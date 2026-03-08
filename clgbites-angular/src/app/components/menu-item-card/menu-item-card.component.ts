@@ -72,11 +72,14 @@ export class MenuItemCardComponent implements OnInit, OnDestroy {
   get isFoodCorner(): boolean { return this.restaurant.id === 'food-corner'; }
   // get canOrder(): boolean { return this.orderingAllowed && this.itemAvailable && this.adminService.isOrdersAccepting() && (!this.isFoodCorner || this.foodCornerAllowed); }
   get canOrder(): boolean { 
-  return this.orderingAllowed && 
+  const adminOverride = this.adminService.isOrdersAccepting();
+  const timeAllowed = this.orderingAllowed || adminOverride;
+  const foodCornerAllowed = this.foodCornerAllowed || adminOverride;
+  return timeAllowed && 
     this.itemAvailable && 
-    this.adminService.isOrdersAccepting() && 
+    adminOverride && 
     this.adminService.isRestaurantAvailable(this.restaurant.id) &&
-    (!this.isFoodCorner || this.foodCornerAllowed); 
+    (!this.isFoodCorner || foodCornerAllowed); 
 }
 
   get disabledReason(): { message: string; shortMessage: string } | null {

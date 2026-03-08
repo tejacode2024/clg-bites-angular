@@ -81,18 +81,7 @@ import { AdminService } from '../../services/admin.service';
 
       <app-floating-cart-bar></app-floating-cart-bar>
 
-      <!-- After 6 PM notice -->
-      <div *ngIf="!orderingAllowed" class="after6pm-notice">
-        <div class="after6pm-pill">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
-            viewBox="0 0 24 24" stroke="white" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <polyline points="12 6 12 12 16 14"/>
-          </svg>
-          <span style="font-weight:600;color:white;">No orders after 6 PM</span>
-        </div>
-      </div>
-    </div>
+      
   `,
   styles: [`
     .closed-banner {
@@ -119,17 +108,7 @@ import { AdminService } from '../../services/admin.service';
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 4rem 1rem;
     }
-    .after6pm-notice {
-      position: fixed; bottom: 6rem; left: 50%; transform: translateX(-50%); z-index: 50;
-      animation: fadeInUp 0.4s ease;
-    }
-    .after6pm-pill {
-      display: flex; align-items: center; gap: 0.5rem;
-      border-radius: 9999px; background: rgba(232,84,108,0.9);
-      padding: 0.75rem 1.25rem;
-      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-      backdrop-filter: blur(4px);
-    }
+    
       .delivery-banner {
   background: #dcfce7;
   border: 1px solid #86efac;
