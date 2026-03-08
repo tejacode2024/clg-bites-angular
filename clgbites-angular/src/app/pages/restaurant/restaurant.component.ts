@@ -27,12 +27,12 @@ import { AdminService } from '../../services/admin.service';
       <p style="color:var(--muted-foreground);">Restaurant not found</p>
     </div>
     <!-- Restaurant unavailable banner -->
-    <div *ngIf="!adminService.isRestaurantAvailable(restaurant.id)" class="closed-banner">
+   <div *ngIf="restaurant && !adminService.isRestaurantAvailable(restaurant.id)" class="closed-banner">
     🔴 This restaurant is currently unavailable. Please check back later.
       </div>
 
     <!-- Orders closed banner -->
-    <div *ngIf="!adminService.isOrdersAccepting()" class="closed-banner">
+   <div *ngIf="restaurant && !adminService.isOrdersAccepting()" class="closed-banner">
     🔴 {{ adminService.settings().orders_off_message }}
 </div>
     <!-- Restaurant page -->

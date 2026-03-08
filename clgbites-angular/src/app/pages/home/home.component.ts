@@ -1,4 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppHeaderComponent } from '../../components/app-header/app-header.component';
 import { SearchBarComponent } from '../../components/search-bar/search-bar.component';
@@ -8,6 +9,7 @@ import { FloatingCartBarComponent } from '../../components/floating-cart-bar/flo
 import { FloatingEmojisComponent } from '../../components/floating-emojis/floating-emojis.component';
 import { restaurants, Restaurant } from '../../services/restaurants';
 import { isOrderingAllowed } from '../../services/time-utils';
+import { AdminService } from '@/app/services/admin.service';
 
 @Component({
   selector: 'app-home',
@@ -25,7 +27,9 @@ import { isOrderingAllowed } from '../../services/time-utils';
     <div style="position:relative; min-height:100vh; background:var(--background); padding-bottom:6rem;">
       <app-floating-emojis></app-floating-emojis>
       <app-header></app-header>
-
+   <div *ngIf="!adminService.isOrdersAccepting()" class="closed-banner">
+  ❗ {{ adminService.settings().orders_off_message }}
+</div>
       <main style="position:relative;z-index:10;margin:0 auto;max-width:42rem;padding:1rem;">
 
         <!-- Multi-restaurant notice -->
@@ -88,6 +92,17 @@ import { isOrderingAllowed } from '../../services/time-utils';
     </div>
   `,
   styles: [`
+    .closed-banner {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin: 1rem;
+  text-align: center;
+}
     .notice-bar {
       display: flex; align-items: center; gap: 0.5rem;
       border-radius: 0.75rem; background: rgba(232,84,108,0.1);
@@ -120,7 +135,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   filteredRestaurants: Restaurant[] = [];
   orderingAllowed = true;
   private timerRef: any;
-
+readonly adminService = inject(AdminService);
   ngOnInit(): void {
     this.filterRestaurants();
     this.checkTime();
