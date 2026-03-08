@@ -1,6 +1,7 @@
 import {
   Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit
 } from '@angular/core';
+import { inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FloatingEmojisComponent } from '../../components/floating-emojis/floating-emojis.component';
@@ -9,6 +10,7 @@ import { FloatingCartBarComponent } from '../../components/floating-cart-bar/flo
 import { CartService } from '../../services/cart.service';
 import { isOrderingAllowed } from '../../services/time-utils';
 import { restaurants, Restaurant } from '../../services/restaurants';
+import { AdminService } from '../../services/admin.service';
 
 @Component({
   selector: 'app-restaurant',
@@ -24,7 +26,15 @@ import { restaurants, Restaurant } from '../../services/restaurants';
     <div *ngIf="!restaurant" style="display:flex;min-height:100vh;align-items:center;justify-content:center;background:var(--background);">
       <p style="color:var(--muted-foreground);">Restaurant not found</p>
     </div>
+    <!-- Restaurant unavailable banner -->
+    <div *ngIf="!adminService.isRestaurantAvailable(restaurant.id)" class="closed-banner">
+    🔴 This restaurant is currently unavailable. Please check back later.
+      </div>
 
+    <!-- Orders closed banner -->
+    <div *ngIf="!adminService.isOrdersAccepting()" class="closed-banner">
+    🔴 {{ adminService.settings().orders_off_message }}
+</div>
     <!-- Restaurant page -->
     <div *ngIf="restaurant" style="position:relative;min-height:100vh;background:var(--background);padding-bottom:7rem;">
       <app-floating-emojis></app-floating-emojis>
@@ -118,6 +128,20 @@ import { restaurants, Restaurant } from '../../services/restaurants';
     </div>
   `,
   styles: [`
+
+
+   .closed-banner {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 0.875rem;
+  margin: 1rem;
+  text-align: center;
+}
+
     .banner {
       position: relative; height: 12rem; overflow: hidden;
     }
@@ -203,6 +227,7 @@ export class RestaurantComponent implements OnInit, OnDestroy {
   get categories(): string[] {
     return this.restaurant?.menu.map((m) => m.category) || [];
   }
+  readonly adminService = inject(AdminService);
 
   get hasOtherRestaurantItems(): boolean {
     return this.otherRestaurants.length > 0;
