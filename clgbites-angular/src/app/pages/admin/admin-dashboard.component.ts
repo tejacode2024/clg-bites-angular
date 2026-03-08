@@ -67,62 +67,82 @@ type Tab = 'overview' | 'restaurants' | 'items' | 'coupons';
 
         <div *ngIf="!adminService.loading()" class="content">
 
-          <!-- ── OVERVIEW TAB ── -->
-          <div *ngIf="activeTab === 'overview'">
+     <!-- ── OVERVIEW TAB ── -->
+<div *ngIf="activeTab === 'overview'">
 
-            <!-- Global orders toggle - BIG CARD -->
-            <div class="orders-card" [class.open]="settings().orders_accepting" [class.closed]="!settings().orders_accepting">
-              <div class="orders-card-left">
-                <div class="orders-icon">{{ settings().orders_accepting ? '✅' : '🔴' }}</div>
-                <div>
-                  <h3>Order Acceptance</h3>
-                  <p>{{ settings().orders_accepting ? 'Customers can place orders right now' : 'Orders are currently closed for customers' }}</p>
-                </div>
-              </div>
-              <div class="toggle-wrap">
-                <label class="toggle">
-                  <input type="checkbox" [checked]="settings().orders_accepting"
-                    (change)="toggleOrders($event)" [disabled]="saving">
-                  <span class="slider"></span>
-                </label>
-                <span class="toggle-label">{{ settings().orders_accepting ? 'ON' : 'OFF' }}</span>
-              </div>
-            </div>
+  <!-- Global orders toggle - BIG CARD -->
+  <div class="orders-card" [class.open]="settings().orders_accepting" [class.closed]="!settings().orders_accepting">
+    <div class="orders-card-left">
+      <div class="orders-icon">{{ settings().orders_accepting ? '✅' : '🔴' }}</div>
+      <div>
+        <h3>Order Acceptance</h3>
+        <p>{{ settings().orders_accepting ? 'Customers can place orders right now' : 'Orders are currently closed for customers' }}</p>
+      </div>
+    </div>
+    <div class="toggle-wrap">
+      <label class="toggle">
+        <input type="checkbox" [checked]="settings().orders_accepting"
+          (change)="toggleOrders($event)" [disabled]="saving">
+        <span class="slider"></span>
+      </label>
+      <span class="toggle-label">{{ settings().orders_accepting ? 'ON' : 'OFF' }}</span>
+    </div>
+  </div>
 
-            <!-- Closed message editor -->
-            <div *ngIf="!settings().orders_accepting" class="card" style="margin-top:1rem;">
-              <h3 class="card-title">📢 Closed Message (shown to customers)</h3>
-              <textarea
-                [(ngModel)]="closedMessage"
-                class="form-textarea"
-                rows="3"
-                placeholder="E.g. Orders closed for today. Back tomorrow at 10 AM!"
-              ></textarea>
-              <button class="btn-primary" (click)="saveClosedMessage()" [disabled]="saving">
-                {{ saving ? 'Saving...' : '💾 Save Message' }}
-              </button>
-            </div>
 
-            <!-- Stats row -->
-            <div class="stats-grid">
-              <div class="stat-card">
-                <div class="stat-num">{{ restaurants.length }}</div>
-                <div class="stat-label">Total Restaurants</div>
-              </div>
-              <div class="stat-card warn">
-                <div class="stat-num">{{ settings().unavailable_restaurants.length }}</div>
-                <div class="stat-label">Unavailable Restaurants</div>
-              </div>
-              <div class="stat-card warn">
-                <div class="stat-num">{{ totalUnavailableItems }}</div>
-                <div class="stat-label">Unavailable Items</div>
-              </div>
-              <div class="stat-card green">
-                <div class="stat-num">{{ activeCoupons }}</div>
-                <div class="stat-label">Active Coupons</div>
-              </div>
-            </div>
-          </div>
+
+  <!-- Delivery time card - ALWAYS VISIBLE -->
+  <div class="card" style="margin-top:1rem;">
+    <h3 class="card-title">🚚 Delivery Time (shown to all customers)</h3>
+    <div style="display:flex;gap:0.75rem;align-items:center;">
+      <input
+        type="text"
+        [(ngModel)]="deliveryTime"
+        class="form-input"
+        placeholder="e.g. 30-45 mins"
+        style="flex:1;"
+      />
+      <button class="btn-primary" (click)="saveDeliveryTime()" [disabled]="saving">
+        {{ saving ? 'Saving...' : '💾 Save' }}
+      </button>
+    </div>
+    <p style="font-size:0.75rem;color:#94a3b8;margin-top:0.5rem;">
+      This is displayed on the home page for all users
+    </p>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-grid" style="margin-top:1rem;">
+    <div class="stat-card">
+      <div class="stat-num">{{ restaurants.length }}</div>
+      <div class="stat-label">Total Restaurants</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-num">{{ settings().unavailable_restaurants.length }}</div>
+      <div class="stat-label">Unavailable Restaurants</div>
+    </div>
+    <div class="stat-card warn">
+      <div class="stat-num">{{ totalUnavailableItems }}</div>
+      <div class="stat-label">Unavailable Items</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-num">{{ activeCoupons }}</div>
+      <div class="stat-label">Active Coupons</div>
+    </div>
+  </div>
+  <!-- Closed message editor -->
+  <div *ngIf="!settings().orders_accepting" class="card" style="margin-top:1rem;">
+    <h3 class="card-title">📢 Closed Message (shown to customers)</h3>
+    <textarea [(ngModel)]="closedMessage" class="form-textarea" rows="3"
+      placeholder="E.g. Orders closed for today. Back tomorrow at 10 AM!"></textarea>
+    <button class="btn-primary" (click)="saveClosedMessage()" [disabled]="saving" style="margin-top:0.75rem;">
+      {{ saving ? 'Saving...' : '💾 Save Message' }}
+    </button>
+  </div>
+
+</div>
+
+     
 
           <!-- ── RESTAURANTS TAB ── -->
           <div *ngIf="activeTab === 'restaurants'">
@@ -286,6 +306,7 @@ type Tab = 'overview' | 'restaurants' | 'items' | 'coupons';
       <!-- Save indicator -->
       <div *ngIf="saveSuccess" class="toast">✅ Saved successfully!</div>
     </div>
+  
   `,
   styles: [`
     .admin-wrap { display: flex; min-height: 100vh; background: #f8fafc; font-family: 'Poppins', sans-serif; }
@@ -497,7 +518,8 @@ export class AdminDashboardComponent implements OnInit {
   closedMessage = '';
   selectedRestaurantId = '';
   editingCoupon: Coupon | null = null;
-
+  deliveryTime = '';
+  
   newCoupon: Omit<Coupon, 'id'> = this.defaultCoupon();
 
   get settings() { return this.adminService.settings; }
@@ -513,6 +535,7 @@ export class AdminDashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.closedMessage = this.settings().orders_off_message;
+    this.deliveryTime = this.settings().delivery_time;
   }
 
   setTab(tab: Tab): void { this.activeTab = tab; }
@@ -526,7 +549,9 @@ export class AdminDashboardComponent implements OnInit {
   async saveClosedMessage(): Promise<void> {
     await this.doSave(() => this.adminService.setOrdersOffMessage(this.closedMessage));
   }
-
+ async saveDeliveryTime(): Promise<void> {
+  await this.doSave(() => this.adminService.setDeliveryTime(this.deliveryTime));
+}
   // ─── Restaurants ───
   isRestAvailable(id: string): boolean { return this.adminService.isRestaurantAvailable(id); }
 

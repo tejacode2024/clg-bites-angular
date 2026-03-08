@@ -9,7 +9,7 @@ import { FloatingCartBarComponent } from '../../components/floating-cart-bar/flo
 import { FloatingEmojisComponent } from '../../components/floating-emojis/floating-emojis.component';
 import { restaurants, Restaurant } from '../../services/restaurants';
 import { isOrderingAllowed } from '../../services/time-utils';
-import { AdminService } from '@/app/services/admin.service';
+import { AdminService } from '../../services/admin.service';
 
 @Component({
   selector: 'app-home',
@@ -29,6 +29,9 @@ import { AdminService } from '@/app/services/admin.service';
       <app-header></app-header>
    <div *ngIf="!adminService.isOrdersAccepting()" class="closed-banner">
   ❗ {{ adminService.settings().orders_off_message }}
+</div>
+<div *ngIf="adminService.settings().delivery_time" class="delivery-banner">
+  🚚 Estimated Delivery Time: <strong>{{ adminService.settings().delivery_time }}</strong>
 </div>
       <main style="position:relative;z-index:10;margin:0 auto;max-width:42rem;padding:1rem;">
 
@@ -127,6 +130,17 @@ import { AdminService } from '@/app/services/admin.service';
       box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
       backdrop-filter: blur(4px);
     }
+      .delivery-banner {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #16a34a;
+  font-size: 0.875rem;
+  margin: 0 1rem;
+  margin-top:10px;
+  text-align: center;
+}
   `]
 })
 export class HomeComponent implements OnInit, OnDestroy {

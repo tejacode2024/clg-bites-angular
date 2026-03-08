@@ -17,6 +17,7 @@ export interface AdminSettings {
   orders_off_message: string;
   unavailable_restaurants: string[];
   unavailable_items: Record<string, string[]>;
+  delivery_time: string;
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
@@ -24,6 +25,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
   orders_off_message: 'Orders are currently closed. Please check back later.',
   unavailable_restaurants: [],
   unavailable_items: {},
+  delivery_time: '7:30-8:30',
 };
 
 @Injectable({ providedIn: 'root' })
@@ -48,6 +50,7 @@ export class AdminService implements OnDestroy {
       .select('*')
       .eq('id', 1)
       .single();
+      
 
     if (error || !data) {
       // Row doesn't exist yet — insert defaults
@@ -59,11 +62,17 @@ export class AdminService implements OnDestroy {
         orders_off_message: data.orders_off_message ?? DEFAULT_SETTINGS.orders_off_message,
         unavailable_restaurants: data.unavailable_restaurants ?? [],
         unavailable_items: data.unavailable_items ?? {},
+        delivery_time: data.delivery_time ?? '7:30-8:30',
       });
     }
     this.loading.set(false);
   }
 
+
+  async setDeliveryTime(time: string): Promise<void> {
+  await this.updateSettings({ delivery_time: time });
+  this.settings.update(s => ({ ...s, delivery_time: time }));
+}
   // ─── Real-time subscription ──────────────────────────────────
   private subscribeRealtime(): void {
     this.channel = this.sb.client
@@ -78,6 +87,7 @@ export class AdminService implements OnDestroy {
               orders_off_message: d.orders_off_message ?? DEFAULT_SETTINGS.orders_off_message,
               unavailable_restaurants: d.unavailable_restaurants ?? [],
               unavailable_items: d.unavailable_items ?? {},
+              delivery_time: d.delivery_time ?? '7:30-8:30',
             });
           }
         }
