@@ -565,6 +565,7 @@ export const restaurants: Restaurant[] = [
         category: 'Full Menu',
         items: [
           { name: '1 Pulka', price: 10 },
+          { name: 'Only Egg Burji', price: 35 },
           { name: '3 Pulkas (2 Veg Curries)', price: 50 },
           { name: '3 Pulkas + Chicken Curry', price: 80 },
           { name: 'Single Egg Omelette', price: 20 },
