@@ -43,9 +43,9 @@ export const restaurants: Restaurant[] = [
       {
         category: 'Bucket Biryanis',
         items: [
-          { name: 'Dum Biryani Bucket (For 4)', price: 630 },
-          { name: 'Fry Piece Biryani Bucket (For 4)', price: 670 },
-          { name: 'Mixed Biryani Bucked (For 4)', price: 730 },
+          { name: 'Bucket Dum Biryani (For 4)', price: 630 },
+          { name: 'Bucket Fry Piece Biryani (For 4)', price: 670 },
+          { name: 'Bucket Mixed Biryani (For 4)', price: 730 },
         ],
       },
       {
