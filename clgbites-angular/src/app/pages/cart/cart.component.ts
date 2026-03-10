@@ -165,7 +165,7 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
         <button class="checkout-btn" [class.valid]="isFormValid" [disabled]="isSubmitting || !isFormValid" (click)="handleCheckout()">
           💬 {{ isSubmitting ? 'Processing...' : 'Checkout via WhatsApp — ₹' + grandTotal }}
         </button>
-        <div *ngIf="!orderingAllowed || !adminService.settings().orders_accepting"
+        <div *ngIf="!adminService.settings().orders_accepting && !orderingAllowed"
           style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--destructive);">
           🕐 Orders not accepted right now
         </div>
@@ -263,7 +263,9 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   get isFormValid(): boolean {
-    return this.name.trim() !== '' && this.mobile.trim() !== '' && this.orderingAllowed && this.adminService.settings().orders_accepting;
+    const adminOverride = this.adminService.settings().orders_accepting;
+    const timeAllowed = this.orderingAllowed || adminOverride;
+    return this.name.trim() !== '' && this.mobile.trim() !== '' && timeAllowed && adminOverride;
   }
 
   get itemsByRestaurantEntries() {
@@ -305,7 +307,8 @@ export class CartComponent implements OnInit, OnDestroy {
   removeCoupon(): void { this.appliedCoupon = null; this.couponCode = ''; this.couponError = ''; }
 
   handleCheckout(): void {
-    if (!this.orderingAllowed || !this.adminService.settings().orders_accepting) {
+    const adminOverride = this.adminService.settings().orders_accepting;
+    if (!adminOverride && !this.orderingAllowed) {
       this.validationError = 'Sorry, orders are not accepted right now.';
       return;
     }

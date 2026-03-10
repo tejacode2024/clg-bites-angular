@@ -32,23 +32,34 @@ export const restaurants: Restaurant[] = [
     menu: [
       {
         category: "Student's Choice",
-        items: [{ name: 'Mixed Biryani', price: 180, isStudentChoice: true }],
+        items: [{ name: 'Mixed Biryani', price: 180, isStudentChoice: true },
+                { name: 'chicken 65 Biryani', price: 230, isStudentChoice: true  },
+                { name: 'Boxer Fried Rice', price: 250, isStudentChoice: true  },
+                { name: 'SP Fried Rice', price: 240, isStudentChoice: true  },
+        ],
+
+      },
+      
+      {
+        category: 'Bucket Biryanis',
+        items: [
+          { name: 'Dum Biryani Bucket (For 4)', price: 630 },
+          { name: 'Fry Piece Biryani Bucket (For 4)', price: 670 },
+          { name: 'Mixed Biryani Bucked (For 4)', price: 730 },
+        ],
       },
       {
         category: 'Biryanis',
         items: [
           { name: 'Dum Biryani', price: 150 },
           { name: 'Fry Biryani', price: 170 },
+          {name: 'Mixed Biryani', price: 180},
+          { name: 'Chicken 65 biryani', price: 230 },
+          { name: 'Chicken Special biryani', price: 230 },
+          { name: 'Mughalai biryani', price: 240 },
         ],
       },
-      {
-        category: 'Family Packs',
-        items: [
-          { name: 'Dum Family Pack (Small)', price: 500 },
-          { name: 'Fry Family Pack (Small)', price: 550 },
-          { name: 'Mixed Family Pack (Small)', price: 600 },
-        ],
-      },
+      
       {
         category: 'Chinese/Fast Food',
         items: [
@@ -58,6 +69,8 @@ export const restaurants: Restaurant[] = [
           { name: 'Egg Fried Rice', price: 100 },
           { name: 'Chicken Noodles', price: 120 },
           { name: 'Chicken Fried Rice', price: 120 },
+          { name: 'SP Fried Rice', price: 240 },
+          { name: 'Boxer Fried Rice', price: 250 },
           { name: 'Chicken Manchurian', price: 150 },
           { name: 'Chilli Chicken', price: 150 },
           { name: 'Chicken Lollipop (4 pcs)', price: 150 },
@@ -353,19 +366,19 @@ export const restaurants: Restaurant[] = [
     bestItem: 'Mutton Biryani & Prawns Biryani',
     menu: [
       {
-        category: "Student's Choice",
+        category: "Student's Choice(Revised Prices By Restaurent)",
         items: [
-          { name: 'Mutton Biryani', price: 220, isStudentChoice: true },
-          { name: 'Prawns Biryani', price: 220, isStudentChoice: true },
+          { name: 'Mutton Biryani', price: 320, isStudentChoice: true },
+          { name: 'Prawns Biryani', price: 300, isStudentChoice: true },
         ],
       },
       {
-        category: 'Full Biryani Menu',
+        category: 'Full Biryani Menu(Revised Prices By Restaurent)',
         items: [
-          { name: 'Mutton Fry Biryani', price: 220 },
-          { name: 'Prawns Biryani', price: 220 },
-          { name: 'Chicken Dhum Biryani', price: 170 },
-          { name: 'Chicken Fry Biryani', price: 200 },
+          { name: 'Mutton Fry Biryani', price: 320 },
+          { name: 'Prawns Fry Biryani', price: 300 },
+          { name: 'Chicken Dhum Biryani', price: 220 },
+          { name: 'Chicken Fry Biryani', price: 250 },
         ],
       },
     ],
@@ -516,32 +529,30 @@ export const restaurants: Restaurant[] = [
     bestItem: 'Masala Dosa & Idli',
     menu: [
       {
-        category: 'Breakfast & Snacks',
+        category: 'Breakfast & Snacks(Prices Revised By Restaurents)',
         items: [
-          { name: 'Idli (4 pcs)', price: 40 },
-          { name: 'Gare (4 pcs)', price: 40 },
-          { name: 'Bajji (4 pcs)', price: 40 },
-          { name: 'Mirchi Bajji (4 pcs)', price: 30 },
-          { name: 'Punugulu', price: 40 },
-          { name: 'Poori (2 pcs)', price: 35 },
+          { name: 'Idli (4 pcs)', price: 45 },
+          { name: 'Gare (4 pcs)', price: 45 },
+          { name: 'Bajji (4 pcs)', price: 45 },
+          { name: 'Mirchi Bajji (4 pcs)', price: 45 },
+          { name: 'Punugulu', price: 45 },
+          { name: 'Poori (2 pcs)', price: 40 },
         ],
       },
       {
         category: 'Dosa Corner',
         items: [
-          { name: 'Masala Dosa', price: 50 },
-          { name: 'Onion Dosa', price: 45 },
-          { name: 'Single Egg Dosa', price: 45 },
-          { name: 'Double Egg Dosa', price: 60 },
+          { name: 'Masala Dosa', price: 55 },
+          { name: 'Onion Dosa', price: 50 },
+          { name: 'Single Egg Dosa', price: 50 },
+          { name: 'Double Egg Dosa', price: 65 },
         ],
       },
       {
         category: 'Tawa Items',
         items: [
-          { name: 'Chapati', price: 40 },
-          { name: 'Parotha', price: 40 },
-          { name: 'Single Omelet', price: 30 },
-          { name: 'Double Egg Omelet', price: 50 },
+          { name: 'Chapati', price: 45 },
+          { name: 'Parotha', price: 45 },
         ],
       },
     ],
@@ -565,7 +576,8 @@ export const restaurants: Restaurant[] = [
         category: 'Full Menu',
         items: [
           { name: '1 Pulka', price: 10 },
-          { name: 'Only Egg Burji', price: 35 },
+          { name: 'Only Egg Burji(Half)', price: 35 },
+          { name: 'Only Egg Burji(Full)', price: 55 },
           { name: '3 Pulkas (2 Veg Curries)', price: 50 },
           { name: '3 Pulkas + Chicken Curry', price: 80 },
           { name: 'Single Egg Omelette', price: 20 },
