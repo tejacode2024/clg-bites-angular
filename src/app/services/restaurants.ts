@@ -39,17 +39,7 @@ export const restaurants: Restaurant[] = [
         ],
 
       },
-      {
-        category: "Newly Added",
-        items: [{ name: 'Chicken 65 Biryani', price: 230},
-                { name: 'Mughalai Biryani', price: 240},
-                { name: 'Chicken Special biryani', price: 230},
-                { name: 'Boxer Fried Rice', price: 250},
-                { name: 'SP Fried Rice', price: 240},
-        ],
-
-      },
-
+      
       
       {
         category: 'Bucket Biryanis',
