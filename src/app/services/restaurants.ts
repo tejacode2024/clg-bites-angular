@@ -22,6 +22,30 @@ export interface Restaurant {
 
 export const restaurants: Restaurant[] = [
   {
+    id: 'haleem',
+    name: 'Haleem',
+    image: 'assets/images/haleem.jpg',
+    rating: 5,
+    description: 'Slow-cooked by tradition, seasoned with love, and perfected by time.',
+    categories: ['Mutton Haleem , Chicken Haleem'],
+    bestItem: 'Mutton Haleem',
+    menu: [
+      {
+        category: "Student's Choice",
+        items: [
+          { name: 'Mutton Haleem', price: 200, isStudentChoice: true },
+        ],
+      },
+      {
+        category: "Haleem",
+        items: [
+          { name: 'Mutton Haleem', price: 200},
+          { name: 'Chicken Haleem', price: 200},
+        ],
+      },
+    ]
+  },
+  {
     id: 'spice-magic',
     name: 'Spice Magic',
     image: 'assets/images/spice-magic.jpg',
