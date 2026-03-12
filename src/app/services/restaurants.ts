@@ -27,20 +27,24 @@ export const restaurants: Restaurant[] = [
     image: 'assets/images/haleem.jpg',
     rating: 5,
     description: 'Slow-cooked by tradition, seasoned with love, and perfected by time.',
-    categories: ['Mutton Haleem , Chicken Haleem'],
+    categories: ['Haleem'],
     bestItem: 'Mutton Haleem',
     menu: [
       {
         category: "Student's Choice",
         items: [
-          { name: 'Mutton Haleem', price: 200, isStudentChoice: true },
+          { name: 'Mutton Haleem (1/4 kg)', price: 200, isStudentChoice: true },
         ],
       },
       {
         category: "Haleem",
         items: [
-          { name: 'Mutton Haleem', price: 200},
-          { name: 'Chicken Haleem', price: 200},
+          { name: 'Mutton Haleem(1/4 kg)', price: 200},
+          { name: 'Mutton Haleem(1/2 kg)', price: 400},
+          { name: 'Mutton Haleem(1 kg)', price: 750},
+          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
         ],
       },
     ]
@@ -586,8 +590,8 @@ export const restaurants: Restaurant[] = [
       {
         category: 'Tawa Items',
         items: [
-          { name: 'Chapati', price: 45 },
-          { name: 'Parotha', price: 45 },
+          { name: 'Chapati', price: 50 },
+          { name: 'Parotha', price: 50 },
         ],
       },
     ],
@@ -654,4 +658,4 @@ export const restaurants: Restaurant[] = [
   },
 ];
 
-export const categories = ['All', 'Biryani', 'Fast Food', 'Tiffins', 'Veg Meals', 'Fruits'];
+export const categories = ['All','Haleem' ,'Biryani', 'Fast Food', 'Tiffins', 'Veg Meals', 'Fruits'];
