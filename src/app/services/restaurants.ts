@@ -40,8 +40,8 @@ export const restaurants: Restaurant[] = [
         category: "Haleem",
         items: [
           { name: 'Mutton Haleem(1/4 kg)', price: 200},
-          { name: 'Mutton Haleem(1/2 kg)', price: 400},
-          { name: 'Mutton Haleem(1 kg)', price: 750},
+          { name: 'Mutton Haleem(1/2 kg)', price: 350},
+          { name: 'Mutton Haleem(1 kg)', price: 700},
           // { name: 'Chicken Haleem (1/4 kg)', price: 200},
           // { name: 'Chicken Haleem (1/2 kg)', price: 200},
           // { name: 'Chicken Haleem (1 kg)', price: 200},
