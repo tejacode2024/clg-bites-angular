@@ -192,7 +192,23 @@ type Tab = 'overview' | 'restaurants' | 'items' | 'coupons';
                   <div class="list-item-left">
                     <div>
                       <h4>{{ item.name }}</h4>
-                      <p class="list-sub">₹{{ item.price }}</p>
+                      <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
+                        <span *ngIf="!editingPrice[selectedRestaurantId + '::' + item.name]" class="list-sub">
+                          ₹{{ adminService.getItemPrice(selectedRestaurantId, item.name, item.price) }}
+                          <button (click)="startEditPrice(selectedRestaurantId, item.name, item.price)"
+                            style="border:none;background:transparent;cursor:pointer;font-size:0.75rem;color:var(--primary);margin-left:0.25rem;">✏️</button>
+                        </span>
+                        <span *ngIf="editingPrice[selectedRestaurantId + '::' + item.name]" style="display:flex;gap:0.25rem;align-items:center;">
+                          <input type="number" [(ngModel)]="tempPrices[selectedRestaurantId + '::' + item.name]"
+                            style="width:5rem;padding:0.25rem 0.5rem;border:1px solid var(--primary);border-radius:0.5rem;font-size:0.875rem;" />
+                          <button (click)="savePrice(selectedRestaurantId, item.name)"
+                            style="border:none;background:#16a34a;color:white;border-radius:0.5rem;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.75rem;">✅</button>
+                          <button (click)="cancelEditPrice(selectedRestaurantId, item.name)"
+                            style="border:none;background:#dc2626;color:white;border-radius:0.5rem;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.75rem;">✕</button>
+                          <button (click)="resetPrice(selectedRestaurantId, item.name)"
+                            style="border:none;background:#f59e0b;color:white;border-radius:0.5rem;padding:0.25rem 0.5rem;cursor:pointer;font-size:0.75rem;">↺</button>
+                        </span>
+                      </div>
                     </div>
                   </div>
                   <div class="list-item-right">
@@ -509,7 +525,7 @@ export class AdminDashboardComponent implements OnInit {
   readonly adminService = inject(AdminService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-
+  
   readonly restaurants = restaurants;
   activeTab: Tab = 'overview';
   sidebarOpen = false;
@@ -532,6 +548,34 @@ export class AdminDashboardComponent implements OnInit {
     return Object.values(this.settings().unavailable_items).reduce((s, arr) => s + (arr as string[]).length, 0);
   }
   get activeCoupons(): number { return this.adminService.coupons().filter(c => c.active).length; }
+  editingPrice: Record<string, boolean> = {};
+tempPrices: Record<string, number> = {};
+
+startEditPrice(restaurantId: string, itemName: string, originalPrice: number): void {
+  const key = `${restaurantId}::${itemName}`;
+  this.tempPrices[key] = this.adminService.getItemPrice(restaurantId, itemName, originalPrice);
+  this.editingPrice[key] = true;
+}
+
+savePrice(restaurantId: string, itemName: string): void {
+  const key = `${restaurantId}::${itemName}`;
+  const newPrice = this.tempPrices[key];
+  if (newPrice > 0) {
+    this.adminService.setItemPrice(restaurantId, itemName, newPrice);
+  }
+  this.editingPrice[key] = false;
+}
+
+cancelEditPrice(restaurantId: string, itemName: string): void {
+  const key = `${restaurantId}::${itemName}`;
+  this.editingPrice[key] = false;
+}
+
+resetPrice(restaurantId: string, itemName: string): void {
+  const key = `${restaurantId}::${itemName}`;
+  this.adminService.resetItemPrice(restaurantId, itemName);
+  this.editingPrice[key] = false;
+}
 
   ngOnInit(): void {
     this.closedMessage = this.settings().orders_off_message;

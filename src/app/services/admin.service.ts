@@ -177,4 +177,30 @@ export class AdminService implements OnDestroy {
   ngOnDestroy(): void {
     this.channel?.unsubscribe();
   }
+
+  // Price overrides
+getPriceOverrides(): Record<string, number> {
+  const stored = localStorage.getItem('priceOverrides');
+  return stored ? JSON.parse(stored) : {};
+}
+
+getItemPrice(restaurantId: string, itemName: string, originalPrice: number): number {
+  const key = `${restaurantId}::${itemName}`;
+  const overrides = this.getPriceOverrides();
+  return overrides[key] ?? originalPrice;
+}
+
+setItemPrice(restaurantId: string, itemName: string, price: number): void {
+  const key = `${restaurantId}::${itemName}`;
+  const overrides = this.getPriceOverrides();
+  overrides[key] = price;
+  localStorage.setItem('priceOverrides', JSON.stringify(overrides));
+}
+
+resetItemPrice(restaurantId: string, itemName: string): void {
+  const key = `${restaurantId}::${itemName}`;
+  const overrides = this.getPriceOverrides();
+  delete overrides[key];
+  localStorage.setItem('priceOverrides', JSON.stringify(overrides));
+}
 }

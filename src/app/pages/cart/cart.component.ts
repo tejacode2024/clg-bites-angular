@@ -119,8 +119,7 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
                 Delivery Charges
                 <span *ngIf="totalItems() >= 10" style="font-size:0.7rem;color:#16a34a;"> (Flat ₹80 for 10+ items)</span>
               </span>
-              <span style="font-weight:500;">🚚 ₹{{ deliveryCharges() }}</span>
-            </div>
+                <span style="font-weight:500;color:#16a34a;">🚚 Free</span>            </div>
             <div *ngIf="appliedCoupon" class="summary-row">
               <span style="color:#16a34a;">Coupon Discount ({{ appliedCoupon.code }})</span>
               <span style="color:#16a34a;font-weight:600;">− ₹{{ couponDiscount }}</span>
@@ -138,7 +137,7 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
           </div>
           <div class="delivery-tip">
             <p style="font-size:0.875rem;font-weight:500;color:var(--primary);">
-              {{ totalItems() >= 10 ? "You're getting flat ₹80 delivery!" : 'Add ' + (10 - totalItems()) + ' more items for flat ₹80 delivery' }}
+              🎉 Free Delivery on all orders!
             </p>
           </div>
         </div>
@@ -332,7 +331,7 @@ export class CartComponent implements OnInit, OnDestroy {
     });
 
     const t = this.totalItems();
-    const deliveryText = t >= 10 ? `₹80 (Flat rate for 10+ items)` : `₹${this.deliveryCharges()} (₹10 × ${t} items)`;
+    const deliveryText = `FREE`;
     const couponLine = this.appliedCoupon ? `\n*Coupon (${this.appliedCoupon.code}):* − ₹${this.couponDiscount}` : '';
 
     const message = `Hello, I would like to place an order.

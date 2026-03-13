@@ -12,6 +12,7 @@ import type { MenuItem, Restaurant } from '../../services/restaurants';
   selector: 'app-menu-item-card',
   standalone: true,
   imports: [CommonModule],
+  
   template: `
     <div class="item-card" [class.unavailable-card]="!itemAvailable">
       <div class="item-info">
@@ -20,7 +21,7 @@ import type { MenuItem, Restaurant } from '../../services/restaurants';
           <span *ngIf="item.isStudentChoice" class="popular-badge">⭐ Popular</span>
           <span *ngIf="!itemAvailable" class="unavail-badge">Unavailable</span>
         </div>
-        <p class="item-price">₹{{ item.price }}</p>
+        <p class="item-price">₹{{ adminService.getItemPrice(restaurant.id, item.name, item.price) }}</p>
         <p *ngIf="quantity() > 0" class="delivery-hint">+₹10 delivery per item</p>
         <p *ngIf="disabledReason" class="disabled-hint">{{ disabledReason.message }}</p>
       </div>
@@ -61,9 +62,9 @@ export class MenuItemCardComponent implements OnInit, OnDestroy {
   @Input() item!: MenuItem;
   @Input() restaurant!: Restaurant;
 
-  private readonly cartService = inject(CartService);
-  private readonly adminService = inject(AdminService);
-
+ readonly cartService = inject(CartService);
+  readonly adminService = inject(AdminService);
+  
   orderingAllowed = true;
   foodCornerAllowed = true;
   private timerRef: any;

@@ -33,7 +33,7 @@ export const restaurants: Restaurant[] = [
       {
         category: "Student's Choice",
         items: [
-          { name: 'Mutton Haleem (1/4 kg)', price: 200, isStudentChoice: true },
+          { name: 'Mutton Haleem (1/2 kg)', price: 200, isStudentChoice: true },
         ],
       },
       {
