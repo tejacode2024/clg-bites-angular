@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS: AdminSettings = {
   unavailable_restaurants: [],
   unavailable_items: {},
   delivery_time: '7:30-8:30',
+  price_overrides: {},
 };
 
 @Injectable({ providedIn: 'root' })
@@ -59,12 +60,13 @@ export class AdminService implements OnDestroy {
       this.settings.set(DEFAULT_SETTINGS);
     } else {
       this.settings.set({
-        orders_accepting: data.orders_accepting ?? true,
-        orders_off_message: data.orders_off_message ?? DEFAULT_SETTINGS.orders_off_message,
-        unavailable_restaurants: data.unavailable_restaurants ?? [],
-        unavailable_items: data.unavailable_items ?? {},
-        delivery_time: data.delivery_time ?? '7:30-8:30',
-      });
+  orders_accepting: data.orders_accepting ?? true,
+  orders_off_message: data.orders_off_message ?? DEFAULT_SETTINGS.orders_off_message,
+  unavailable_restaurants: data.unavailable_restaurants ?? [],
+  unavailable_items: data.unavailable_items ?? {},
+  delivery_time: data.delivery_time ?? '7:30-8:30',
+  price_overrides: data.price_overrides ?? {},
+    });
     }
     this.loading.set(false);
   }
@@ -84,12 +86,13 @@ export class AdminService implements OnDestroy {
           if (payload.new) {
             const d = payload.new as any;
             this.settings.set({
-              orders_accepting: d.orders_accepting ?? true,
-              orders_off_message: d.orders_off_message ?? DEFAULT_SETTINGS.orders_off_message,
-              unavailable_restaurants: d.unavailable_restaurants ?? [],
-              unavailable_items: d.unavailable_items ?? {},
-              delivery_time: d.delivery_time ?? '7:30-8:30',
-            });
+            orders_accepting: d.orders_accepting ?? true,
+            orders_off_message: d.orders_off_message ?? DEFAULT_SETTINGS.orders_off_message,
+            unavailable_restaurants: d.unavailable_restaurants ?? [],
+            unavailable_items: d.unavailable_items ?? {},
+            delivery_time: d.delivery_time ?? '7:30-8:30',
+            price_overrides: d.price_overrides ?? {},
+          });
           }
         }
       )
@@ -187,20 +190,17 @@ getItemPrice(restaurantId: string, itemName: string, originalPrice: number): num
 
 async setItemPrice(restaurantId: string, itemName: string, price: number): Promise<void> {
   const key = `${restaurantId}::${itemName}`;
-  const overrides = { ...this.settings().price_overrides } || {};
+  const overrides = { ...(this.settings().price_overrides ?? {}) };
   overrides[key] = price;
-  await this.supabase.client
-    .from('admin_settings')
-    .update({ price_overrides: overrides })
-    .eq('id', 1);
+  await this.updateSettings({ price_overrides: overrides });
+  this.settings.update(s => ({ ...s, price_overrides: overrides }));
 }
 
 async resetItemPrice(restaurantId: string, itemName: string): Promise<void> {
   const key = `${restaurantId}::${itemName}`;
-  const overrides = { ...this.settings().price_overrides } || {};
+  const overrides = { ...(this.settings().price_overrides ?? {}) };
   delete overrides[key];
-  await this.supabase.client
-    .from('admin_settings')
-    .update({ price_overrides: overrides })
-    .eq('id', 1);
+  await this.updateSettings({ price_overrides: overrides });
+  this.settings.update(s => ({ ...s, price_overrides: overrides }));
+}
 }
