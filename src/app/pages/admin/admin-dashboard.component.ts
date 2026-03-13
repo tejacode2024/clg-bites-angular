@@ -557,11 +557,11 @@ startEditPrice(restaurantId: string, itemName: string, originalPrice: number): v
   this.editingPrice[key] = true;
 }
 
-savePrice(restaurantId: string, itemName: string): void {
+async savePrice(restaurantId: string, itemName: string): Promise<void> {
   const key = `${restaurantId}::${itemName}`;
   const newPrice = this.tempPrices[key];
   if (newPrice > 0) {
-    this.adminService.setItemPrice(restaurantId, itemName, newPrice);
+    await this.adminService.setItemPrice(restaurantId, itemName, newPrice);
   }
   this.editingPrice[key] = false;
 }
@@ -571,12 +571,11 @@ cancelEditPrice(restaurantId: string, itemName: string): void {
   this.editingPrice[key] = false;
 }
 
-resetPrice(restaurantId: string, itemName: string): void {
+async resetPrice(restaurantId: string, itemName: string): Promise<void> {
   const key = `${restaurantId}::${itemName}`;
-  this.adminService.resetItemPrice(restaurantId, itemName);
+  await this.adminService.resetItemPrice(restaurantId, itemName);
   this.editingPrice[key] = false;
 }
-
   ngOnInit(): void {
     this.closedMessage = this.settings().orders_off_message;
     this.deliveryTime = this.settings().delivery_time;

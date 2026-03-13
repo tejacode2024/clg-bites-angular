@@ -18,6 +18,7 @@ export interface AdminSettings {
   unavailable_restaurants: string[];
   unavailable_items: Record<string, string[]>;
   delivery_time: string;
+  price_overrides: Record<string, number>;
 }
 
 const DEFAULT_SETTINGS: AdminSettings = {
@@ -178,29 +179,28 @@ export class AdminService implements OnDestroy {
     this.channel?.unsubscribe();
   }
 
-  // Price overrides
-getPriceOverrides(): Record<string, number> {
-  const stored = localStorage.getItem('priceOverrides');
-  return stored ? JSON.parse(stored) : {};
-}
-
 getItemPrice(restaurantId: string, itemName: string, originalPrice: number): number {
   const key = `${restaurantId}::${itemName}`;
-  const overrides = this.getPriceOverrides();
+  const overrides = this.settings().price_overrides || {};
   return overrides[key] ?? originalPrice;
 }
 
-setItemPrice(restaurantId: string, itemName: string, price: number): void {
+async setItemPrice(restaurantId: string, itemName: string, price: number): Promise<void> {
   const key = `${restaurantId}::${itemName}`;
-  const overrides = this.getPriceOverrides();
+  const overrides = { ...this.settings().price_overrides } || {};
   overrides[key] = price;
-  localStorage.setItem('priceOverrides', JSON.stringify(overrides));
+  await this.supabase.client
+    .from('admin_settings')
+    .update({ price_overrides: overrides })
+    .eq('id', 1);
 }
 
-resetItemPrice(restaurantId: string, itemName: string): void {
+async resetItemPrice(restaurantId: string, itemName: string): Promise<void> {
   const key = `${restaurantId}::${itemName}`;
-  const overrides = this.getPriceOverrides();
+  const overrides = { ...this.settings().price_overrides } || {};
   delete overrides[key];
-  localStorage.setItem('priceOverrides', JSON.stringify(overrides));
-}
+  await this.supabase.client
+    .from('admin_settings')
+    .update({ price_overrides: overrides })
+    .eq('id', 1);
 }
