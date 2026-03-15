@@ -54,9 +54,10 @@ export const restaurants: Restaurant[] = [
     name: 'Amrutha (Earlier Nellore Ruchulu)',
     image: 'assets/images/amrutha.jpeg',
     rating: 5,
-    description: '',
+    
+    description: 'Mughalai Birynai is Famous Here',
     categories: ['Biryani'],
-    bestItem: 'Prawns Biryani',
+    bestItem: 'Mughalai Biryani',
     menu: [
       {
         category: "Student's Choice",
@@ -65,13 +66,46 @@ export const restaurants: Restaurant[] = [
         ],
       },
       {
-        category: "Haleem",
+        category: "Biryani",
         items: [
           { name: 'Dum Biryani', price: 199},
           { name: 'Fry Piece Biryani', price: 220},
           { name: 'Mixed Biryani', price: 220},
           { name: 'Mughalai Biryani', price: 240},
           { name: 'Sp Mixed Biryani', price: 280},
+        
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+    ]
+  },
+  {
+    id: 'RoyalGrand',
+    name: 'Royal Grand',
+    image: 'assets/images/royalgrand.png',
+    rating: 5,
+    description: 'Lollipop Biryani is famous here',
+    categories: ['Biryani'],
+    bestItem: 'Lollipop Biryani',
+    menu: [
+      {
+        category: "Student's Choice",
+        items: [
+          { name: 'Lollipop Biryani', price: 260, isStudentChoice: true },
+        ],
+      },
+      {
+        category: "Biryani",
+        items: [
+          { name: 'Dum Biryani', price: 199},
+          { name: 'Fry Piece Biryani', price: 219},
+          { name: 'Lollipop Biryani', price: 269},
+          { name: 'Wing Biryani', price: 269},
+          { name: 'Mughalai Biryani', price: 269},
+          { name: 'Tikka Biryani', price: 269},
+          { name: 'Sp Biryani', price: 269},
+          
         
           // { name: 'Chicken Haleem (1/2 kg)', price: 200},
           // { name: 'Chicken Haleem (1 kg)', price: 200},

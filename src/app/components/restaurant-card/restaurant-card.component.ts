@@ -17,7 +17,8 @@ import type { Restaurant } from '../../services/restaurants';
 
         <div class="img-wrap">
           <div *ngIf="!imageLoaded" class="shimmer" style="position:absolute;inset:0;"></div>
-          <img [src]="restaurant.image" [alt]="restaurant.name" class="restaurant-img"
+          <img [src]="restaurant.image" 
+  style="width:100%;height:160px;object-fit:cover;object-position:center top;" [alt]="restaurant.name" class="restaurant-img"
             [class.loaded]="imageLoaded" (load)="imageLoaded = true" />
           <div class="img-overlay"></div>
 

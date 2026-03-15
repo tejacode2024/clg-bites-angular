@@ -136,7 +136,7 @@ import { AdminService } from '../../services/admin.service';
     }
     @media (min-width: 640px) { .banner { height: 14rem; } }
     .banner-img {
-      width: 100%; height: 100%; object-fit: cover;
+      width: 100%; height: 100%; object-fit: cover; object-position: center 15%;
       opacity: 0; transition: opacity 0.5s;
     }
     .banner-img.loaded { opacity: 1; }
