@@ -69,10 +69,10 @@ export const restaurants: Restaurant[] = [
         category: "Biryani",
         items: [
           { name: 'Dum Biryani', price: 199},
-          { name: 'Fry Piece Biryani', price: 220},
-          { name: 'Mixed Biryani', price: 220},
-          { name: 'Mughalai Biryani', price: 240},
-          { name: 'Sp Mixed Biryani', price: 280},
+          { name: 'Fry Piece Biryani', price: 219},
+          { name: 'Mixed Biryani', price: 219},
+          { name: 'Mughalai Biryani', price: 239},
+          { name: 'Sp Mixed Biryani', price: 279},
         
           // { name: 'Chicken Haleem (1/2 kg)', price: 200},
           // { name: 'Chicken Haleem (1 kg)', price: 200},
@@ -92,7 +92,7 @@ export const restaurants: Restaurant[] = [
       {
         category: "Student's Choice",
         items: [
-          { name: 'Lollipop Biryani', price: 260, isStudentChoice: true },
+          { name: 'Lollipop Biryani', price: 269, isStudentChoice: true },
         ],
       },
       {
