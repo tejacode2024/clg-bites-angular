@@ -82,7 +82,7 @@ export const restaurants: Restaurant[] = [
   },
   {
     id: 'RoyalGrand',
-    name: 'Royal Grand',
+    name: 'Hotel Royal Grand',
     image: 'assets/images/royalgrand.png',
     rating: 5,
     description: 'Lollipop Biryani is famous here',
