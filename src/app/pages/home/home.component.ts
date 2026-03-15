@@ -10,12 +10,14 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
 import { restaurants, Restaurant } from '../../services/restaurants';
 import { isOrderingAllowed } from '../../services/time-utils';
 import { AdminService } from '../../services/admin.service';
+import { FormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
     CommonModule,
+    FormsModule,
     AppHeaderComponent,
     SearchBarComponent,
     CategoryFiltersComponent,
@@ -49,8 +51,18 @@ import { AdminService } from '../../services/admin.service';
         </div>
 
         <!-- Search -->
+        <!-- Search -->
         <div style="margin-bottom:1rem;">
           <app-search-bar [value]="search" (onChange)="search = $event; filterRestaurants()"></app-search-bar>
+        </div>
+
+        <!-- Veg Toggle -->
+        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+          <label class="toggle">
+            <input type="checkbox" [(ngModel)]="onlyVeg" (change)="filterRestaurants()">
+            <span class="slider"></span>
+          </label>
+          <span style="font-size:0.875rem;font-weight:600;color:#16a34a;">🥦 Only Veg</span>
         </div>
 
         <!-- Category Filters -->
@@ -108,8 +120,13 @@ import { AdminService } from '../../services/admin.service';
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 4rem 1rem;
     }
-    
-      .delivery-banner {
+    .toggle { position:relative; display:inline-block; width:44px; height:24px; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:24px; transition:0.3s; }
+    .slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.3s; }
+    .toggle input:checked + .slider { background:#16a34a; }
+    .toggle input:checked + .slider:before { transform:translateX(20px); }
+  .delivery-banner {
   background: #dcfce7;
   border: 1px solid #86efac;
   border-radius: 0.75rem;
@@ -127,6 +144,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   selectedCategory = 'All';
   filteredRestaurants: Restaurant[] = [];
   orderingAllowed = true;
+  onlyVeg = false;
   private timerRef: any;
 readonly adminService = inject(AdminService);
   ngOnInit(): void {
@@ -140,14 +158,15 @@ readonly adminService = inject(AdminService);
   }
 
   filterRestaurants(): void {
-    this.filteredRestaurants = restaurants.filter((r) => {
+      this.filteredRestaurants = restaurants.filter((r) => {
       const matchesSearch =
         this.search === '' ||
         r.name.toLowerCase().includes(this.search.toLowerCase()) ||
         r.description.toLowerCase().includes(this.search.toLowerCase());
       const matchesCategory =
         this.selectedCategory === 'All' || r.categories.includes(this.selectedCategory);
-      return matchesSearch && matchesCategory;
+      const matchesVeg = !this.onlyVeg || r.menu.some(cat => cat.isVeg === true);
+      return matchesSearch && matchesCategory && matchesVeg;
     });
   }
 
