@@ -50,6 +50,37 @@ export const restaurants: Restaurant[] = [
     ]
   },
   {
+    id: 'Amrutha',
+    name: 'Amrutha (Earlier Nellore Ruchulu)',
+    image: 'assets/images/amrutha.jpeg',
+    rating: 5,
+    description: '',
+    categories: ['Biryani'],
+    bestItem: 'Prawns Biryani',
+    menu: [
+      {
+        category: "Student's Choice",
+        items: [
+          { name: 'Dum Biryani', price: 199, isStudentChoice: true },
+        ],
+      },
+      {
+        category: "Haleem",
+        items: [
+          { name: 'Dum Biryani', price: 199},
+          { name: 'Fry Piece Biryani', price: 220},
+          { name: 'Mixed Biryani', price: 220},
+          { name: 'Mughalai Biryani', price: 240},
+          { name: 'Sp Mixed Biryani', price: 280},
+        
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+    ]
+  },
+
+  {
     id: 'spice-magic',
     name: 'Spice Magic',
     image: 'assets/images/spice-magic.jpg',
