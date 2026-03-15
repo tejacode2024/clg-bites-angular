@@ -59,8 +59,7 @@ import { FormsModule } from '@angular/forms';
         <!-- Veg Toggle -->
         <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
           <label class="toggle">
-            <input type="checkbox" [(ngModel)]="onlyVeg" (change)="filterRestaurants()">
-            <span class="slider"></span>
+          <input type="checkbox" [checked]="adminService.onlyVeg()" (change)="adminService.toggleVeg(); filterRestaurants()">            <span class="slider"></span>
           </label>
           <span style="font-size:0.875rem;font-weight:600;color:#16a34a;">🥦 Only Veg</span>
         </div>
@@ -159,16 +158,17 @@ readonly adminService = inject(AdminService);
 
   filterRestaurants(): void {
       this.filteredRestaurants = restaurants.filter((r) => {
-      const matchesSearch =
-        this.search === '' ||
-        r.name.toLowerCase().includes(this.search.toLowerCase()) ||
-        r.description.toLowerCase().includes(this.search.toLowerCase());
-      const matchesCategory =
-        this.selectedCategory === 'All' || r.categories.includes(this.selectedCategory);
-      const matchesVeg = !this.onlyVeg || r.menu.some(cat => cat.isVeg === true);
-      return matchesSearch && matchesCategory && matchesVeg;
-    });
-  }
+    const matchesSearch =
+      this.search === '' ||
+      r.name.toLowerCase().includes(this.search.toLowerCase()) ||
+      r.description.toLowerCase().includes(this.search.toLowerCase());
+    const matchesCategory =
+      this.selectedCategory === 'All' || r.categories.includes(this.selectedCategory);
+    const matchesVeg = !this.adminService.onlyVeg() || r.menu.some(cat => cat.isVeg === true);
+    return matchesSearch && matchesCategory && matchesVeg;
+  });
+}
+  
 
   onCategorySelect(category: string): void {
     this.selectedCategory = category;

@@ -9,14 +9,17 @@ import { MenuItemCardComponent } from '../../components/menu-item-card/menu-item
 import { FloatingCartBarComponent } from '../../components/floating-cart-bar/floating-cart-bar.component';
 import { CartService } from '../../services/cart.service';
 import { isOrderingAllowed } from '../../services/time-utils';
+import { FormsModule } from '@angular/forms';
 import { restaurants, Restaurant } from '../../services/restaurants';
 import { AdminService } from '../../services/admin.service';
+
 
 @Component({
   selector: 'app-restaurant',
   standalone: true,
   imports: [
     CommonModule,
+     FormsModule,
     FloatingEmojisComponent,
     MenuItemCardComponent,
     FloatingCartBarComponent,
@@ -92,11 +95,11 @@ import { AdminService } from '../../services/admin.service';
         </p>
       </div>
 
+
       <!-- Menu sections -->
       <div style="position:relative;z-index:10;padding:1rem;">
         <div
-          *ngFor="let menuCat of restaurant.menu; let i = index"
-          [id]="'section-' + menuCat.category"
+      *ngFor="let menuCat of getFilteredMenu(restaurant.menu); let i = index"          [id]="'section-' + menuCat.category"
           style="margin-bottom:1.5rem;"
         >
           <h2 style="font-size:1.125rem;font-weight:600;color:var(--foreground);margin-bottom:0.75rem;">
@@ -179,6 +182,12 @@ import { AdminService } from '../../services/admin.service';
       background: var(--primary); color: var(--primary-foreground);
       box-shadow: 0 4px 6px -1px rgba(232,84,108,0.3);
     }
+    .toggle { position:relative; display:inline-block; width:44px; height:24px; }
+    .toggle input { opacity:0; width:0; height:0; }
+    .slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:24px; transition:0.3s; }
+    .slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.3s; }
+    .toggle input:checked + .slider { background:#16a34a; }
+    .toggle input:checked + .slider:before { transform:translateX(20px); }
     .multi-rest-info {
       margin: 1rem; border-radius: 0.75rem;
       background: rgba(232,84,108,0.1);
@@ -186,6 +195,7 @@ import { AdminService } from '../../services/admin.service';
       padding: 0.75rem;
       animation: fadeInUp 0.3s ease;
     }
+    
     
     @keyframes fadeInUp {
       from { opacity: 0; transform: translate(-50%, 20px); }
@@ -198,13 +208,18 @@ export class RestaurantComponent implements OnInit, OnDestroy {
   activeCategory = '';
   imageLoaded = false;
   orderingAllowed = true;
+  onlyVeg = false;
   otherRestaurants: string[] = [];
   stars = [0, 1, 2, 3, 4];
   private timerRef: any;
   private isScrollingToCategory = false;
 
   get categories(): string[] {
-    return this.restaurant?.menu.map((m) => m.category) || [];
+    const menu = this.restaurant?.menu || [];
+  if (this.adminService.onlyVeg()) {
+    return menu.filter(m => m.isVeg === true).map(m => m.category);
+  }
+  return menu.map(m => m.category);
   }
   readonly adminService = inject(AdminService);
 
@@ -217,7 +232,10 @@ export class RestaurantComponent implements OnInit, OnDestroy {
     private readonly router: Router,
     private readonly cartService: CartService
   ) {}
-
+  getFilteredMenu(menu: any[]): any[] {
+  if (!this.adminService.onlyVeg()) return menu;
+  return menu.filter(cat => cat.isVeg === true);
+}
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.restaurant = restaurants.find((r) => r.id === id);

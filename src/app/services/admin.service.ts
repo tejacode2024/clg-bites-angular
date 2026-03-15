@@ -38,6 +38,9 @@ export class AdminService implements OnDestroy {
   readonly settings = signal<AdminSettings>(DEFAULT_SETTINGS);
   readonly coupons = signal<Coupon[]>([]);
   readonly loading = signal(true);
+  readonly onlyVeg = signal(false);
+toggleVeg(): void { this.onlyVeg.update(v => !v); }
+
 
   constructor() {
     this.loadSettings();
