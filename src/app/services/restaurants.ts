@@ -742,7 +742,7 @@ export const restaurants: Restaurant[] = [
       {
         category: "Student's Choice",isVeg : false,
         items: [
-          { name: '3 Pulkhas + Egg Burji Combo', price: 60, isStudentChoice: true },
+          { name: '3 Pulkhas + Egg Burji Combo', price: 70, isStudentChoice: true },
         ],
       },
       {
