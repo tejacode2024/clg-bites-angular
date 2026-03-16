@@ -82,6 +82,51 @@ export const restaurants: Restaurant[] = [
     ]
   },
   {
+    id: 'sindhu',
+    name: 'Hotel Sindhu',
+    image: 'assets/images/sindhu.jpg',
+    rating: 5,
+    description: 'Best Biryanis in Mandadam',
+    categories: ['Biryani'],
+    bestItem: 'Dum Biryani',
+    menu: [
+      {
+        category: "Student's Choice",isVeg : false,
+        items: [
+          { name: 'Dum Biryani', price: 200, isStudentChoice: true },
+        ],
+      },
+      {
+        category: "Biryani",isVeg : false,
+        items: [
+          { name: 'Dum Biryani', price: 200},
+          { name: 'Fry Biryani', price: 200},
+          { name: 'Mixed Biryani', price: 200},
+          { name: 'Fish Fry Biryani', price: 200},
+          { name: 'Prawns Biryani', price: 250},
+          //{ name: 'Mutton Biryani', price: 710},
+          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+      {
+        category: "Double Biryani",isVeg : false,
+        items: [
+          { name: 'Dum Biryani', price: 390},
+          { name: 'Fry Biryani', price: 390},
+          { name: 'Mixed Biryani', price: 390},
+          { name: 'Fish Fry Biryani', price: 390},
+          //{ name: 'Prawns Biryani', price: 550},
+          //{ name: 'Mutton Biryani', price: 550},
+          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+    ]
+  },
+  {
     id: 'Amrutha',
     name: 'Amrutha (Earlier Nellore Ruchulu)',
     image: 'assets/images/amrutha.jpeg',
