@@ -98,7 +98,16 @@ export class MenuItemCardComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void { if (this.timerRef) clearInterval(this.timerRef); }
   private checkTime(): void { this.orderingAllowed = isOrderingAllowed(); this.foodCornerAllowed = isFoodCornerOrderingAllowed(); }
 
-  add(): void { this.cartService.addItem(this.item, this.restaurant); }
-  increment(): void { this.cartService.updateQuantity(this.itemId, this.quantity() + 1); }
-  decrement(): void { this.cartService.updateQuantity(this.itemId, this.quantity() - 1); }
+add(): void { 
+  const overriddenItem = { 
+    ...this.item, 
+    price: this.adminService.getItemPrice(this.restaurant.id, this.item.name, this.item.price) 
+  };
+  this.cartService.addItem(overriddenItem, this.restaurant); 
+}
+increment(): void { 
+  const overriddenPrice = this.adminService.getItemPrice(this.restaurant.id, this.item.name, this.item.price);
+  this.cartService.updateQuantityWithPrice(this.itemId, this.quantity() + 1, overriddenPrice);
+}
+decrement(): void { this.cartService.updateQuantity(this.itemId, this.quantity() - 1); }
 }
