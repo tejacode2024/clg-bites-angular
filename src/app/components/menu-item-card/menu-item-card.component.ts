@@ -22,7 +22,7 @@ import type { MenuItem, Restaurant } from '../../services/restaurants';
           <span *ngIf="!itemAvailable" class="unavail-badge">Unavailable</span>
         </div>
         <p class="item-price">₹{{ adminService.getItemPrice(restaurant.id, item.name, item.price) }}</p>
-        <p *ngIf="quantity() > 0" class="delivery-hint">+₹10 delivery per item</p>
+        <p *ngIf="quantity() > 0" class="delivery-hint" style="color:#16a34a;">Free Delivery</p>
         <p *ngIf="disabledReason" class="disabled-hint">{{ disabledReason.message }}</p>
       </div>
       <div style="flex-shrink:0;">

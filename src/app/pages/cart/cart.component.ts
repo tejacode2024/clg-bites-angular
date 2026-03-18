@@ -142,6 +142,19 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
           </div>
         </div>
 
+        <!-- Delivery Type -->
+        <div class="summary-card" style="margin-bottom:1.5rem;">
+          <h3 class="card-title">Delivery Type</h3>
+          <div style="display:flex;gap:1.5rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;font-weight:500;">
+              <input type="radio" name="deliveryType" value="prepay" [(ngModel)]="deliveryType"> PrePay
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;font-weight:500;">
+              <input type="radio" name="deliveryType" value="cod" [(ngModel)]="deliveryType"> COD (Cash on Delivery)
+            </label>
+          </div>
+        </div>
+
         <!-- Customer Details -->
         <div class="summary-card" style="margin-bottom:1.5rem;">
           <h3 class="card-title">Customer Details</h3>
@@ -237,6 +250,7 @@ export class CartComponent implements OnInit, OnDestroy {
   couponCode = '';
   couponError = '';
   appliedCoupon: Coupon | null = null;
+  deliveryType: 'prepay' | 'cod' = 'prepay';
   private timerRef: any;
 
   readonly cartService = inject(CartService);
@@ -334,20 +348,35 @@ export class CartComponent implements OnInit, OnDestroy {
     const deliveryText = `FREE`;
     const couponLine = this.appliedCoupon ? `\n*Coupon (${this.appliedCoupon.code}):* − ₹${this.couponDiscount}` : '';
 
-    const message = `Hello, I would like to place an order.
+      const message = this.deliveryType === 'cod'
+      ? `Hello, I would like to place an order.
 
-*Customer Details:*
-Name: ${this.name}
-Mobile: ${this.mobile}
+    *Customer Details:*
+    Name: ${this.name}
+    Mobile: ${this.mobile}
 
-*Order Details:*${orderDetails}
-*Items Total:* ₹${this.totalAmount()}
-*Delivery Charges:* ${deliveryText}${couponLine}
-*GST:* No GST
+    *Order Details:*${orderDetails}
+    *Items Total:* ₹${this.totalAmount()}
+    *Delivery Charges:* FREE${couponLine}
+    *GST:* No GST
 
-*Final Total:* ₹${this.grandTotal}
+    *Final Total:* ₹${this.grandTotal}
 
-Please confirm my order and send the payment QR.`;
+    Please confirm my order on COD`
+      : `Hello, I would like to place an order.
+
+    *Customer Details:*
+    Name: ${this.name}
+    Mobile: ${this.mobile}
+
+    *Order Details:*${orderDetails}
+    *Items Total:* ₹${this.totalAmount()}
+    *Delivery Charges:* ${deliveryText}${couponLine}
+    *GST:* No GST
+
+    *Final Total:* ₹${this.grandTotal}
+
+    Please confirm my order and send the payment QR.`;
 
     this.cartService.clearCart();
     window.open(`https://wa.me/917842960252?text=${encodeURIComponent(message)}`, '_blank');
