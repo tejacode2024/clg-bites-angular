@@ -128,7 +128,7 @@ export const restaurants: Restaurant[] = [
   },
   {
     id: 'cafe999',
-    name: 'cafe 999',
+    name: 'Cafe 999',
     image: 'assets/images/cafe999.jpeg',
     rating: 5,
     
