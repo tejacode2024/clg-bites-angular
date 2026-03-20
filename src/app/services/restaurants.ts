@@ -127,6 +127,85 @@ export const restaurants: Restaurant[] = [
     ]
   },
   {
+    id: 'cafe999',
+    name: 'cafe 999',
+    image: 'assets/images/cafe999.jpeg',
+    rating: 5,
+    
+    description: 'Food & Bavarages',
+    categories: ['Food'],
+    bestItem: 'pizza',
+    menu: [
+      {
+        category: "Student's Choice",isVeg : false,
+        items: [
+          { name: 'Chicken pizza', price: 189, isStudentChoice: true },
+          { name: 'Sweet corn pizza', price: 169, isStudentChoice: true },
+          { name: 'Chicken Burger', price: 119, isStudentChoice: true },
+          { name: 'Veg Burger', price: 99, isStudentChoice: true },
+          { name: 'Chicken wings(10pc)', price: 239, isStudentChoice: true},
+          
+          
+
+          
+        ],
+      },
+      // {
+      //   category: "Bavarages",isVeg : true,
+      //   items: [
+      //     { name: 'Mint Mojito', price: 99},
+      //     { name: 'Blue Cirracao', price: 99},
+        
+      //     { name: 'Mango Burst Milkshake', price: 119},
+      //     { name: 'Butter Scotch Milkshake', price: 119},
+          
+      //     // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+      //     // { name: 'Chicken Haleem (1 kg)', price: 200},
+      //   ],
+      // },
+      {
+        category: "Non Veg",isVeg : false,
+        items: [
+          { name: 'Chicken Sandwich', price: 149},
+          { name: 'Chicken burger', price: 119},
+          { name: 'Chicken pizza', price: 189},
+          { name: 'Chicken wings(5pc)', price: 159},
+          { name: 'Chicken wings(10pc)', price: 239},
+          { name: 'Chicken lollipop(5pc)', price: 209},
+          { name: 'Chicken lollipop(10pc)', price: 359},
+
+          { name: 'Chicken pizza', price: 189},
+          { name: 'chicken momo fried', price: 109},
+        
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+      {
+        category: "Veg",isVeg : true,
+        items: [
+          { name: 'Corn Samosa (5 pc)', price:69},
+           {name: 'Veg Burger', price: 89},
+           { name: 'sweet corn pizza', price: 169},
+
+          { name: 'Salted French Fries', price:99},
+          
+          { name: 'Masala French Fries', price: 109},
+
+
+          { name: 'Veg Momo Fried', price: 99},
+          { name: 'Paneer Momo Fried', price: 119},
+          { name: 'veg sandwich', price: 129},
+          
+                    
+        
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+    ]
+  },
+  {
     id: 'Amrutha',
     name: 'Amrutha (Earlier Nellore Ruchulu)',
     image: 'assets/images/amrutha.jpeg',
