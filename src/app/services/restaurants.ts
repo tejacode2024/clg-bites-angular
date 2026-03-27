@@ -242,7 +242,7 @@ export const restaurants: Restaurant[] = [
         ],
       },
       {
-        category: " veg Items",isVeg : false,
+        category: " veg Items",isVeg : true,
         items: [
           { name: 'Veg Biryani', price: 160},
           { name: 'sp Veg Biryani', price: 180},
