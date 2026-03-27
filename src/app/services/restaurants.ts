@@ -235,6 +235,13 @@ export const restaurants: Restaurant[] = [
         ],
       },
       {
+        category: "Amrutha Student Combo",isVeg : false,
+        items: [
+          { name: '3 Members Rice + Chicken Curry + Half Starter + 3 Pulkhas + 3 Eggs', price: 999},
+          
+        ],
+      },
+      {
         category: " veg Items",isVeg : false,
         items: [
           { name: 'Veg Biryani', price: 160},
