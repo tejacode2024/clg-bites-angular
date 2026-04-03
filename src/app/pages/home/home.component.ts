@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
 import { Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppHeaderComponent } from '../../components/app-header/app-header.component';
@@ -146,12 +146,20 @@ export class HomeComponent implements OnInit, OnDestroy {
   onlyVeg = false;
   private timerRef: any;
 readonly adminService = inject(AdminService);
-  ngOnInit(): void {
+   constructor() {
+    effect(() => {
+      this.adminService.settings();
+      this.filterRestaurants();
+  });
+}
+   ngOnInit(): void {
     this.filterRestaurants();
     this.checkTime();
     this.timerRef = setInterval(() => this.checkTime(), 60000);
+    // Re-sort when admin settings change (e.g. restaurant availability loads from Supabase)
+    setInterval(() => this.filterRestaurants(), 2000);
   }
-
+ 
   ngOnDestroy(): void {
     if (this.timerRef) clearInterval(this.timerRef);
   }
@@ -167,9 +175,11 @@ readonly adminService = inject(AdminService);
     const matchesVeg = !this.adminService.onlyVeg() || r.menu.some(cat => cat.isVeg === true);
     return matchesSearch && matchesCategory && matchesVeg;
   }).sort((a, b) => {
-    const aAvail = this.adminService.isRestaurantAvailable(a.id) ? 0 : 1;
+   const aAvail = this.adminService.isRestaurantAvailable(a.id) ? 0 : 1;
     const bAvail = this.adminService.isRestaurantAvailable(b.id) ? 0 : 1;
-    return aAvail - bAvail;
+    if (aAvail !== bAvail) return aAvail - bAvail;
+    // Keep original order for same availability status
+    return restaurants.indexOf(a) - restaurants.indexOf(b);
   });
 }
   
