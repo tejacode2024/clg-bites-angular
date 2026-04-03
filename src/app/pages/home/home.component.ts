@@ -157,7 +157,7 @@ readonly adminService = inject(AdminService);
   }
 
   filterRestaurants(): void {
-      this.filteredRestaurants = restaurants.filter((r) => {
+  this.filteredRestaurants = restaurants.filter((r) => {
     const matchesSearch =
       this.search === '' ||
       r.name.toLowerCase().includes(this.search.toLowerCase()) ||
@@ -166,6 +166,10 @@ readonly adminService = inject(AdminService);
       this.selectedCategory === 'All' || r.categories.includes(this.selectedCategory);
     const matchesVeg = !this.adminService.onlyVeg() || r.menu.some(cat => cat.isVeg === true);
     return matchesSearch && matchesCategory && matchesVeg;
+  }).sort((a, b) => {
+    const aAvail = this.adminService.isRestaurantAvailable(a.id) ? 0 : 1;
+    const bAvail = this.adminService.isRestaurantAvailable(b.id) ? 0 : 1;
+    return aAvail - bAvail;
   });
 }
   

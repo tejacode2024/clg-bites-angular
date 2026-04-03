@@ -53,34 +53,34 @@ export const restaurants: Restaurant[] = [
       },
     ],
   },
-  {
-    id: 'haleem',
-    name: 'Haleem',
-    image: 'assets/images/haleem.jpg',
-    rating: 5,
-    description: 'Slow-cooked by tradition, seasoned with love, and perfected by time.',
-    categories: ['Haleem'],
-    bestItem: 'Mutton Haleem',
-    menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [
-          { name: 'Mutton Haleem (1/4 kg)', price: 210, isStudentChoice: true },
-        ],
-      },
-      {
-        category: "Haleem",isVeg : false,
-        items: [
-          { name: 'Mutton Haleem(1/4 kg)', price: 210},
-          { name: 'Mutton Haleem(1/2 kg)', price: 360},
-          { name: 'Mutton Haleem(1 kg)', price: 710},
-          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-    ]
-  },
+  // {
+  //   id: 'haleem',
+  //   name: 'Haleem',
+  //   image: 'assets/images/haleem.jpg',
+  //   rating: 5,
+  //   description: 'Slow-cooked by tradition, seasoned with love, and perfected by time.',
+  //   categories: ['Haleem'],
+  //   bestItem: 'Mutton Haleem',
+  //   menu: [
+  //     {
+  //       category: "Student's Choice",isVeg : false,
+  //       items: [
+  //         { name: 'Mutton Haleem (1/4 kg)', price: 210, isStudentChoice: true },
+  //       ],
+  //     },
+  //     {
+  //       category: "Haleem",isVeg : false,
+  //       items: [
+  //         { name: 'Mutton Haleem(1/4 kg)', price: 210},
+  //         { name: 'Mutton Haleem(1/2 kg)', price: 360},
+  //         { name: 'Mutton Haleem(1 kg)', price: 710},
+  //         // { name: 'Chicken Haleem (1/4 kg)', price: 200},
+  //         // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+  //         // { name: 'Chicken Haleem (1 kg)', price: 200},
+  //       ],
+  //     },
+  //   ]
+  // },
   {
     id: 'sindhu',
     name: 'Hotel Sindhu',
@@ -256,81 +256,81 @@ export const restaurants: Restaurant[] = [
       },
     ]
   },
-  {
-    id: 'spice-magic',
-    name: 'Spice Magic',
-    image: 'assets/images/spice-magic.jpg',
-    rating: 4,
-    description: 'Famous for their aromatic Mixed Biryani',
-    categories: ['Biryani', 'Fast Food'],
-    bestItem: 'Mixed Biryani',
-    menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [{ name: 'Mixed Biryani', price: 190, isStudentChoice: true },
-                { name: 'chicken 65 Biryani', price: 240, isStudentChoice: true  },
-                { name: 'Boxer Fried Rice', price: 260, isStudentChoice: true  },
-                //{ name: 'SP Fried Rice', price: 250, isStudentChoice: true  },
-        ],
+  // {
+  //   id: 'spice-magic',
+  //   name: 'Spice Magic',
+  //   image: 'assets/images/spice-magic.jpg',
+  //   rating: 4,
+  //   description: 'Famous for their aromatic Mixed Biryani',
+  //   categories: ['Biryani', 'Fast Food'],
+  //   bestItem: 'Mixed Biryani',
+  //   menu: [
+  //     {
+  //       category: "Student's Choice",isVeg : false,
+  //       items: [{ name: 'Mixed Biryani', price: 190, isStudentChoice: true },
+  //               { name: 'chicken 65 Biryani', price: 240, isStudentChoice: true  },
+  //               { name: 'Boxer Fried Rice', price: 260, isStudentChoice: true  },
+  //               //{ name: 'SP Fried Rice', price: 250, isStudentChoice: true  },
+  //       ],
 
-      },
-      {
-        category: "Newly Added",isVeg : false,
-        items: [{ name: 'Chicken 65 Biryani', price: 240},
-                { name: 'Mughalai Biryani', price: 250},
-                { name: 'Chicken Special biryani', price: 240},
-               // { name: 'Boxer Fried Rice', price: 260},
-                //{ name: 'SP Fried Rice', price: 250},
-        ],
+  //     },
+  //     {
+  //       category: "Newly Added",isVeg : false,
+  //       items: [{ name: 'Chicken 65 Biryani', price: 240},
+  //               { name: 'Mughalai Biryani', price: 250},
+  //               { name: 'Chicken Special biryani', price: 240},
+  //              // { name: 'Boxer Fried Rice', price: 260},
+  //               //{ name: 'SP Fried Rice', price: 250},
+  //       ],
 
-      },
+  //     },
 
       
-      {
-        category: 'Bucket Biryanis',isVeg : false,
-        items: [
-          { name: 'Bucket Dum Biryani (For 4)', price: 640 },
-          { name: 'Bucket Fry Piece Biryani (For 4)', price: 670 },
-          { name: 'Bucket Mixed Biryani (For 4)', price: 730 },
-        ],
-      },
-      {
-        category: 'Biryanis',isVeg : false,
-        items: [
-          { name: 'Dum Biryani', price: 160 },
-          { name: 'Fry Biryani', price: 180 },
-          {name: 'Mixed Biryani', price: 190},
-          { name: 'Chicken 65 biryani', price: 240 },
-          { name: 'Chicken Special biryani', price: 240 },
-          { name: 'Mughalai Biryani', price: 250 },
-        ],
-      },
+  //     {
+  //       category: 'Bucket Biryanis',isVeg : false,
+  //       items: [
+  //         { name: 'Bucket Dum Biryani (For 4)', price: 640 },
+  //         { name: 'Bucket Fry Piece Biryani (For 4)', price: 670 },
+  //         { name: 'Bucket Mixed Biryani (For 4)', price: 730 },
+  //       ],
+  //     },
+  //     {
+  //       category: 'Biryanis',isVeg : false,
+  //       items: [
+  //         { name: 'Dum Biryani', price: 160 },
+  //         { name: 'Fry Biryani', price: 180 },
+  //         {name: 'Mixed Biryani', price: 190},
+  //         { name: 'Chicken 65 biryani', price: 240 },
+  //         { name: 'Chicken Special biryani', price: 240 },
+  //         { name: 'Mughalai Biryani', price: 250 },
+  //       ],
+  //     },
       
-      {
-        category: 'Chinese/Fast Food',isVeg : false ,
-        items: [
-          // { name: 'Veg Noodles', price: 90 },
-          // { name: 'Veg Fried Rice', price: 90 },
-          { name: 'Egg Noodles', price: 110 },
-          { name: 'Egg Fried Rice', price: 110 },
-          { name: 'Chicken Noodles', price: 130 },
-          { name: 'Chicken Fried Rice', price: 130 },
-         // { name: 'SP Fried Rice', price: 20 },
-         // { name: 'Boxer Fried Rice', price: 250 },
-          { name: 'Chicken Manchurian', price: 160 },
-          { name: 'Chilli Chicken', price: 160 },
-          { name: 'Chicken Lollipop (4 pcs)', price: 160 },
-        ],
-      },
-      {
-        category : 'Veg Chinese/Fast Food', isVeg : true,
-        items:[
-           { name: 'Veg Noodles', price: 90 },
-          { name: 'Veg Fried Rice', price: 90 },
-        ]
-      },
-    ],
-  },
+  //     {
+  //       category: 'Chinese/Fast Food',isVeg : false ,
+  //       items: [
+  //         // { name: 'Veg Noodles', price: 90 },
+  //         // { name: 'Veg Fried Rice', price: 90 },
+  //         { name: 'Egg Noodles', price: 110 },
+  //         { name: 'Egg Fried Rice', price: 110 },
+  //         { name: 'Chicken Noodles', price: 130 },
+  //         { name: 'Chicken Fried Rice', price: 130 },
+  //        // { name: 'SP Fried Rice', price: 20 },
+  //        // { name: 'Boxer Fried Rice', price: 250 },
+  //         { name: 'Chicken Manchurian', price: 160 },
+  //         { name: 'Chilli Chicken', price: 160 },
+  //         { name: 'Chicken Lollipop (4 pcs)', price: 160 },
+  //       ],
+  //     },
+  //     {
+  //       category : 'Veg Chinese/Fast Food', isVeg : true,
+  //       items:[
+  //          { name: 'Veg Noodles', price: 90 },
+  //         { name: 'Veg Fried Rice', price: 90 },
+  //       ]
+  //     },
+  //   ],
+  // },
 
   
   {
