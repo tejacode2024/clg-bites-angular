@@ -156,7 +156,7 @@ export const restaurants: Restaurant[] = [
         ],
       },
       {
-        category: "Amrutha Student Combo",isVeg : false,
+        category: "Amrutha Student combo",isVeg : false,
         items: [
           { name: '3 Members Rice + Chicken Curry + Half Starter + 3 Pulkhas + 3 Eggs', price: 999},
           
