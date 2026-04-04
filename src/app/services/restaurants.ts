@@ -81,6 +81,51 @@ export const restaurants: Restaurant[] = [
   //     },
   //   ]
   // },
+    {
+    id: 'KonaseemaRuchuku',
+    name: 'Konaseema Kodi Palao',
+    image: 'assets/images/kp.jpeg',
+    rating: 5,
+    description: 'Bagara Rice + fry Piece Curry',
+    categories: ['Biryani'],
+    bestItem: 'Andhra Fry Piece Palao',
+    menu: [
+      {
+        category: "Student's Choice",isVeg : false,
+        items: [
+          { name: 'Andhra Fry Piece Paloa', price: 220, isStudentChoice: true },
+        ],
+      },
+      {
+        category: "Biryani",isVeg : false,
+        items: [
+          { name: 'Andhra Fry Piece Palao', price: 220},
+          // { name: 'Fry Biryani', price: 200},
+          // { name: 'Mixed Biryani', price: 200},
+          // { name: 'Fish Fry Biryani', price: 200},
+          // { name: 'Prawns Biryani', price: 250},
+          //{ name: 'Mutton Biryani', price: 710},
+          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+      // {
+      //   category: "Double Biryani",isVeg : false,
+      //   items: [
+      //     { name: 'Double Dum Biryani', price: 390},
+      //     { name: 'Double Fry Biryani', price: 390},
+      //     { name: 'Double Mixed Biryani', price: 390},
+      //     { name: 'Double Fish Fry Biryani', price: 390},
+      //     //{ name: 'Prawns Biryani', price: 550},
+      //     //{ name: 'Mutton Biryani', price: 550},
+      //     // { name: 'Chicken Haleem (1/4 kg)', price: 200},
+      //     // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+      //     // { name: 'Chicken Haleem (1 kg)', price: 200},
+      //   ],
+      // },
+    ]
+  },
   {
     id: 'sindhu',
     name: 'Hotel Sindhu',
