@@ -86,7 +86,7 @@ export const restaurants: Restaurant[] = [
     name: 'Konaseema Kodi Palao',
     image: 'assets/images/kp.jpeg',
     rating: 5,
-    description: 'Bagara Rice + fry Piece Curry',
+    description: 'Bagara Rice + Fry Piece Curry',
     categories: ['Biryani'],
     bestItem: 'Andhra Fry Piece Palao',
     menu: [
@@ -124,6 +124,57 @@ export const restaurants: Restaurant[] = [
       //     // { name: 'Chicken Haleem (1 kg)', price: 200},
       //   ],
       // },
+    ]
+  },
+  {
+    id: 'Amrutha',
+    name: 'Amrutha (Earlier Nellore Ruchulu)',
+    image: 'assets/images/amrutha.jpeg',
+    rating: 5,
+    
+    description: 'Mughalai Birynai is Famous Here',
+    categories: ['Biryani'],
+    bestItem: 'Mughalai Biryani',
+    menu: [
+      {
+        category: "Student's Choice",isVeg : false,
+        items: [
+          { name: 'Mughalai Biryani', price: 239, isStudentChoice: true },
+        ],
+      },
+      {
+        category: "NV Biryani",isVeg : false,
+        items: [
+          { name: 'Dum Biryani', price: 199},
+          { name: 'Fry Piece Biryani', price: 219},
+          { name: 'Mixed Biryani', price: 219},
+          { name: 'Mughalai Biryani', price: 239},
+          
+        
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+      {
+        category: "Amrutha Student Combo",isVeg : false,
+        items: [
+          { name: '3 Members Rice + Chicken Curry + Half Starter + 3 Pulkhas + 3 Eggs', price: 999},
+          
+        ],
+      },
+      {
+        category: "veg Items",isVeg : true,
+        items: [
+          { name: 'Veg Biryani', price: 160},
+          { name: 'sp Veg Biryani', price: 180},
+          { name: 'Panner Biryani', price: 225},
+          { name: 'Veg Fried Rice', price: 165},
+          { name: 'Sp Veg Fried Rice', price: 235},
+        
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
     ]
   },
   {
@@ -250,57 +301,7 @@ export const restaurants: Restaurant[] = [
       },
     ]
   },
-  {
-    id: 'Amrutha',
-    name: 'Amrutha (Earlier Nellore Ruchulu)',
-    image: 'assets/images/amrutha.jpeg',
-    rating: 5,
-    
-    description: 'Mughalai Birynai is Famous Here',
-    categories: ['Biryani'],
-    bestItem: 'Mughalai Biryani',
-    menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [
-          { name: 'Mughalai Biryani', price: 239, isStudentChoice: true },
-        ],
-      },
-      {
-        category: "NV Biryani",isVeg : false,
-        items: [
-          { name: 'Dum Biryani', price: 199},
-          { name: 'Fry Piece Biryani', price: 219},
-          { name: 'Mixed Biryani', price: 219},
-          { name: 'Mughalai Biryani', price: 239},
-          
-        
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-      {
-        category: "Amrutha Student Combo",isVeg : false,
-        items: [
-          { name: '3 Members Rice + Chicken Curry + Half Starter + 3 Pulkhas + 3 Eggs', price: 999},
-          
-        ],
-      },
-      {
-        category: "veg Items",isVeg : true,
-        items: [
-          { name: 'Veg Biryani', price: 160},
-          { name: 'sp Veg Biryani', price: 180},
-          { name: 'Panner Biryani', price: 225},
-          { name: 'Veg Fried Rice', price: 165},
-          { name: 'Sp Veg Fried Rice', price: 235},
-        
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-    ]
-  },
+  
   // {
   //   id: 'spice-magic',
   //   name: 'Spice Magic',
