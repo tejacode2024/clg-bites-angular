@@ -55,9 +55,7 @@ import { FormsModule } from '@angular/forms';
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          <p style="color:var(--primary);font-weight:500;font-size:0.875rem;">
-            Note: Ordering food from multiple restaurants in a single order is available.
-          </p>
+          
         </div>
 
         <!-- Search -->
