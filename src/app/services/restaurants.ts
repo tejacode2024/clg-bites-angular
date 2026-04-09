@@ -82,7 +82,7 @@ export const restaurants: Restaurant[] = [
   //   ]
   // },
     {
-    id: 'KonaseemaRuchuku',
+    id: 'KonaseemaRuchulu',
     name: 'Konaseema Kodi Palao',
     image: 'assets/images/kp.jpeg',
     rating: 5,

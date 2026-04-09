@@ -88,6 +88,17 @@ import { AdminService } from '../../services/admin.service';
           <span class="offer-limit">⏳ Limited Time Only</span>
         </div>
       </div>
+      <!-- Today's Offer Popup -->
+      <div *ngIf="restaurant.id === 'KonaseemaRuchulu'" class="offer-popup fade-slide-in">
+        <div class="offer-inner">
+          <span class="offer-tag">🎉 Today's Special</span>
+          <p class="offer-text">
+            🍳 <strong>Dum,Fry Biryani & Kodi Palao</strong><br>
+            + <strong>FREE Egg - </strong>  <strong>₹0 extra!</strong>
+          </p>
+          <span class="offer-limit">⏳ Limited Time Only</span>
+        </div>
+      </div>
 
 
       <!-- Sticky category nav -->

@@ -39,7 +39,7 @@ import { FormsModule } from '@angular/forms';
         <!--Offer Banner -->
         <div class="offer-banner fade-slide-in" style = "margin-bottom:1rem">
           <div class="offer-banner-inner">
-            <span class="offer-banner-tag">🎉 Special Offer — Amrutha</span>
+            <span class="offer-banner-tag">🎉 Special Offer — Amrutha & Konaseema</span>
             <p class="offer-banner-text">
               🍳 <strong>DUM|FRY|KODI PALAO</strong> + <strong>FREE Egg — </strong><strong>₹0 extra cost</strong>
             </p>
