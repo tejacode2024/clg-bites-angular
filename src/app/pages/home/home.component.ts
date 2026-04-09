@@ -37,7 +37,7 @@ import { FormsModule } from '@angular/forms';
 </div>
       <main style="position:relative;z-index:10;margin:0 auto;max-width:42rem;padding:1rem;">
         <!-- Amrutha Offer Banner -->
-        <div class="offer-banner fade-slide-in">
+        <div class="offer-banner fade-slide-in" styles = "margin-bottom :1rem">
           <div class="offer-banner-inner">
             <span class="offer-banner-tag">🎉 Special Offer — Amrutha</span>
             <p class="offer-banner-text">
@@ -47,7 +47,7 @@ import { FormsModule } from '@angular/forms';
           </div>
         </div>
 
-        
+       
 
         <!-- Search -->
         <!-- Search -->
