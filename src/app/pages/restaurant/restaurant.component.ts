@@ -77,8 +77,22 @@ import { AdminService } from '../../services/admin.service';
           </div>
         </div>
       </div>
+      <!-- Today's Offer Popup -->
+      <div *ngIf="restaurant.id === 'Amrutha'" class="offer-popup fade-slide-in">
+        <div class="offer-inner">
+          <span class="offer-tag">🎉 Today's Special</span>
+          <p class="offer-text">
+            🍳 <strong>Dum,Fry Biryani & Kodi Palao</strong><br>
+            + <strong>FREE Egg - </strong>  <strong>₹0 extra!</strong>
+          </p>
+          <span class="offer-limit">⏳ Limited Time Only</span>
+        </div>
+      </div>
+
 
       <!-- Sticky category nav -->
+
+
       <div class="category-nav sticky-nav scrollbar-hide">
         <button
           *ngFor="let cat of categories"
@@ -120,7 +134,18 @@ import { AdminService } from '../../services/admin.service';
       
   `,
   styles: [`
-
+  .offer-popup {
+  margin: 0.75rem 1rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #fff7ed, #fef3c7);
+  border: 1.5px solid #fbbf24;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 4px 12px rgba(251,191,36,0.25);
+  }
+  .offer-inner { display: flex; flex-direction: column; gap: 0.4rem; }
+  .offer-tag { font-size: 0.75rem; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.05em; }
+  .offer-text { font-size: 0.875rem; color: #1a1a2e; line-height: 1.5; margin: 0; }
+  .offer-limit { font-size: 0.75rem; font-weight: 600; color: #dc2626; }
 
    .closed-banner {
   background: #fee2e2;

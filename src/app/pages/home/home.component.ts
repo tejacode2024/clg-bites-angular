@@ -36,6 +36,16 @@ import { FormsModule } from '@angular/forms';
   🚚 Estimated Delivery Time: <strong>{{ adminService.settings().delivery_time }}</strong>
 </div>
       <main style="position:relative;z-index:10;margin:0 auto;max-width:42rem;padding:1rem;">
+        <!-- Amrutha Offer Banner -->
+        <div class="offer-banner fade-slide-in">
+          <div class="offer-banner-inner">
+            <span class="offer-banner-tag">🎉 Special Offer — Amrutha</span>
+            <p class="offer-banner-text">
+              🍳 <strong>DUM|FRY|KODI PALAO</strong> + <strong>FREE Egg — </strong><strong>₹0 extra cost</strong>
+            </p>
+            <span class="offer-limit">⏳ Limited Time Only</span>
+          </div>
+        </div>
 
         <!-- Multi-restaurant notice -->
         <div class="notice-bar fade-slide-in">
@@ -95,6 +105,18 @@ import { FormsModule } from '@angular/forms';
       
   `,
   styles: [`
+  .offer-banner {
+  margin: 0.75rem 1rem 0;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #fff7ed, #fef3c7);
+  border: 1.5px solid #fbbf24;
+  padding: 0.875rem 1rem;
+  box-shadow: 0 4px 12px rgba(251,191,36,0.25);
+}
+.offer-limit { color : red;}
+.offer-banner-inner { display:flex; flex-direction:column; gap:0.4rem; }
+.offer-banner-tag { font-size:0.75rem; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:0.05em; }
+.offer-banner-text { font-size:0.875rem; color:#1a1a2e; line-height:1.5; margin:0; }
     .closed-banner {
   background: #fee2e2;
   border: 1px solid #fca5a5;

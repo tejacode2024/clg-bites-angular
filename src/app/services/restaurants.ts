@@ -140,10 +140,12 @@ export const restaurants: Restaurant[] = [
         category: "Student's Choice",isVeg : false,
         items: [
           { name: 'Mughalai Biryani', price: 239, isStudentChoice: true },
-        ],
+          { name: 'Tandoori Chicken Full', price: 550 , isStudentChoice: true},
+          { name: 'Tandoori Chicken Half', price: 300 , isStudentChoice: true},
+          ],
       },
       {
-        category: "NV Biryani",isVeg : false,
+        category: "Non Veg Biryani",isVeg : false,
         items: [
           { name: 'Dum Biryani', price: 199},
           { name: 'Fry Piece Biryani', price: 219},
@@ -155,15 +157,15 @@ export const restaurants: Restaurant[] = [
           // { name: 'Chicken Haleem (1 kg)', price: 200},
         ],
       },
-      {
-        category: "Amrutha Student combo",isVeg : false,
-        items: [
-          { name: '3 Members Rice + Chicken Curry + Half Starter + 3 Pulkhas + 3 Eggs', price: 999},
+      // {
+      //   category: "Amrutha Student combo",isVeg : false,
+      //   items: [
+      //     { name: '3 Members Rice + Chicken Curry + Half Starter + 3 Pulkhas + 3 Eggs', price: 999},
           
-        ],
-      },
+      //   ],
+      // },
       {
-        category: "veg Items",isVeg : true,
+        category: "veg Biryanis & Fried Rices",isVeg : true,
         items: [
           { name: 'Veg Biryani', price: 160},
           { name: 'sp Veg Biryani', price: 180},
@@ -175,6 +177,21 @@ export const restaurants: Restaurant[] = [
           // { name: 'Chicken Haleem (1 kg)', price: 200},
         ],
       },
+      {
+        category: "Tandoori",isVeg : true,
+        items: [
+          { name: 'Tandoori Chicken Full', price: 550},
+          { name: 'Tandoori Chicken Half', price: 300},
+          { name: 'Kalmi Kabab(4pc)', price: 390},
+          { name: 'Chicken Tikka', price: 350},
+          { name: 'Chicken Seekh kabab', price: 350},
+          //{ name: 'Sp Veg Fried Rice', price: 235},
+        
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+
     ]
   },
   {
