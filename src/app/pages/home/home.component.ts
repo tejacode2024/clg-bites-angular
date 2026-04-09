@@ -47,16 +47,7 @@ import { FormsModule } from '@angular/forms';
           </div>
         </div>
 
-        <!-- Multi-restaurant notice -->
-        <div class="notice-bar fade-slide-in">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
-            viewBox="0 0 24 24" stroke="var(--primary)" stroke-width="2" style="flex-shrink:0;">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="8" x2="12" y2="12"/>
-            <line x1="12" y1="16" x2="12.01" y2="16"/>
-          </svg>
-          
-        </div>
+        
 
         <!-- Search -->
         <!-- Search -->
