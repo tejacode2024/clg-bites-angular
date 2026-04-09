@@ -82,7 +82,7 @@ import { AdminService } from '../../services/admin.service';
         <div class="offer-inner">
           <span class="offer-tag">🎉 Today's Special</span>
           <p class="offer-text">
-            🍳 <strong>Dum,Fry Biryani & Kodi Palao</strong><br>
+            🍳 <strong>Dum & Fry Biryani</strong><br>
             + <strong>FREE Egg - </strong>  <strong>₹0 extra!</strong>
           </p>
           <span class="offer-limit">⏳ Limited Time Only</span>
@@ -93,7 +93,7 @@ import { AdminService } from '../../services/admin.service';
         <div class="offer-inner">
           <span class="offer-tag">🎉 Today's Special</span>
           <p class="offer-text">
-            🍳 <strong>Dum,Fry Biryani & Kodi Palao</strong><br>
+            🍳 <strong>Kodi Palao</strong><br>
             + <strong>FREE Egg - </strong>  <strong>₹0 extra!</strong>
           </p>
           <span class="offer-limit">⏳ Limited Time Only</span>
