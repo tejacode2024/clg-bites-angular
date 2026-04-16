@@ -170,49 +170,12 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
           </div>
         </div>
 
-        <!-- ─── Per-Restaurant WhatsApp Section ─── -->
-        <div class="summary-card" style="margin-bottom:1.5rem;" *ngIf="isFormValid">
-          <h3 class="card-title">📲 Send Orders via WhatsApp</h3>
-          <p style="font-size:0.8rem;color:var(--muted-foreground);margin-bottom:1rem;">
-            Select a restaurant to send its order items separately via WhatsApp.
-          </p>
-
-          <!-- Restaurant dropdown -->
-          <div class="rest-dropdown-wrap">
-            <select [(ngModel)]="selectedWaRestaurant" class="rest-dropdown">
-              <option value="">— Select Restaurant —</option>
-              <option *ngFor="let entry of itemsByRestaurantEntries" [value]="entry.restaurantId">
-                🏪 {{ entry.restaurantName }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Selected restaurant items preview + WA button -->
-          <div *ngIf="selectedWaRestaurantEntry" class="wa-preview">
-            <div class="wa-items-list">
-              <div *ngFor="let item of selectedWaRestaurantEntry.items" class="wa-item-row">
-                <span>{{ item.name }}</span>
-                <span>×{{ item.quantity }} — ₹{{ item.price * item.quantity }}</span>
-              </div>
-              <div class="wa-item-row wa-subtotal">
-                <span>Subtotal</span>
-                <span>₹{{ selectedWaRestaurantEntry.subtotal }}</span>
-              </div>
-            </div>
-            <button class="wa-btn" (click)="sendRestaurantWhatsApp()">
-              💬 Send {{ selectedWaRestaurantEntry.restaurantName }} Order via WhatsApp
-            </button>
-            <button class="export-rest-btn" (click)="exportRestaurantOrder()">
-              ⬇ Export {{ selectedWaRestaurantEntry.restaurantName }} Order
-            </button>
-          </div>
-        </div>
       </div>
 
       <!-- Checkout button -->
       <div class="checkout-bar">
         <button class="checkout-btn" [class.valid]="isFormValid" [disabled]="isSubmitting || !isFormValid" (click)="handleCheckout()">
-          💬 {{ isSubmitting ? 'Placing Order...' : 'Checkout & Save Order — ₹' + grandTotal }}
+          💬 {{ isSubmitting ? 'Placing Order...' : 'Checkout via WhatsApp — ₹' + grandTotal }}
         </button>
         <div *ngIf="!adminService.settings().orders_accepting && !orderingAllowed"
           style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--destructive);">
@@ -223,7 +186,7 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
           Please fill all required fields to checkout
         </p>
         <p style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--muted-foreground);">
-          Order is saved to database &amp; you can send to restaurants via WhatsApp above
+          Order is saved to database &amp; sent to restaurant via WhatsApp
         </p>
       </div>
     </div>

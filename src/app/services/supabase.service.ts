@@ -8,8 +8,15 @@ export class SupabaseService {
 
   constructor() {
     this.client = createClient(
-      environment.supabase.url,
-      environment.supabase.anonKey
-    );
+  environment.supabase.url,
+  environment.supabase.anonKey,
+  {
+    auth: {
+      persistSession: false,   // user-side app doesn't need a session
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    }
+  }
+);
   }
 }
