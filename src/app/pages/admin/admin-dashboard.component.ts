@@ -17,28 +17,41 @@ const MENU_SUGGESTIONS: string[] = (restaurants as any[])
   .flatMap((r: any) => r.menu.flatMap((cat: any) => cat.items.map((it: any) => it.name)));
 
 interface LocalOrder {
-  id: number | string; token: string; name: string; phone: string;
+  id: number | string; token: string; tokenNum: number; name: string; phone: string;
   items: OrderItem[]; total: number; status: 'pending' | 'delivered';
   payment: 'COD' | 'Prepaid'; paymentStatus?: 'paid' | 'unpaid' | 'pending';
   pendingAmount?: number; orderedAt: Date; isNew?: boolean; fadingOut?: boolean;
 }
+
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function fmtDT(d: Date): string {
   const dd = String(d.getDate()).padStart(2,'0'), mon = MONTHS[d.getMonth()];
   let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
   return `${dd} ${mon} | ${String(h).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`;
 }
-function tokenNum(t: string): number { return parseInt(t.replace(/\D/g,''), 10) || 0; }
+
 function apiToLocal(o: Order, idx: number): LocalOrder {
+  const tNum = o.token_number ?? idx;
   return {
-    id: o.id, token: `#${String(idx).padStart(3,'0')}`,
+    id: o.id, token: `#${String(tNum).padStart(3,'0')}`, tokenNum: tNum,
     name: o.customer_name ?? '—', phone: o.customer_phone ?? '—',
-    items: (o.items ?? []).map((it: any) => ({ name: it.name, qty: it.qty ?? 1 })),
+    items: (o.items ?? []).map((it: any) => ({ name: it.name, qty: it.qty ?? 1, restaurant_name: it.restaurant_name ?? '' })),
     total: o.total ?? 0, status: o.deliver_status === 'delivered' ? 'delivered' : 'pending',
     payment: o.payment_mode === 'cod' ? 'COD' : 'Prepaid',
     paymentStatus: o.pay_status !== 'pending' ? o.pay_status as any : undefined,
     pendingAmount: o.pending_amount ?? undefined, orderedAt: new Date(o.created_at ?? Date.now()),
   };
+}
+
+// Group items by restaurant_name for display
+function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items: OrderItem[] }[] {
+  const map: Record<string, OrderItem[]> = {};
+  items.forEach(it => {
+    const r = it.restaurant_name || 'Other';
+    if (!map[r]) map[r] = [];
+    map[r].push(it);
+  });
+  return Object.entries(map).map(([restaurant, items]) => ({ restaurant, items }));
 }
 
 @Component({
@@ -120,10 +133,9 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
               <input type="text" [(ngModel)]="deliveryTime" class="form-input" placeholder="e.g. 30-45 mins" style="flex:1" />
               <button class="btn-primary" (click)="saveDeliveryTime()" [disabled]="saving">{{ saving ? 'Saving...' : '💾 Save' }}</button>
             </div>
-            <p style="font-size:.75rem;color:#94a3b8;margin-top:.5rem">This is displayed on the home page for all users</p>
           </div>
 
-          <!-- Stats -->
+          <!-- Stats (DB-driven) -->
           <div class="stats-grid">
             <div class="stat-card"><div class="stat-num">{{ restaurants.length }}</div><div class="stat-label">Total Restaurants</div></div>
             <div class="stat-card warn"><div class="stat-num">{{ adminService.settings().unavailable_restaurants.length }}</div><div class="stat-label">Unavailable Restaurants</div></div>
@@ -138,7 +150,7 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
             <button class="btn-primary" (click)="saveClosedMessage()" [disabled]="saving" style="margin-top:.75rem">{{ saving ? 'Saving...' : '💾 Save Message' }}</button>
           </div>
 
-          <!-- Live orders summary -->
+          <!-- Live orders summary — fully from DB -->
           <div class="card" style="margin-top:0">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
               <p class="label-cap" style="margin:0">Live Orders Today</p>
@@ -150,13 +162,29 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
                 <p class="stat-num2">{{ s.value }}</p>
               </div>
             </div>
+            <!-- Per-restaurant order counts -->
+            <div *ngIf="perRestaurantOrderCounts.length > 0" style="margin-top:16px">
+              <p class="label-cap" style="margin-bottom:8px">Orders per Restaurant</p>
+              <div *ngFor="let r of perRestaurantOrderCounts; let i=index">
+                <hr *ngIf="i>0" class="divider" />
+                <div class="recent-row">
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span class="tag-orange">🏪</span>
+                    <p class="rr-name">{{ r.name }}</p>
+                  </div>
+                  <div style="text-align:right">
+                    <p class="rr-total">{{ r.itemCount }} items · {{ r.orderCount }} orders</p>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div *ngIf="recentOrders.length>0" style="margin-top:12px">
               <p class="label-cap" style="margin-bottom:8px">Recent Orders</p>
               <div *ngFor="let o of recentOrders; let i=index">
                 <hr *ngIf="i>0" class="divider" />
                 <div class="recent-row">
                   <div style="display:flex;align-items:center;gap:8px">
-                    <span class="tag-orange">#{{ padToken(apiOrders.indexOf(o)+1) }}</span>
+                    <span class="tag-orange">#{{ padToken(o.token_number ?? (apiOrders.indexOf(o)+1)) }}</span>
                     <div><p class="rr-name">{{ o.customer_name }}</p><p class="rr-sub">{{ getItemNames(o) }}</p></div>
                   </div>
                   <div style="text-align:right">
@@ -165,7 +193,6 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
                   </div>
                 </div>
               </div>
-              <div *ngIf="recentOrders.length===0" class="empty-hint">No orders today yet</div>
             </div>
           </div>
         </div>
@@ -195,7 +222,7 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
         </div>
 
         <!-- ════════════════════════════════════
-             MENU ITEMS TAB  (project1 style)
+             MENU ITEMS TAB
         ════════════════════════════════════ -->
         <div *ngIf="activeTab==='items'">
           <p class="tab-desc">Disable specific menu items per restaurant. Disabled items show as "Unavailable" to customers. You can also override prices.</p>
@@ -320,7 +347,10 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
               <div class="upd-items-list">
                 <p *ngIf="updItems.length===0" class="empty-hint" style="padding:12px 0">No items — add below.</p>
                 <div *ngFor="let item of updItems; let idx=index" class="upd-item-row">
-                  <span class="upd-item-name">{{ item.name }}</span>
+                  <span class="upd-item-name">
+                    <span *ngIf="item.restaurant_name" class="upd-rest-tag">{{ item.restaurant_name }}</span>
+                    {{ item.name }}
+                  </span>
                   <button class="qty-btn" (click)="chUpdQty(idx,-1)" [disabled]="item.qty<=1">−</button>
                   <span class="qty-val">{{ item.qty }}</span>
                   <button class="qty-btn" (click)="chUpdQty(idx,1)">+</button>
@@ -378,7 +408,7 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
                 <div class="del-icon">🗑️</div>
                 <div><h3 class="sheet-title">Delete Order?</h3><p class="sheet-sub">{{ delModal.token }} · {{ delModal.name }}</p></div>
               </div>
-              <p style="font-size:13px;color:#64748b;margin:0 0 20px">This will permanently remove this order.</p>
+              <p style="font-size:13px;color:#64748b;margin:0 0 20px">This will permanently remove this order from the database.</p>
               <div class="sheet-actions">
                 <button class="btn-ghost" (click)="delModal=null">Cancel</button>
                 <button class="btn-red" (click)="doDeleteOrder()">Delete Order</button>
@@ -390,7 +420,7 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
           <div class="orders-toolbar">
             <div style="position:relative;flex:1">
               <span class="search-icon">🔍</span>
-              <input type="text" [(ngModel)]="ordersSearch" placeholder="Search…" class="form-input" style="padding-left:36px" />
+              <input type="text" [(ngModel)]="ordersSearch" placeholder="Search name, #token, phone…" class="form-input" style="padding-left:36px" />
             </div>
             <button class="btn-ghost sm" (click)="loadOrdersData()" [disabled]="ordersLoading||busy">{{ ordersLoading?'…':'↻' }}</button>
             <button class="btn-primary sm" (click)="doExport()" [disabled]="busy||localOrders.length===0">⬇ Export</button>
@@ -417,6 +447,15 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
                     <span *ngIf="o.paymentStatus==='paid'"    class="pay-badge paid">Paid</span>
                     <span *ngIf="o.paymentStatus==='unpaid'"  class="pay-badge unpaid">Unpaid</span>
                     <span *ngIf="o.paymentStatus==='pending'" class="pay-badge pend">Pending {{ o.pendingAmount?'₹'+o.pendingAmount:'' }}</span>
+                    <!-- ··· Dots menu -->
+                    <div class="dots-wrap">
+                      <button class="dots-btn" (click)="toggleDotsMenu(o.id)">···</button>
+                      <div *ngIf="dotsOpenId===o.id" class="dots-drop" (click)="$event.stopPropagation()">
+                        <button class="dots-item" (click)="openUpdModal(o); dotsOpenId=null">✏️ Edit</button>
+                        <button class="dots-item" (click)="callUser(o); dotsOpenId=null">📞 Call</button>
+                        <button class="dots-item danger" (click)="openDelModal(o); dotsOpenId=null">🗑️ Delete</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="order-card-body">
@@ -424,21 +463,22 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
                   <p class="order-phone">📞 {{ o.phone }}</p>
                   <p class="order-time">🕒 {{ fmtDT(o.orderedAt) }}</p>
                 </div>
+                <!-- Items grouped by restaurant -->
                 <div class="order-items-box">
-                  <div *ngFor="let it of o.items" class="order-item-row"><span>{{ it.name }}</span><span>×{{ it.qty }}</span></div>
+                  <div *ngFor="let grp of groupItemsByRestaurant(o.items)">
+                    <div class="order-rest-label">🏪 {{ grp.restaurant }}</div>
+                    <div *ngFor="let it of grp.items" class="order-item-row"><span>{{ it.name }}</span><span>×{{ it.qty }}</span></div>
+                  </div>
                 </div>
                 <div class="order-card-footer">
                   <span class="order-total-big">₹{{ o.total }}</span>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <button class="action-btn" (click)="openUpdModal(o)">✏️</button>
-                    <button class="action-btn danger" (click)="openDelModal(o)">🗑️</button>
-                    <button class="deliver-btn" (click)="openPayModal(o)">✔ Deliver</button>
-                  </div>
+                  <button class="deliver-btn" (click)="openPayModal(o)">✔ Deliver</button>
                 </div>
               </div>
             </div>
           </div>
           <div *ngIf="pendingOrders.length===0&&!ordersSearch" class="empty-hint" style="text-align:center;padding:2rem">✔ All caught up!</div>
+          <div *ngIf="pendingOrders.length===0&&ordersSearch" class="empty-hint" style="text-align:center;padding:2rem">No orders match "{{ ordersSearch }}"</div>
 
           <!-- Delivered -->
           <div *ngIf="deliveredOrders.length>0" style="margin-top:16px">
@@ -452,6 +492,14 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
                     <span *ngIf="o.paymentStatus==='paid'"    class="pay-badge paid">Paid</span>
                     <span *ngIf="o.paymentStatus==='unpaid'"  class="pay-badge unpaid">Unpaid</span>
                     <span *ngIf="o.paymentStatus==='pending'" class="pay-badge pend">Pending {{ o.pendingAmount?'₹'+o.pendingAmount:'' }}</span>
+                    <div class="dots-wrap">
+                      <button class="dots-btn" (click)="toggleDotsMenu(o.id)">···</button>
+                      <div *ngIf="dotsOpenId===o.id" class="dots-drop" (click)="$event.stopPropagation()">
+                        <button class="dots-item" (click)="openUpdModal(o); dotsOpenId=null">✏️ Edit</button>
+                        <button class="dots-item" (click)="callUser(o); dotsOpenId=null">📞 Call</button>
+                        <button class="dots-item danger" (click)="openDelModal(o); dotsOpenId=null">🗑️ Delete</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
                 <div class="order-card-body">
@@ -460,15 +508,14 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
                   <p class="order-time">🕒 {{ fmtDT(o.orderedAt) }}</p>
                 </div>
                 <div class="order-items-box">
-                  <div *ngFor="let it of o.items" class="order-item-row"><span>{{ it.name }}</span><span>×{{ it.qty }}</span></div>
+                  <div *ngFor="let grp of groupItemsByRestaurant(o.items)">
+                    <div class="order-rest-label">🏪 {{ grp.restaurant }}</div>
+                    <div *ngFor="let it of grp.items" class="order-item-row"><span>{{ it.name }}</span><span>×{{ it.qty }}</span></div>
+                  </div>
                 </div>
                 <div class="order-card-footer">
                   <span class="order-total-big">₹{{ o.total }}</span>
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <button class="action-btn" (click)="openUpdModal(o)">✏️</button>
-                    <button class="action-btn danger" (click)="openDelModal(o)">🗑️</button>
-                    <button class="deliver-btn" style="background:#dcfce7;color:#16a34a;cursor:default" disabled>✔ Delivered</button>
-                  </div>
+                  <button class="deliver-btn" style="background:#dcfce7;color:#16a34a;cursor:default" disabled>✔ Delivered</button>
                 </div>
               </div>
             </div>
@@ -477,42 +524,64 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
         </div>
 
         <!-- ════════════════════════════════════
-             SHOW OFF TAB
+             SHOW OFF TAB — per-restaurant
         ════════════════════════════════════ -->
         <div *ngIf="activeTab==='showoff'" class="tab-content">
           <div *ngIf="showoffToast" class="inline-toast">📶 {{ showoffToast }}</div>
+
+          <!-- Overall actions -->
           <div class="orders-toolbar">
-            <button class="btn-wa" [disabled]="showoffDisplay.length===0" (click)="doWhatsApp()">💬 Share on WhatsApp</button>
-            <button class="btn-primary sm" (click)="doShowOffExport()" [disabled]="showoffDisplay.length===0">⬇ Export</button>
-            <button [class]="canShowOffClear?'btn-danger sm':'btn-ghost sm'" (click)="doShowOffClear()" [disabled]="!canShowOffClear" [title]="!showoffExported?'Export first':'Clear the list'">🗑 Clear</button>
+            <button class="btn-wa" [disabled]="showoffDisplay.length===0" (click)="doWhatsApp()">💬 Share All on WhatsApp</button>
+            <button class="btn-primary sm" (click)="doShowOffExport()" [disabled]="showoffDisplay.length===0">⬇ Export All</button>
+            <button [class]="canShowOffClear?'btn-danger sm':'btn-ghost sm'" (click)="doShowOffClear()" [disabled]="!canShowOffClear">🗑 Clear</button>
           </div>
+
+          <!-- Overall banner -->
           <div class="perf-banner">
             <div class="perf-header"><span>📈</span><span>Today's Performance</span></div>
             <p class="perf-num">{{ showoffTotal }}</p>
             <p class="perf-sub">Total items sold today</p>
             <div *ngIf="showoffTop&&!showoffUiCleared" class="perf-top">
-              <p class="perf-top-label">Top Seller</p>
+              <p class="perf-top-label">Top Seller Overall</p>
               <p class="perf-top-val">{{ showoffTop.name }} — {{ showoffTop.qty }}</p>
             </div>
           </div>
-          <div *ngIf="showoffDisplay.length>0" class="list">
-            <div class="category-header">Bestsellers</div>
-            <div *ngFor="let item of showoffDisplay; let idx=index">
-              <hr *ngIf="idx>0" class="divider" />
-              <div style="padding:12px 16px">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                  <div style="display:flex;align-items:center;gap:8px">
-                    <span style="font-size:12px;font-weight:700;color:#64748b;width:20px;text-align:right">{{ idx+1 }}</span>
-                    <span style="font-size:13px;font-weight:500;color:#1e293b">{{ item.name }}</span>
-                  </div>
-                  <span style="font-size:14px;font-weight:800;color:var(--primary)">{{ item.qty }}</span>
+
+          <!-- Per-restaurant sections -->
+          <div *ngIf="showoffByRestaurant.length > 0">
+            <div *ngFor="let restSection of showoffByRestaurant" class="rest-showoff-section">
+              <div class="rest-showoff-header">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span>🏪</span>
+                  <span class="rest-showoff-name">{{ restSection.restaurant }}</span>
+                  <span class="rest-showoff-count">{{ restSection.totalItems }} items</span>
                 </div>
-                <div style="margin-left:28px;height:5px;background:#f1f5f9;border-radius:99px;overflow:hidden">
-                  <div style="height:100%;background:var(--primary);border-radius:99px;transition:width .5s" [style.width.%]="showoffDisplay[0].qty>0?(item.qty/showoffDisplay[0].qty*100):0"></div>
+                <div style="display:flex;gap:6px">
+                  <button class="btn-wa sm" (click)="doRestaurantWhatsApp(restSection)">💬</button>
+                  <button class="btn-primary sm" (click)="doRestaurantExport(restSection)">⬇</button>
+                </div>
+              </div>
+              <div class="list">
+                <div *ngFor="let item of restSection.items; let idx=index">
+                  <hr *ngIf="idx>0" class="divider" />
+                  <div style="padding:10px 16px">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                      <div style="display:flex;align-items:center;gap:8px">
+                        <span style="font-size:11px;font-weight:700;color:#64748b;width:18px;text-align:right">{{ idx+1 }}</span>
+                        <span style="font-size:13px;font-weight:500;color:#1e293b">{{ item.name }}</span>
+                      </div>
+                      <span style="font-size:14px;font-weight:800;color:var(--primary)">{{ item.qty }}</span>
+                    </div>
+                    <div style="margin-left:26px;height:4px;background:#f1f5f9;border-radius:99px;overflow:hidden">
+                      <div style="height:100%;background:var(--primary);border-radius:99px;transition:width .5s"
+                           [style.width.%]="restSection.items[0].qty>0?(item.qty/restSection.items[0].qty*100):0"></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
+
           <div *ngIf="showoffDisplay.length===0" class="empty-hint" style="text-align:center;padding:3rem">📈 No orders yet — start taking orders!</div>
         </div>
 
@@ -656,7 +725,7 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
     .btn-red    { padding:.625rem 1.25rem; border-radius:.625rem; background:#ef4444; color:#fff; border:none; cursor:pointer; font-size:.875rem; font-weight:600; font-family:'Poppins',sans-serif; display:inline-flex; align-items:center; gap:6px; }
     .btn-wa     { flex:1; padding:.625rem 1.25rem; border-radius:.625rem; background:#25d366; color:#fff; border:none; cursor:pointer; font-size:.875rem; font-weight:700; font-family:'Poppins',sans-serif; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
     .btn-wa:disabled { opacity:.45; cursor:not-allowed; }
-    .sm { padding:.5rem .875rem !important; font-size:.8rem !important; }
+    .sm { padding:.5rem .875rem !important; font-size:.8rem !important; flex:none !important; }
     button:disabled { opacity:.45; cursor:not-allowed; }
     .btn-icon { border:none; background:none; cursor:pointer; font-size:1.1rem; padding:.25rem; border-radius:.375rem; transition:background .2s; }
     .btn-icon:hover { background:#f1f5f9; }
@@ -673,8 +742,8 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
     .coupon-actions { display:flex; align-items:center; gap:.25rem; flex-shrink:0; }
 
     /* ── Orders ── */
-    .orders-toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .orders-summary { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#64748b; }
+    .orders-toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:10px; }
+    .orders-summary { display:flex; align-items:center; justify-content:space-between; font-size:12px; color:#64748b; margin-bottom:12px; }
     .inline-toast { position:fixed; top:64px; left:50%; transform:translateX(-50%); z-index:9000; display:flex; align-items:center; gap:8px; background:#fff3e6; color:#1e293b; font-size:12px; font-weight:600; padding:8px 16px; border-radius:99px; box-shadow:0 4px 16px rgba(232,84,108,.18); border:1px solid var(--primary); max-width:85vw; }
     .search-icon { position:absolute; left:12px; top:50%; transform:translateY(-50%); pointer-events:none; font-size:14px; }
     .section-label { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
@@ -691,7 +760,9 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
     .order-phone { font-size:12px; color:#64748b; margin:3px 0 0; }
     .order-time { font-size:11px; color:#94a3b8; margin:2px 0 0; }
     .order-items-box { margin:0 14px 10px; background:#f8fafc; border-radius:10px; padding:8px 12px; }
-    .order-item-row { display:flex; justify-content:space-between; margin-bottom:4px; font-size:12px; color:#1e293b; }
+    .order-rest-label { font-size:11px; font-weight:700; color:var(--primary); margin:6px 0 3px; text-transform:uppercase; letter-spacing:.04em; }
+    .order-rest-label:first-child { margin-top:0; }
+    .order-item-row { display:flex; justify-content:space-between; margin-bottom:3px; font-size:12px; color:#1e293b; padding-left:8px; }
     .order-item-row:last-child { margin-bottom:0; }
     .order-card-footer { display:flex; align-items:center; justify-content:space-between; padding:8px 14px 12px; }
     .order-total-big { font-size:16px; font-weight:800; color:#1e293b; }
@@ -702,6 +773,17 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
     .pay-badge.paid   { background:#dcfce7; color:#16a34a; }
     .pay-badge.unpaid { background:#fee2e2; color:#dc2626; }
     .pay-badge.pend   { background:#fef9c3; color:#92400e; }
+
+    /* ── Dots menu ── */
+    .dots-wrap { position:relative; }
+    .dots-btn { width:30px; height:30px; display:flex; align-items:center; justify-content:center; border-radius:8px; border:1px solid #e2e8f0; background:#f8fafc; cursor:pointer; font-size:16px; font-weight:700; color:#64748b; letter-spacing:1px; line-height:1; }
+    .dots-btn:hover { background:#e2e8f0; }
+    .dots-drop { position:absolute; right:0; top:34px; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 8px 24px rgba(0,0,0,.12); z-index:20; min-width:130px; overflow:hidden; }
+    .dots-item { display:flex; align-items:center; gap:8px; width:100%; padding:10px 14px; border:none; background:transparent; font-size:13px; color:#1e293b; cursor:pointer; text-align:left; font-family:'Poppins',sans-serif; }
+    .dots-item:hover { background:#f8fafc; }
+    .dots-item.danger { color:#dc2626; }
+    .dots-item.danger:hover { background:#fee2e2; }
+    .upd-rest-tag { font-size:10px; font-weight:700; color:var(--primary); background:rgba(232,84,108,.1); padding:1px 5px; border-radius:4px; margin-right:4px; }
 
     /* ── Modals ── */
     .sheet-overlay { position:fixed; inset:0; z-index:60; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.45); backdrop-filter:blur(3px); }
@@ -731,13 +813,17 @@ function apiToLocal(o: Order, idx: number): LocalOrder {
     .pay-opt.sel-pending { border-color:#fcd34d; background:#fffbeb; color:#92400e; }
 
     /* ── Show Off ── */
-    .perf-banner { background:var(--primary); border-radius:1rem; padding:1.25rem; color:#fff; }
+    .perf-banner { background:var(--primary); border-radius:1rem; padding:1.25rem; color:#fff; margin-bottom:16px; }
     .perf-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:14px; font-weight:600; }
     .perf-num { font-size:2.25rem; font-weight:800; margin:0; }
     .perf-sub { font-size:12px; color:rgba(255,255,255,.75); margin-top:4px; }
     .perf-top { margin-top:12px; background:rgba(255,255,255,.2); border-radius:12px; padding:8px 14px; }
     .perf-top-label { font-size:11px; color:rgba(255,255,255,.7); margin:0; }
     .perf-top-val { font-size:14px; font-weight:700; margin:2px 0 0; }
+    .rest-showoff-section { margin-bottom:16px; }
+    .rest-showoff-header { display:flex; align-items:center; justify-content:space-between; background:#fff; border-radius:1rem 1rem 0 0; padding:12px 16px; border-bottom:1px solid #f1f5f9; box-shadow:0 1px 3px rgba(0,0,0,.07); }
+    .rest-showoff-name { font-size:13px; font-weight:700; color:#1e293b; }
+    .rest-showoff-count { font-size:11px; color:var(--primary); background:rgba(232,84,108,.1); padding:1px 7px; border-radius:99px; font-weight:600; }
 
     /* ── Toast ── */
     .toast { position:fixed; bottom:1.5rem; right:1.5rem; z-index:100; background:#1e293b; color:#fff; padding:.75rem 1.25rem; border-radius:.75rem; font-size:.875rem; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,.2); animation:slideUp .3s ease; font-family:'Poppins',sans-serif; }
@@ -786,6 +872,9 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   paySelStatus: 'paid'|'unpaid'|'pending'|null = null;
   payPendingAmt = 0;
 
+  // Dots menu
+  dotsOpenId: number | string | null = null;
+
   // Toasts
   globalToastName = '';
   ordersToast = '';
@@ -800,14 +889,29 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   private ordersToastTimer: any;
   private showoffToastTimer: any;
 
+  // helper exposed to template
+  readonly groupItemsByRestaurant = groupItemsByRestaurant;
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.closedMessage = this.adminService.settings().orders_off_message;
     this.deliveryTime  = this.adminService.settings().delivery_time;
+    // Close dots menu on document click
+    document.addEventListener('click', this.closeDotsMenu);
     this.loadOrdersData();
     this.pollInterval = setInterval(() => this.loadOrdersData(true), 15000);
   }
-  ngOnDestroy(): void { clearInterval(this.pollInterval); }
+  ngOnDestroy(): void {
+    clearInterval(this.pollInterval);
+    document.removeEventListener('click', this.closeDotsMenu);
+  }
+  private closeDotsMenu = () => { if (this.dotsOpenId !== null) { this.dotsOpenId = null; this.cdr.detectChanges(); } };
+  toggleDotsMenu(id: number | string): void {
+    this.dotsOpenId = this.dotsOpenId === id ? null : id;
+  }
+  callUser(o: LocalOrder): void {
+    if (o.phone && o.phone !== '—') window.open(`tel:${o.phone}`);
+  }
 
   // ── Orders data ───────────────────────────────────────────────────────────
   async loadOrdersData(silent = false): Promise<void> {
@@ -844,17 +948,37 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
   get activeCoupons(): number { return this.adminService.coupons().filter(c => c.active).length; }
 
+  /** Per-restaurant order count derived from DB */
+  get perRestaurantOrderCounts(): { name: string; orderCount: number; itemCount: number }[] {
+    const map: Record<string, { orderCount: number; itemCount: number }> = {};
+    this.apiOrders.forEach(o => {
+      const restNames = new Set<string>();
+      (o.items ?? []).forEach((it: any) => {
+        const rn = it.restaurant_name || 'Other';
+        if (!map[rn]) map[rn] = { orderCount: 0, itemCount: 0 };
+        map[rn].itemCount += it.qty ?? 1;
+        restNames.add(rn);
+      });
+      restNames.forEach(rn => { if (map[rn]) map[rn].orderCount++; });
+    });
+    return Object.entries(map)
+      .map(([name, v]) => ({ name, ...v }))
+      .sort((a, b) => b.orderCount - a.orderCount);
+  }
+
   get overviewOrderStats() {
     const rev = this.apiOrders.reduce((s,o) => s+(o.total??0),0);
     const codRev = this.apiOrders.filter(o=>o.payment_mode==='cod').reduce((s,o)=>s+(o.total??0),0);
     const preRev = this.apiOrders.filter(o=>o.payment_mode!=='cod').reduce((s,o)=>s+(o.total??0),0);
+    const delivered = this.apiOrders.filter(o=>o.deliver_status==='delivered').length;
+    const pending   = this.apiOrders.filter(o=>o.deliver_status!=='delivered').length;
     return [
-      { label:'Revenue',      value:`₹${rev}`,                 icon:'📈', bg:'#FEF0E6' },
-      { label:'Total Orders', value:`${this.apiOrders.length}`,icon:'🛍️', bg:'#E6EFFD' },
-      { label:'Pending',      value:`${this.pendingCount}`,    icon:'⏰', bg:'#FEF7E6' },
-      { label:'Delivered',    value:`${this.deliveredCount}`,  icon:'✅', bg:'#E6F5EA' },
-      { label:'COD',          value:`₹${codRev}`,             icon:'💵', bg:'#F0EBFD' },
-      { label:'Prepaid',      value:`₹${preRev}`,             icon:'💳', bg:'#E6FBF6' },
+      { label:'Revenue',      value:`₹${rev}`,                   icon:'📈', bg:'#FEF0E6' },
+      { label:'Total Orders', value:`${this.apiOrders.length}`,  icon:'🛍️', bg:'#E6EFFD' },
+      { label:'Pending',      value:`${pending}`,                icon:'⏰', bg:'#FEF7E6' },
+      { label:'Delivered',    value:`${delivered}`,              icon:'✅', bg:'#E6F5EA' },
+      { label:'COD',          value:`₹${codRev}`,               icon:'💵', bg:'#F0EBFD' },
+      { label:'Prepaid',      value:`₹${preRev}`,               icon:'💳', bg:'#E6FBF6' },
     ];
   }
   get recentOrders(): Order[] { return [...this.apiOrders].reverse().slice(0,5); }
@@ -964,11 +1088,26 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.busy = false;
   }
 
+  /** Search: match name, token (#001 or 001 or 1), phone */
+  private matchSearch(o: LocalOrder): boolean {
+    const q = this.ordersSearch.trim().toLowerCase();
+    if (!q) return true;
+    // Token search: strip # and leading zeros for flexible match
+    const tokenClean = o.token.replace('#','').replace(/^0+/,'');
+    const qClean = q.replace('#','').replace(/^0+/,'');
+    return (
+      o.name.toLowerCase().includes(q) ||
+      o.phone.includes(q) ||
+      o.token.toLowerCase().includes(q) ||
+      tokenClean === qClean ||
+      tokenClean.startsWith(qClean)
+    );
+  }
+
   get pendingOrders(): LocalOrder[]   { return this.localOrders.filter(o=>o.status==='pending'   && this.matchSearch(o)); }
-  get deliveredOrders(): LocalOrder[] { return this.localOrders.filter(o=>o.status==='delivered' && this.matchSearch(o)).sort((a,b)=>tokenNum(a.token)-tokenNum(b.token)); }
+  get deliveredOrders(): LocalOrder[] { return this.localOrders.filter(o=>o.status==='delivered' && this.matchSearch(o)).sort((a,b)=>a.tokenNum-b.tokenNum); }
   get pendingCount(): number   { return this.localOrders.filter(o=>o.status==='pending').length; }
   get deliveredCount(): number { return this.localOrders.filter(o=>o.status==='delivered').length; }
-  private matchSearch(o: LocalOrder): boolean { const q=this.ordersSearch.trim().toLowerCase(); return !q||o.name.toLowerCase().includes(q)||o.token.toLowerCase().includes(q)||o.phone.includes(q); }
 
   // ── Suggestions ───────────────────────────────────────────────────────────
   onNewItemNameChange(): void {
@@ -987,21 +1126,49 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   chUpdQty(idx: number, d: number): void { if(this.updItems[idx].qty+d>=1) this.updItems[idx].qty+=d; }
   remUpdItem(idx: number): void { this.updItems.splice(idx,1); }
 
-  // ── Show Off ──────────────────────────────────────────────────────────────
-  get showoffTally(): {name:string;qty:number}[] {
-    const tally: Record<string,{name:string;qty:number}> = {};
-    this.apiOrders.forEach(o=>(o.items??[]).forEach((it:any)=>{ if(!tally[it.name]) tally[it.name]={name:it.name,qty:0}; tally[it.name].qty+=it.qty??1; }));
+  // ── Show Off — per restaurant breakdown ───────────────────────────────────
+  get showoffTally(): { name: string; qty: number; restaurant: string }[] {
+    const tally: Record<string,{ name:string; qty:number; restaurant:string }> = {};
+    this.apiOrders.forEach(o=>(o.items??[]).forEach((it:any)=>{
+      const key = `${it.restaurant_name||'Other'}::${it.name}`;
+      if(!tally[key]) tally[key]={ name:it.name, qty:0, restaurant: it.restaurant_name||'Other' };
+      tally[key].qty+=it.qty??1;
+    }));
     return Object.values(tally).sort((a,b)=>b.qty-a.qty);
   }
-  get showoffDisplay(): {name:string;qty:number}[] { return this.showoffUiCleared ? [] : this.showoffTally; }
+  get showoffDisplay(): { name:string; qty:number; restaurant:string }[] { return this.showoffUiCleared ? [] : this.showoffTally; }
   get showoffTotal(): number { return this.showoffDisplay.reduce((s,i)=>s+i.qty,0); }
-  get showoffTop(): {name:string;qty:number}|null { return this.showoffDisplay[0]??null; }
+  get showoffTop(): { name:string; qty:number }|null { return this.showoffDisplay[0]??null; }
   get canShowOffClear(): boolean { return this.showoffExported && this.apiOrders.length===0 && !this.showoffUiCleared; }
-  doWhatsApp(): void {
-    const lines=this.showoffDisplay.map(i=>`${i.name} — ${i.qty}`).join('\n');
-    window.open(`https://wa.me/?text=${encodeURIComponent(`🍛 *CLGBITES — Today's Bestsellers*\n\n${lines}\n\nTotal: ${this.showoffTotal}`)}`, '_blank');
+
+  /** Show off grouped by restaurant */
+  get showoffByRestaurant(): { restaurant:string; items:{name:string;qty:number}[]; totalItems:number }[] {
+    const map: Record<string,{name:string;qty:number}[]> = {};
+    this.showoffDisplay.forEach(it => {
+      if (!map[it.restaurant]) map[it.restaurant] = [];
+      map[it.restaurant].push({ name:it.name, qty:it.qty });
+    });
+    return Object.entries(map).map(([restaurant, items]) => ({
+      restaurant,
+      items: items.sort((a,b)=>b.qty-a.qty),
+      totalItems: items.reduce((s,i)=>s+i.qty,0),
+    })).sort((a,b)=>b.totalItems-a.totalItems);
   }
-  doShowOffExport(): void { this.ordersService.exportShowOffCSV(this.showoffDisplay); this.showoffExported=true; this.showShowOffToast('Exported ✓'); }
+
+  doWhatsApp(): void {
+    const lines = this.showoffByRestaurant
+      .map(r => `*${r.restaurant}*\n` + r.items.map(i=>`  ${i.name} — ${i.qty}`).join('\n'))
+      .join('\n\n');
+    window.open(`https://wa.me/?text=${encodeURIComponent(`🍛 *CLGBITES — Today's Bestsellers*\n\n${lines}\n\nTotal items: ${this.showoffTotal}`)}`, '_blank');
+  }
+  doRestaurantWhatsApp(r: { restaurant:string; items:{name:string;qty:number}[]; totalItems:number }): void {
+    const lines = r.items.map(i=>`  ${i.name} — ${i.qty}`).join('\n');
+    window.open(`https://wa.me/?text=${encodeURIComponent(`🍛 *CLGBITES — ${r.restaurant} Today's Sales*\n\n${lines}\n\nTotal items: ${r.totalItems}`)}`, '_blank');
+  }
+  doRestaurantExport(r: { restaurant:string; items:{name:string;qty:number}[] }): void {
+    this.ordersService.exportShowOffCSV(r.items.map(i=>({...i, restaurant:r.restaurant})), r.restaurant);
+  }
+  doShowOffExport(): void { this.ordersService.exportShowOffCSV(this.showoffDisplay, undefined); this.showoffExported=true; this.showShowOffToast('Exported ✓'); }
   doShowOffClear(): void { if(!this.canShowOffClear) return; this.showoffUiCleared=true; this.showoffExported=false; this.showShowOffToast('List cleared ✓'); }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -1019,7 +1186,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     finally { this.saving=false; }
   }
   private showToast():void { this.saveSuccess=true; this.statusMsg='Saved ✓'; setTimeout(()=>{ this.saveSuccess=false; this.statusMsg=''; this.cdr.detectChanges(); },2500); }
-  private flash(msg:string):void { this.statusMsg=msg; setTimeout(()=>{ this.statusMsg=''; this.cdr.detectChanges(); },2000); }
   private showGlobalToast(name:string):void { this.globalToastName=name; clearTimeout(this.globalToastTimer); this.globalToastTimer=setTimeout(()=>{ this.globalToastName=''; this.cdr.detectChanges(); },6000); }
   private showOrdersToast(msg:string):void { this.ordersToast=msg; clearTimeout(this.ordersToastTimer); this.ordersToastTimer=setTimeout(()=>{ this.ordersToast=''; this.cdr.detectChanges(); },3500); }
   private showShowOffToast(msg:string):void { this.showoffToast=msg; clearTimeout(this.showoffToastTimer); this.showoffToastTimer=setTimeout(()=>{ this.showoffToast=''; this.cdr.detectChanges(); },3000); }

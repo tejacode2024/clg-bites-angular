@@ -4,6 +4,7 @@ import { SupabaseService } from './supabase.service';
 export interface OrderItem {
   name: string;
   qty: number;
+  restaurant_name?: string; // ← NEW: track which restaurant each item belongs to
 }
 
 export interface Order {
@@ -32,6 +33,18 @@ export class OrdersService {
       .order('created_at', { ascending: true });
     if (error) { console.error('fetchOrders error', error); return []; }
     return (data as Order[]) ?? [];
+  }
+
+  /** Returns the number of orders placed today (used for token assignment) */
+  async fetchTodayOrderCount(): Promise<number> {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const { count, error } = await this.sb.client
+      .from('orders')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', todayStart.toISOString());
+    if (error) { console.error('fetchTodayOrderCount error', error); return 0; }
+    return count ?? 0;
   }
 
   async placeOrder(order: Omit<Order, 'id' | 'created_at' | 'deliver_status' | 'pay_status'>): Promise<Order | null> {
@@ -111,7 +124,7 @@ export class OrdersService {
     };
     const rows: string[][] = [
       [`CLGBITES - Today's Orders | ${ds}`], [],
-      ['Token','Name','Phone','Item','Qty','Payment Mode','Total','Payment Status','Pending Amount','Deliver Status','Date & Time','Delivered At'],
+      ['Token','Name','Phone','Restaurant','Item','Qty','Payment Mode','Total','Payment Status','Pending Amount','Deliver Status','Date & Time','Delivered At'],
     ];
     orders.forEach((order, idx) => {
       const token = `#${String(idx + 1).padStart(3, '0')}`;
@@ -125,7 +138,9 @@ export class OrdersService {
       items.forEach((item, i) => {
         rows.push([
           i === 0 ? token : '', i === 0 ? (order.customer_name ?? '') : '',
-          i === 0 ? (order.customer_phone ?? '') : '', item.name, String(item.qty ?? 1),
+          i === 0 ? (order.customer_phone ?? '') : '',
+          item.restaurant_name ?? '',
+          item.name, String(item.qty ?? 1),
           i === 0 ? payMode : '', i === 0 ? (order.total != null ? `₹${order.total}` : '') : '',
           i === 0 ? payStatus : '', i === 0 ? pendingAmt : '',
           i === 0 ? deliverStatus : '', i === 0 ? time : '', i === 0 ? deliveredAt : '',
@@ -133,7 +148,7 @@ export class OrdersService {
       });
       if (items.length === 0) {
         rows.push([token, order.customer_name ?? '', order.customer_phone ?? '',
-          '—', '0', payMode, payStatus, pendingAmt,
+          '','—', '0', payMode, payStatus, pendingAmt,
           order.total != null ? `₹${order.total}` : '', deliverStatus, time, deliveredAt]);
       }
     });
@@ -144,17 +159,21 @@ export class OrdersService {
     a.click(); URL.revokeObjectURL(a.href);
   }
 
-  exportShowOffCSV(items: { name: string; qty: number }[]): void {
+  exportShowOffCSV(items: { name: string; qty: number; restaurant?: string }[], restaurantName?: string): void {
     const now = new Date();
     const ds = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    const title = restaurantName
+      ? `CLGBITES - Show Off | ${restaurantName} | ${ds}`
+      : `CLGBITES - Show Off | ${ds}`;
     const rows: string[][] = [
-      [`CLGBITES - Show Off | ${ds}`], [], ['S.No', 'Item Name', 'Qty'],
-      ...items.map((it, i) => [String(i + 1), it.name, String(it.qty)]),
+      [title], [], ['S.No', 'Restaurant', 'Item Name', 'Qty'],
+      ...items.map((it, i) => [String(i + 1), it.restaurant ?? '', it.name, String(it.qty)]),
     ];
     const csv = '\uFEFF' + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
-    a.download = `clgbites-showoff-${now.toISOString().slice(0, 10)}.csv`;
+    const suffix = restaurantName ? `-${restaurantName.toLowerCase().replace(/\s+/g,'-')}` : '';
+    a.download = `clgbites-showoff${suffix}-${now.toISOString().slice(0, 10)}.csv`;
     a.click(); URL.revokeObjectURL(a.href);
   }
 }

@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CartService, CartItem } from '../../services/cart.service';
 import { AdminService, Coupon } from '../../services/admin.service';
+import { OrdersService } from '../../services/orders.service';
 import { isOrderingAllowed } from '../../services/time-utils';
 import { FloatingEmojisComponent } from '../../components/floating-emojis/floating-emojis.component';
 
@@ -115,11 +116,9 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
               <span>₹{{ totalAmount() }}</span>
             </div>
             <div class="summary-row">
-              <span style="color:var(--muted-foreground);">
-                Delivery Charges
-                <span *ngIf="totalItems() >= 10" style="font-size:0.7rem;color:#16a34a;"> (Flat ₹80 for 10+ items)</span>
-              </span>
-                <span style="font-weight:500;color:#16a34a;">🚚 Free</span>            </div>
+              <span style="color:var(--muted-foreground);">Delivery Charges</span>
+              <span style="font-weight:500;color:#16a34a;">🚚 Free</span>
+            </div>
             <div *ngIf="appliedCoupon" class="summary-row">
               <span style="color:#16a34a;">Coupon Discount ({{ appliedCoupon.code }})</span>
               <span style="color:#16a34a;font-weight:600;">− ₹{{ couponDiscount }}</span>
@@ -170,12 +169,50 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
             </div>
           </div>
         </div>
+
+        <!-- ─── Per-Restaurant WhatsApp Section ─── -->
+        <div class="summary-card" style="margin-bottom:1.5rem;" *ngIf="isFormValid">
+          <h3 class="card-title">📲 Send Orders via WhatsApp</h3>
+          <p style="font-size:0.8rem;color:var(--muted-foreground);margin-bottom:1rem;">
+            Select a restaurant to send its order items separately via WhatsApp.
+          </p>
+
+          <!-- Restaurant dropdown -->
+          <div class="rest-dropdown-wrap">
+            <select [(ngModel)]="selectedWaRestaurant" class="rest-dropdown">
+              <option value="">— Select Restaurant —</option>
+              <option *ngFor="let entry of itemsByRestaurantEntries" [value]="entry.restaurantId">
+                🏪 {{ entry.restaurantName }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Selected restaurant items preview + WA button -->
+          <div *ngIf="selectedWaRestaurantEntry" class="wa-preview">
+            <div class="wa-items-list">
+              <div *ngFor="let item of selectedWaRestaurantEntry.items" class="wa-item-row">
+                <span>{{ item.name }}</span>
+                <span>×{{ item.quantity }} — ₹{{ item.price * item.quantity }}</span>
+              </div>
+              <div class="wa-item-row wa-subtotal">
+                <span>Subtotal</span>
+                <span>₹{{ selectedWaRestaurantEntry.subtotal }}</span>
+              </div>
+            </div>
+            <button class="wa-btn" (click)="sendRestaurantWhatsApp()">
+              💬 Send {{ selectedWaRestaurantEntry.restaurantName }} Order via WhatsApp
+            </button>
+            <button class="export-rest-btn" (click)="exportRestaurantOrder()">
+              ⬇ Export {{ selectedWaRestaurantEntry.restaurantName }} Order
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Checkout button -->
       <div class="checkout-bar">
         <button class="checkout-btn" [class.valid]="isFormValid" [disabled]="isSubmitting || !isFormValid" (click)="handleCheckout()">
-          💬 {{ isSubmitting ? 'Processing...' : 'Checkout via WhatsApp — ₹' + grandTotal }}
+          💬 {{ isSubmitting ? 'Placing Order...' : 'Checkout & Save Order — ₹' + grandTotal }}
         </button>
         <div *ngIf="!adminService.settings().orders_accepting && !orderingAllowed"
           style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--destructive);">
@@ -186,7 +223,7 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
           Please fill all required fields to checkout
         </p>
         <p style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--muted-foreground);">
-          You will be redirected to WhatsApp to complete your order
+          Order is saved to database &amp; you can send to restaurants via WhatsApp above
         </p>
       </div>
     </div>
@@ -233,6 +270,19 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
     .remove-coupon-btn { padding:0 1rem; border-radius:0.75rem; background:#fee2e2; color:#dc2626; border:none; cursor:pointer; font-weight:600; font-family:'Poppins',sans-serif; white-space:nowrap; }
     .coupon-error { margin-top:0.5rem; font-size:0.8rem; color:var(--destructive); }
     .coupon-success { margin-top:0.5rem; font-size:0.8rem; color:#16a34a; background:#dcfce7; padding:0.5rem 0.75rem; border-radius:0.5rem; }
+    /* Per-restaurant WA */
+    .rest-dropdown-wrap { margin-bottom:0.75rem; }
+    .rest-dropdown { width:100%; padding:0.625rem 0.875rem; border:2px solid var(--input); border-radius:0.75rem; font-size:0.875rem; font-family:'Poppins',sans-serif; background:var(--background); color:var(--foreground); outline:none; cursor:pointer; }
+    .rest-dropdown:focus { border-color:var(--primary); }
+    .wa-preview { margin-top:0.75rem; border:1px solid var(--border); border-radius:0.75rem; overflow:hidden; }
+    .wa-items-list { padding:0.75rem; display:flex; flex-direction:column; gap:0.25rem; }
+    .wa-item-row { display:flex; justify-content:space-between; font-size:0.8rem; color:var(--foreground); padding:0.25rem 0; border-bottom:1px dashed var(--border); }
+    .wa-item-row:last-child { border-bottom:none; }
+    .wa-subtotal { font-weight:700; color:var(--primary); margin-top:0.25rem; }
+    .wa-btn { width:100%; padding:0.75rem; background:#25d366; color:white; border:none; cursor:pointer; font-size:0.875rem; font-weight:700; font-family:'Poppins',sans-serif; border-top:1px solid rgba(0,0,0,0.08); transition:opacity 0.2s; }
+    .wa-btn:hover { opacity:0.9; }
+    .export-rest-btn { width:100%; padding:0.625rem; background:#f1f5f9; color:#475569; border:none; cursor:pointer; font-size:0.8rem; font-weight:600; font-family:'Poppins',sans-serif; border-top:1px solid var(--border); }
+    .export-rest-btn:hover { background:#e2e8f0; }
     /* Checkout */
     .checkout-bar { position:fixed; bottom:0; left:0; right:0; z-index:50; background:rgba(255,255,255,0.95); backdrop-filter:blur(12px); padding:1rem 1rem 1.5rem; box-shadow:0 -4px 20px rgba(0,0,0,0.1); }
     .checkout-btn { width:100%; border-radius:1rem; padding:1rem; font-size:1rem; font-weight:700; border:none; cursor:pointer; transition:all 0.2s; background:var(--muted); color:var(--muted-foreground); font-family:'Poppins',sans-serif; }
@@ -251,10 +301,12 @@ export class CartComponent implements OnInit, OnDestroy {
   couponError = '';
   appliedCoupon: Coupon | null = null;
   deliveryType: 'prepay' | 'cod' = 'prepay';
+  selectedWaRestaurant = '';
   private timerRef: any;
 
   readonly cartService = inject(CartService);
   readonly adminService = inject(AdminService);
+  private readonly ordersService = inject(OrdersService);
   private readonly router = inject(Router);
 
   readonly items = this.cartService.items;
@@ -291,6 +343,11 @@ export class CartComponent implements OnInit, OnDestroy {
     }));
   }
 
+  get selectedWaRestaurantEntry() {
+    if (!this.selectedWaRestaurant) return null;
+    return this.itemsByRestaurantEntries.find(e => e.restaurantId === this.selectedWaRestaurant) ?? null;
+  }
+
   get restaurantNames(): string[] { return this.cartService.getRestaurantNames(); }
 
   ngOnInit(): void { this.checkTime(); this.timerRef = setInterval(() => this.checkTime(), 60000); }
@@ -319,7 +376,39 @@ export class CartComponent implements OnInit, OnDestroy {
 
   removeCoupon(): void { this.appliedCoupon = null; this.couponCode = ''; this.couponError = ''; }
 
-  handleCheckout(): void {
+  /** Send only ONE restaurant's items via WhatsApp */
+  sendRestaurantWhatsApp(): void {
+    const entry = this.selectedWaRestaurantEntry;
+    if (!entry) return;
+    let itemLines = '';
+    entry.items.forEach(i => { itemLines += `  - ${i.name} × ${i.quantity} = ₹${i.price * i.quantity}\n`; });
+    const message = `Hello, order from *${entry.restaurantName}*\n\n*Customer:* ${this.name} | 📞 ${this.mobile}\n\n*Items:*\n${itemLines}\n*Subtotal: ₹${entry.subtotal}*\n*Payment: ${this.deliveryType === 'cod' ? 'COD' : 'Prepaid'}*`;
+    window.open(`https://wa.me/917842960252?text=${encodeURIComponent(message)}`, '_blank');
+  }
+
+  /** Export only ONE restaurant's order as CSV */
+  exportRestaurantOrder(): void {
+    const entry = this.selectedWaRestaurantEntry;
+    if (!entry) return;
+    const now = new Date();
+    const ds = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    const rows: string[][] = [
+      [`CLGBITES — ${entry.restaurantName} | ${ds}`], [],
+      ['Item', 'Qty', 'Price Each', 'Total'],
+      ...entry.items.map(i => [i.name, String(i.quantity), `₹${i.price}`, `₹${i.price * i.quantity}`]),
+      [], ['', '', 'Subtotal', `₹${entry.subtotal}`],
+      ['', '', 'Customer', this.name],
+      ['', '', 'Phone', this.mobile],
+      ['', '', 'Payment', this.deliveryType === 'cod' ? 'COD' : 'Prepaid'],
+    ];
+    const csv = '\uFEFF' + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
+    a.download = `${entry.restaurantName.toLowerCase().replace(/\s+/g,'-')}-order-${now.toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  async handleCheckout(): Promise<void> {
     const adminOverride = this.adminService.settings().orders_accepting;
     if (!adminOverride && !this.orderingAllowed) {
       this.validationError = 'Sorry, orders are not accepted right now.';
@@ -334,49 +423,52 @@ export class CartComponent implements OnInit, OnDestroy {
     this.validationError = '';
     this.isSubmitting = true;
 
+    // ── Build flat items list with restaurant_name ──
+    const allItems = this.itemsByRestaurantEntries.flatMap(entry =>
+      entry.items.map(i => ({
+        name: i.name,
+        qty: i.quantity,
+        restaurant_name: entry.restaurantName,
+      }))
+    );
+
+    // ── Get token number (today's order count + 1) ──
+    const todayCount = await this.ordersService.fetchTodayOrderCount();
+    const tokenNumber = todayCount + 1;
+
+    // ── Save order to database ──
+    const savedOrder = await this.ordersService.placeOrder({
+      customer_name: this.name.trim(),
+      customer_phone: this.mobile.trim(),
+      items: allItems,
+      payment_mode: this.deliveryType === 'cod' ? 'cod' : 'prepaid',
+      total: this.grandTotal,
+      token_number: tokenNumber,
+    });
+
+    if (!savedOrder) {
+      this.validationError = 'Failed to save order. Please try again.';
+      this.isSubmitting = false;
+      return;
+    }
+
+    // ── Build full WhatsApp message (all restaurants) ──
     const grouped = this.cartService.getItemsByRestaurant();
     let orderDetails = '';
     Object.entries(grouped).forEach(([, rItems]) => {
-      const name = rItems[0]?.restaurantName || 'Unknown';
+      const rName = rItems[0]?.restaurantName || 'Unknown';
       const sub = rItems.reduce((s, i) => s + i.price * i.quantity, 0);
-      orderDetails += `\n*${name}*\n`;
+      orderDetails += `\n*${rName}*\n`;
       rItems.forEach(i => { orderDetails += `  - ${i.name} × ${i.quantity} = ₹${i.price * i.quantity}\n`; });
       orderDetails += `  Subtotal: ₹${sub}\n`;
     });
 
-    const t = this.totalItems();
-    const deliveryText = `FREE`;
     const couponLine = this.appliedCoupon ? `\n*Coupon (${this.appliedCoupon.code}):* − ₹${this.couponDiscount}` : '';
+    const tokenLine = `*Token: #${String(tokenNumber).padStart(3,'0')}*`;
 
-      const message = this.deliveryType === 'cod'
-      ? `Hello, I would like to place an order.
-
-    *Customer Details:*
-    Name: ${this.name}
-    Mobile: ${this.mobile}
-
-    *Order Details:*${orderDetails}
-    *Items Total:* ₹${this.totalAmount()}
-    *Delivery Charges:* FREE${couponLine}
-    *GST:* No GST
-
-    *Final Total:* ₹${this.grandTotal}
-
-    Please confirm my order on COD`
-      : `Hello, I would like to place an order.
-
-    *Customer Details:*
-    Name: ${this.name}
-    Mobile: ${this.mobile}
-
-    *Order Details:*${orderDetails}
-    *Items Total:* ₹${this.totalAmount()}
-    *Delivery Charges:* ${deliveryText}${couponLine}
-    *GST:* No GST
-
-    *Final Total:* ₹${this.grandTotal}
-
-    Please confirm my order and send the payment QR.`;
+    const message = this.deliveryType === 'cod'
+      ? `Hello, I would like to place an order.\n\n${tokenLine}\n\n*Customer Details:*\nName: ${this.name}\nMobile: ${this.mobile}\n\n*Order Details:*${orderDetails}\n*Items Total:* ₹${this.totalAmount()}\n*Delivery Charges:* FREE${couponLine}\n*GST:* No GST\n\n*Final Total:* ₹${this.grandTotal}\n\nPlease confirm my order on COD`
+      : `Hello, I would like to place an order.\n\n${tokenLine}\n\n*Customer Details:*\nName: ${this.name}\nMobile: ${this.mobile}\n\n*Order Details:*${orderDetails}\n*Items Total:* ₹${this.totalAmount()}\n*Delivery Charges:* FREE${couponLine}\n*GST:* No GST\n\n*Final Total:* ₹${this.grandTotal}\n\nPlease confirm my order and send the payment QR.`;
 
     this.cartService.clearCart();
     window.open(`https://wa.me/917842960252?text=${encodeURIComponent(message)}`, '_blank');
