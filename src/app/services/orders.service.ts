@@ -73,8 +73,7 @@ export class OrdersService {
   async clearAllOrders(): Promise<void> {
     const { error } = await this.sb.client.from('orders').delete().neq('id', 0);
     if (error) { console.error('clearAllOrders error', error); throw error; }
-    // Reset sequence so next order starts from #001
-    await this.sb.client.rpc('reset_orders_sequence').catch(() => {});
+    try { await this.sb.client.rpc('reset_orders_sequence'); } catch { /* ignore */ }
   }
 
   async fetchConfig(): Promise<{ site_online: boolean; item_flags: Record<string, boolean> }> {
@@ -110,12 +109,10 @@ export class OrdersService {
       let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
       return `${dd} ${mon} | ${String(h).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`;
     };
-
     const rows: string[][] = [
       [`CLGBITES - Today's Orders | ${ds}`], [],
       ['Token','Name','Phone','Item','Qty','Payment Mode','Total','Payment Status','Pending Amount','Deliver Status','Date & Time','Delivered At'],
     ];
-
     orders.forEach((order, idx) => {
       const token = `#${String(idx + 1).padStart(3, '0')}`;
       const payMode = order.payment_mode === 'cod' ? 'COD' : 'Prepaid';
@@ -125,20 +122,13 @@ export class OrdersService {
       const time = fmtDT(order.created_at);
       const deliverStatus = order.deliver_status ?? 'pending';
       const deliveredAt = order.delivered_at ? fmtDT(order.delivered_at) : '';
-
       items.forEach((item, i) => {
         rows.push([
-          i === 0 ? token : '',
-          i === 0 ? (order.customer_name ?? '') : '',
-          i === 0 ? (order.customer_phone ?? '') : '',
-          item.name, String(item.qty ?? 1),
-          i === 0 ? payMode : '',
-          i === 0 ? (order.total != null ? `₹${order.total}` : '') : '',
-          i === 0 ? payStatus : '',
-          i === 0 ? pendingAmt : '',
-          i === 0 ? deliverStatus : '',
-          i === 0 ? time : '',
-          i === 0 ? deliveredAt : '',
+          i === 0 ? token : '', i === 0 ? (order.customer_name ?? '') : '',
+          i === 0 ? (order.customer_phone ?? '') : '', item.name, String(item.qty ?? 1),
+          i === 0 ? payMode : '', i === 0 ? (order.total != null ? `₹${order.total}` : '') : '',
+          i === 0 ? payStatus : '', i === 0 ? pendingAmt : '',
+          i === 0 ? deliverStatus : '', i === 0 ? time : '', i === 0 ? deliveredAt : '',
         ]);
       });
       if (items.length === 0) {
@@ -147,28 +137,24 @@ export class OrdersService {
           order.total != null ? `₹${order.total}` : '', deliverStatus, time, deliveredAt]);
       }
     });
-
     const csv = '\uFEFF' + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     a.download = `clgbites-orders-${now.toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    a.click(); URL.revokeObjectURL(a.href);
   }
 
   exportShowOffCSV(items: { name: string; qty: number }[]): void {
     const now = new Date();
     const ds = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
     const rows: string[][] = [
-      [`CLGBITES - Show Off | ${ds}`], [],
-      ['S.No', 'Item Name', 'Qty'],
+      [`CLGBITES - Show Off | ${ds}`], [], ['S.No', 'Item Name', 'Qty'],
       ...items.map((it, i) => [String(i + 1), it.name, String(it.qty)]),
     ];
     const csv = '\uFEFF' + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }));
     a.download = `clgbites-showoff-${now.toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    a.click(); URL.revokeObjectURL(a.href);
   }
 }
