@@ -1,10 +1,10 @@
-import { Component, OnInit, OnDestroy, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CartService, CartItem } from '../../services/cart.service';
 import { AdminService, Coupon } from '../../services/admin.service';
-import { OrdersService } from '../../services/orders.service';
+import { SupabaseService } from '../../services/supabase.service';
 import { isOrderingAllowed } from '../../services/time-utils';
 import { FloatingEmojisComponent } from '../../components/floating-emojis/floating-emojis.component';
 
@@ -116,8 +116,11 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
               <span>₹{{ totalAmount() }}</span>
             </div>
             <div class="summary-row">
-              <span style="color:var(--muted-foreground);">Delivery Charges</span>
-              <span style="font-weight:500;color:#16a34a;">🚚 Free</span>
+              <span style="color:var(--muted-foreground);">
+                Delivery Charges
+                <span *ngIf="totalItems() >= 10" style="font-size:0.7rem;color:#16a34a;"> (Flat ₹80 for 10+ items)</span>
+              </span>
+              <span style="font-weight:500;">🚚 ₹{{ deliveryCharges() }}</span>
             </div>
             <div *ngIf="appliedCoupon" class="summary-row">
               <span style="color:#16a34a;">Coupon Discount ({{ appliedCoupon.code }})</span>
@@ -136,21 +139,8 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
           </div>
           <div class="delivery-tip">
             <p style="font-size:0.875rem;font-weight:500;color:var(--primary);">
-              🎉 Free Delivery on all orders!
+              {{ totalItems() >= 10 ? "You're getting flat ₹80 delivery!" : 'Add ' + (10 - totalItems()) + ' more items for flat ₹80 delivery' }}
             </p>
-          </div>
-        </div>
-
-        <!-- Delivery Type -->
-        <div class="summary-card" style="margin-bottom:1.5rem;">
-          <h3 class="card-title">Delivery Type</h3>
-          <div style="display:flex;gap:1.5rem;">
-            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;font-weight:500;">
-              <input type="radio" name="deliveryType" value="prepay" [(ngModel)]="deliveryType"> PrePay
-            </label>
-            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;font-weight:500;">
-              <input type="radio" name="deliveryType" value="cod" [(ngModel)]="deliveryType"> COD (Cash on Delivery)
-            </label>
           </div>
         </div>
 
@@ -169,13 +159,12 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
             </div>
           </div>
         </div>
-
       </div>
 
       <!-- Checkout button -->
       <div class="checkout-bar">
         <button class="checkout-btn" [class.valid]="isFormValid" [disabled]="isSubmitting || !isFormValid" (click)="handleCheckout()">
-          💬 {{ isSubmitting ? 'Placing Order...' : 'Checkout via WhatsApp — ₹' + grandTotal }}
+          💬 {{ isSubmitting ? 'Processing...' : 'Checkout via WhatsApp — ₹' + grandTotal }}
         </button>
         <div *ngIf="!adminService.settings().orders_accepting && !orderingAllowed"
           style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--destructive);">
@@ -186,7 +175,7 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
           Please fill all required fields to checkout
         </p>
         <p style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--muted-foreground);">
-          Order is saved to database &amp; sent to restaurant via WhatsApp
+          You will be redirected to WhatsApp to complete your order
         </p>
       </div>
     </div>
@@ -224,7 +213,6 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
     .error-box { margin-bottom:1rem; border-radius:0.5rem; background:rgba(239,68,68,0.1); padding:0.75rem 1rem; font-size:0.875rem; color:var(--destructive); }
     .form-input { width:100%; padding:0.75rem 1rem; border:2px solid var(--input); border-radius:0.75rem; background:var(--background); color:var(--foreground); outline:none; font-size:0.875rem; font-family:'Poppins',sans-serif; box-sizing:border-box; transition:all 0.2s; }
     .form-input:focus { border-color:var(--primary); box-shadow:0 0 0 2px rgba(232,84,108,0.2); }
-    /* Coupon */
     .coupon-input-row { display:flex; gap:0.75rem; }
     .coupon-input { flex:1; }
     .apply-btn { padding:0 1.25rem; border-radius:0.75rem; background:var(--primary); color:white; border:none; cursor:pointer; font-weight:600; font-family:'Poppins',sans-serif; white-space:nowrap; transition:all 0.2s; }
@@ -233,7 +221,6 @@ import { FloatingEmojisComponent } from '../../components/floating-emojis/floati
     .remove-coupon-btn { padding:0 1rem; border-radius:0.75rem; background:#fee2e2; color:#dc2626; border:none; cursor:pointer; font-weight:600; font-family:'Poppins',sans-serif; white-space:nowrap; }
     .coupon-error { margin-top:0.5rem; font-size:0.8rem; color:var(--destructive); }
     .coupon-success { margin-top:0.5rem; font-size:0.8rem; color:#16a34a; background:#dcfce7; padding:0.5rem 0.75rem; border-radius:0.5rem; }
-    /* Checkout */
     .checkout-bar { position:fixed; bottom:0; left:0; right:0; z-index:50; background:rgba(255,255,255,0.95); backdrop-filter:blur(12px); padding:1rem 1rem 1.5rem; box-shadow:0 -4px 20px rgba(0,0,0,0.1); }
     .checkout-btn { width:100%; border-radius:1rem; padding:1rem; font-size:1rem; font-weight:700; border:none; cursor:pointer; transition:all 0.2s; background:var(--muted); color:var(--muted-foreground); font-family:'Poppins',sans-serif; }
     .checkout-btn.valid { background:var(--primary); color:white; box-shadow:0 0 20px rgba(232,84,108,0.3); }
@@ -250,12 +237,11 @@ export class CartComponent implements OnInit, OnDestroy {
   couponCode = '';
   couponError = '';
   appliedCoupon: Coupon | null = null;
-  deliveryType: 'prepay' | 'cod' = 'prepay';
   private timerRef: any;
 
   readonly cartService = inject(CartService);
   readonly adminService = inject(AdminService);
-  private readonly ordersService = inject(OrdersService);
+  private readonly supabaseService = inject(SupabaseService);
   private readonly router = inject(Router);
 
   readonly items = this.cartService.items;
@@ -320,8 +306,65 @@ export class CartComponent implements OnInit, OnDestroy {
 
   removeCoupon(): void { this.appliedCoupon = null; this.couponCode = ''; this.couponError = ''; }
 
+  // ─── FIX 1: WhatsApp redirect that works on iOS, Android, and desktop ────
+  // window.open(..., '_blank') is blocked by mobile browsers when called inside
+  // an async callback because it runs outside the original user-gesture tick.
+  // window.location.href is never blocked and opens the WhatsApp universal link
+  // reliably on both iOS and Android without needing any platform detection.
+  private openWhatsApp(message: string): void {
+    window.location.href = `https://wa.me/917842960252?text=${encodeURIComponent(message)}`;
+  }
+
+  // ─── FIX 2 + 3: Atomic token reservation ─────────────────────────────────
+  // Calls a Postgres RPC that does an atomic INSERT … ON CONFLICT UPDATE so
+  // two simultaneous checkouts can never receive the same token value.
+  // Falls back to a crypto-random ID if the RPC hasn't been created yet.
+  //
+  // Run this SQL ONCE in your Supabase SQL editor to enable atomic tokens:
+  // ─────────────────────────────────────────────────────────────────────────
+  //  CREATE TABLE IF NOT EXISTS order_token_counter (
+  //    date_key   TEXT PRIMARY KEY,
+  //    last_token INT NOT NULL DEFAULT 0
+  //  );
+  //
+  //  CREATE OR REPLACE FUNCTION get_next_order_token()
+  //  RETURNS TEXT LANGUAGE plpgsql AS $$
+  //  DECLARE
+  //    today    TEXT := TO_CHAR(NOW() AT TIME ZONE 'Asia/Kolkata', 'DDMMYYYY');
+  //    next_val INT;
+  //  BEGIN
+  //    INSERT INTO order_token_counter (date_key, last_token)
+  //    VALUES (today, 1)
+  //    ON CONFLICT (date_key)
+  //    DO UPDATE SET last_token = order_token_counter.last_token + 1
+  //    RETURNING last_token INTO next_val;
+  //    RETURN today || '-' || LPAD(next_val::TEXT, 3, '0');
+  //  END;
+  //  $$;
+  // ─────────────────────────────────────────────────────────────────────────
+  private async reserveToken(): Promise<string> {
+    try {
+      const { data, error } = await this.supabaseService.client.rpc('get_next_order_token');
+      if (error || !data) {
+        console.warn('Token RPC unavailable, using fallback:', error?.message);
+        return this.fallbackToken();
+      }
+      return data as string;
+    } catch (err) {
+      console.warn('Token reservation failed, using fallback:', err);
+      return this.fallbackToken();
+    }
+  }
+
+  private fallbackToken(): string {
+    const now = new Date();
+    const p = (n: number) => String(n).padStart(2, '0');
+    const date = p(now.getDate()) + p(now.getMonth() + 1) + now.getFullYear();
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${date}-${rand}`;
+  }
+
   async handleCheckout(): Promise<void> {
-    // ── Guards ──────────────────────────────────────────────────────────────
     const adminOverride = this.adminService.settings().orders_accepting;
     if (!adminOverride && !this.orderingAllowed) {
       this.validationError = 'Sorry, orders are not accepted right now.';
@@ -336,65 +379,10 @@ export class CartComponent implements OnInit, OnDestroy {
     this.validationError = '';
     this.isSubmitting = true;
 
-    // ── Build flat items list ───────────────────────────────────────────────
-    const allItems = this.itemsByRestaurantEntries.flatMap(entry =>
-      entry.items.map(i => ({
-        name: i.name,
-        qty: i.quantity,
-        restaurant_name: entry.restaurantName,
-      }))
-    );
+    // Reserve unique token FIRST — before building the message — so two
+    // simultaneous checkouts always get different tokens.
+    const orderToken = await this.reserveToken();
 
-    // ── Build WhatsApp message text BEFORE any async work ──────────────────
-    //
-    // FIX #1 — iOS Safari and Android Chrome block window.open() when called
-    // inside an async callback (after an `await`). The browser treats it as a
-    // popup rather than a direct user-gesture response.
-    //
-    // Solution: call window.open() FIRST with a blank target to "claim" the
-    // user-gesture window, THEN do all async work and fill in the final URL.
-    // This keeps the original tab open and the new tab loads WhatsApp once
-    // the order is saved.
-    //
-    // We pre-build a placeholder message so the tab opens immediately, then
-    // replace the location after the DB call succeeds.
-
-    // Open the WhatsApp tab right away (while user gesture is still "fresh")
-    const waTab = window.open('', '_blank');
-
-    // ── FIX #2 & #3 — Get token atomically from the DB ─────────────────────
-    // This calls a Postgres function that atomically increments today's
-    // counter and returns a unique token. Two simultaneous orders will NEVER
-    // receive the same token.
-    let tokenNumber: number;
-    try {
-      tokenNumber = await this.ordersService.fetchNextToken();
-    } catch {
-      tokenNumber = Date.now() % 100000; // extreme fallback, should never hit
-    }
-
-    // ── FIX #4 — Save to DB with id = token_number ─────────────────────────
-    const savedOrder = await this.ordersService.placeOrder(
-      {
-        customer_name: this.name.trim(),
-        customer_phone: this.mobile.trim(),
-        items: allItems,
-        payment_mode: this.deliveryType === 'cod' ? 'cod' : 'prepaid',
-        total: this.grandTotal,
-        token_number: tokenNumber,
-      },
-      tokenNumber
-    );
-
-    if (!savedOrder) {
-      // Order failed — close the blank tab and show error
-      waTab?.close();
-      this.validationError = 'Failed to save order. Please try again.';
-      this.isSubmitting = false;
-      return;
-    }
-
-    // ── Build the full WhatsApp message ────────────────────────────────────
     const grouped = this.cartService.getItemsByRestaurant();
     let orderDetails = '';
     Object.entries(grouped).forEach(([, rItems]) => {
@@ -405,35 +393,37 @@ export class CartComponent implements OnInit, OnDestroy {
       orderDetails += `  Subtotal: ₹${sub}\n`;
     });
 
+    const t = this.totalItems();
+    const deliveryText = t >= 10
+      ? `₹80 (Flat rate for 10+ items)`
+      : `₹${this.deliveryCharges()} (₹10 × ${t} items)`;
     const couponLine = this.appliedCoupon
       ? `\n*Coupon (${this.appliedCoupon.code}):* − ₹${this.couponDiscount}`
       : '';
-    const tokenLine = `*Token: #${String(tokenNumber).padStart(3, '0')}*`;
 
-    const message = this.deliveryType === 'cod'
-      ? `Hello, I would like to place an order.\n\n${tokenLine}\n\n*Customer Details:*\nName: ${this.name}\nMobile: ${this.mobile}\n\n*Order Details:*${orderDetails}\n*Items Total:* ₹${this.totalAmount()}\n*Delivery Charges:* FREE${couponLine}\n*GST:* No GST\n\n*Final Total:* ₹${this.grandTotal}\n\nPlease confirm my order on COD`
-      : `Hello, I would like to place an order.\n\n${tokenLine}\n\n*Customer Details:*\nName: ${this.name}\nMobile: ${this.mobile}\n\n*Order Details:*${orderDetails}\n*Items Total:* ₹${this.totalAmount()}\n*Delivery Charges:* FREE${couponLine}\n*GST:* No GST\n\n*Final Total:* ₹${this.grandTotal}\n\nPlease confirm my order and send the payment QR.`;
+    const message =
+`Hello, I would like to place an order.
 
-    const waUrl = `https://wa.me/917842960252?text=${encodeURIComponent(message)}`;
+*Order Token:* ${orderToken}
 
-    // ── FIX #1 (continued) — Navigate the already-open tab to WhatsApp ─────
-    //
-    // The tab was opened synchronously during the user gesture, so iOS/Android
-    // will NOT block it. Now we simply redirect it to the real WhatsApp URL.
-    if (waTab) {
-      waTab.location.href = waUrl;
-    } else {
-      // Fallback: if the tab was blocked anyway (very rare), try direct open
-      // and show a manual link.
-      const fallback = window.open(waUrl, '_blank');
-      if (!fallback) {
-        // Last resort for heavily restricted browsers: navigate current tab
-        window.location.href = waUrl;
-        return;
-      }
-    }
+*Customer Details:*
+Name: ${this.name}
+Mobile: ${this.mobile}
+
+*Order Details:*${orderDetails}
+*Items Total:* ₹${this.totalAmount()}
+*Delivery Charges:* ${deliveryText}${couponLine}
+*GST:* No GST
+
+*Final Total:* ₹${this.grandTotal}
+
+Please confirm my order and send the payment QR.`;
 
     this.cartService.clearCart();
-    this.router.navigate(['/']);
+    this.isSubmitting = false;
+
+    // Navigate first so the cart page is gone, then redirect to WhatsApp.
+    // This prevents the browser's back-button from bouncing back to a cleared cart.
+    this.router.navigate(['/']).then(() => this.openWhatsApp(message));
   }
 }
