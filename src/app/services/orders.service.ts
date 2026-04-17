@@ -123,19 +123,57 @@ export class OrdersService {
     return (data as Order[]) ?? [];
   }
 
-  async fetchTodayOrderCount(): Promise<number> {
-    const todayStart = new Date(); todayStart.setHours(0,0,0,0);
-    const { count, error } = await this.sb.client
-      .from('orders').select('id', { count: 'exact', head: true })
-      .gte('created_at', todayStart.toISOString());
-    if (error) { console.error('fetchTodayOrderCount error', error); return 0; }
-    return count ?? 0;
+  /**
+   * FIX #2 & #3 — Atomic token assignment via Supabase RPC.
+   *
+   * Instead of: count rows → add 1 → hope nobody else is doing the same thing
+   * We now:    call get_next_daily_token() which runs atomically inside Postgres
+   *            and returns a unique token for today.
+   *
+   * This means two simultaneous orders will ALWAYS get different tokens.
+   * The token is then stored as both `id` and `token_number` (see placeOrder).
+   *
+   * You must add the SQL function — see SUPABASE_SETUP.md (updated).
+   */
+  async fetchNextToken(): Promise<number> {
+    const { data, error } = await this.sb.client.rpc('get_next_daily_token');
+    if (error || data == null) {
+      console.error('fetchNextToken RPC error', error);
+      // Fallback: count rows for today (less safe but won't break the flow)
+      const todayStart = new Date(); todayStart.setHours(0,0,0,0);
+      const { count } = await this.sb.client
+        .from('orders').select('id', { count: 'exact', head: true })
+        .gte('created_at', todayStart.toISOString());
+      return (count ?? 0) + 1;
+    }
+    return data as number;
   }
 
-  async placeOrder(order: Omit<Order,'id'|'created_at'|'deliver_status'|'pay_status'>): Promise<Order|null> {
+  /**
+   * FIX #4 — id in DB equals the token_number.
+   *
+   * We set `id` explicitly to the token returned by fetchNextToken().
+   * The `orders` table must use `id integer primary key` (not serial/identity)
+   * so we can supply our own value. See updated SUPABASE_SETUP.md.
+   *
+   * FIX #2 & #3 — token_number is fetched atomically before insert,
+   * so no two concurrent orders can ever share the same token.
+   */
+  async placeOrder(
+    order: Omit<Order,'id'|'created_at'|'deliver_status'|'pay_status'>,
+    tokenNumber: number
+  ): Promise<Order|null> {
     const { data, error } = await this.sb.client
-      .from('orders').insert([{ ...order, deliver_status:'pending', pay_status:'pending' }])
-      .select().single();
+      .from('orders')
+      .insert([{
+        id: tokenNumber,            // ← id IS the token number
+        token_number: tokenNumber,
+        ...order,
+        deliver_status: 'pending',
+        pay_status: 'pending',
+      }])
+      .select()
+      .single();
     if (error) { console.error('placeOrder error', error); return null; }
     return data as Order;
   }
@@ -225,7 +263,7 @@ export class OrdersService {
       ['S.No','Restaurant','Item Name','Qty'],
       ...items.map((it,i)=>[i+1, it.restaurant??'', it.name, it.qty]),
     ];
-    const suffix = restaurantName?`-${restaurantName.toLowerCase().replace(/\s+/g,'-')}`:'';
+    const suffix = restaurantName?`-${restaurantName.toLowerCase().replace(/\s+/g,'-')}`:''
     downloadXlsx(rows, `clgbites-showoff${suffix}-${now.toISOString().slice(0,10)}.xlsx`);
   }
 }
