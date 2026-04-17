@@ -50,7 +50,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
   });
   return Object.entries(map).map(([restaurant, items]) => ({ restaurant, items }));
 }
-
 @Component({
   selector: 'app-admin-dashboard',
   standalone: true,
@@ -58,7 +57,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
   template: `
 <!-- ═══ NEW-ORDER GLOBAL TOAST ═══ -->
 <div *ngIf="globalToastName" class="global-toast">
-  <div class="toast-icon">📶</div>
+  <div class="toast-icon">↑</div>
   <div><p class="toast-sub">New order from</p><p class="toast-name">{{ globalToastName }}</p></div>
   <button class="toast-close" (click)="globalToastName=''">✕</button>
 </div>
@@ -73,15 +72,15 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
       <button class="icon-btn" (click)="sidebarOpen=false">✕</button>
     </div>
     <nav class="nav">
-      <button class="nav-pill" [class.active]="activeTab==='overview'"     (click)="setTab('overview');     sidebarOpen=false">📊 Overview</button>
-      <button class="nav-pill" [class.active]="activeTab==='restaurants'"  (click)="setTab('restaurants');  sidebarOpen=false">🏪 Restaurants</button>
-      <button class="nav-pill" [class.active]="activeTab==='items'"        (click)="setTab('items');        sidebarOpen=false">🍽️ Menu Items</button>
-      <button class="nav-pill" [class.active]="activeTab==='coupons'"      (click)="setTab('coupons');      sidebarOpen=false">🎟️ Coupons</button>
-      <button class="nav-pill" [class.active]="activeTab==='orders'"       (click)="setTab('orders');       sidebarOpen=false">📋 Today's Orders</button>
-      <button class="nav-pill" [class.active]="activeTab==='showoff'"      (click)="setTab('showoff');      sidebarOpen=false">⭐ Show Off</button>
+      <button class="nav-pill" [class.active]="activeTab==='overview'"     (click)="setTab('overview');     sidebarOpen=false">Overview</button>
+      <button class="nav-pill" [class.active]="activeTab==='restaurants'"  (click)="setTab('restaurants');  sidebarOpen=false">Restaurants</button>
+      <button class="nav-pill" [class.active]="activeTab==='items'"        (click)="setTab('items');        sidebarOpen=false">Menu Items</button>
+      <button class="nav-pill" [class.active]="activeTab==='coupons'"      (click)="setTab('coupons');      sidebarOpen=false">Coupons</button>
+      <button class="nav-pill" [class.active]="activeTab==='orders'"       (click)="setTab('orders');       sidebarOpen=false">Today's Orders</button>
+      <button class="nav-pill" [class.active]="activeTab==='showoff'"      (click)="setTab('showoff');      sidebarOpen=false">Show Off</button>
     </nav>
     <div class="sidebar-footer">
-      <button class="nav-pill" style="color:#EF4444" (click)="logout(); sidebarOpen=false">🚪 Logout</button>
+      <button class="nav-pill" style="color:#EF4444" (click)="logout(); sidebarOpen=false">Logout</button>
     </div>
   </aside>
 
@@ -95,7 +94,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
       </div>
       <div style="display:flex;align-items:center;gap:4px">
         <button class="back-site-btn" (click)="goHome()">← Site</button>
-        <button class="icon-btn" (click)="logout()">🚪</button>
+        <button class="icon-btn" (click)="logout()">Logout</button>
       </div>
     </header>
 
@@ -107,7 +106,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
         <div *ngIf="activeTab==='overview'" class="tab-content">
           <div class="orders-card" [class.open]="adminService.settings().orders_accepting" [class.closed]="!adminService.settings().orders_accepting">
             <div style="display:flex;align-items:center;gap:1rem">
-              <div style="font-size:2rem">{{ adminService.settings().orders_accepting ? '✅' : '🔴' }}</div>
+              <div class="oc-status-icon" [class.on]="adminService.settings().orders_accepting">{{ adminService.settings().orders_accepting ? 'ON' : 'OFF' }}</div>
               <div>
                 <h3 class="oc-title">Order Acceptance</h3>
                 <p class="oc-sub">{{ adminService.settings().orders_accepting ? 'Customers can place orders right now' : 'Orders are currently closed for customers' }}</p>
@@ -119,10 +118,10 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
             </div>
           </div>
           <div class="card">
-            <h3 class="card-title">🚚 Delivery Time (shown to all customers)</h3>
+            <h3 class="card-title">Delivery Time (shown to all customers)</h3>
             <div style="display:flex;gap:.75rem;align-items:center">
               <input type="text" [(ngModel)]="deliveryTime" class="form-input" placeholder="e.g. 30-45 mins" style="flex:1" />
-              <button class="btn-primary" (click)="saveDeliveryTime()" [disabled]="saving">{{ saving ? 'Saving...' : '💾 Save' }}</button>
+              <button class="btn-primary" (click)="saveDeliveryTime()" [disabled]="saving">{{ saving ? 'Saving...' : 'Save' }}</button>
             </div>
           </div>
           <div class="stats-grid">
@@ -131,10 +130,13 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
             <div class="stat-card warn"><div class="stat-num">{{ totalUnavailableItems }}</div><div class="stat-label">Unavailable Items</div></div>
             <div class="stat-card green"><div class="stat-num">{{ activeCoupons }}</div><div class="stat-label">Active Coupons</div></div>
           </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:-4px">
+            <button class="btn-ghost sm" (click)="exportStatsXlsx()" title="Download today's stats as Excel">↓ Export Stats</button>
+          </div>
           <div *ngIf="!adminService.settings().orders_accepting" class="card">
-            <h3 class="card-title">📢 Closed Message (shown to customers)</h3>
+            <h3 class="card-title">Closed Message (shown to customers)</h3>
             <textarea [(ngModel)]="closedMessage" class="form-textarea" rows="3" placeholder="E.g. Orders closed for today. Back tomorrow at 10 AM!"></textarea>
-            <button class="btn-primary" (click)="saveClosedMessage()" [disabled]="saving" style="margin-top:.75rem">{{ saving ? 'Saving...' : '💾 Save Message' }}</button>
+            <button class="btn-primary" (click)="saveClosedMessage()" [disabled]="saving" style="margin-top:.75rem">{{ saving ? 'Saving...' : 'Save Message' }}</button>
           </div>
           <div class="card" style="margin-top:0">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
@@ -153,7 +155,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
                 <hr *ngIf="i>0" class="divider" />
                 <div class="recent-row">
                   <div style="display:flex;align-items:center;gap:8px">
-                    <span class="tag-orange">🏪</span>
+                    <span class="tag-orange rest-icon">R</span>
                     <p class="rr-name">{{ r.name }}</p>
                   </div>
                   <div style="text-align:right">
@@ -222,11 +224,11 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
                     <div style="display:flex;align-items:center;gap:.5rem;margin-top:.25rem">
                       <span *ngIf="!editingPrice[selectedRestaurantId+'::'+item.name]" class="list-sub">
                         ₹{{ adminService.getItemPrice(selectedRestaurantId, item.name, item.price) }}
-                        <button (click)="startEditPrice(selectedRestaurantId,item.name,item.price)" class="edit-price-btn">✏️</button>
+                        <button (click)="startEditPrice(selectedRestaurantId,item.name,item.price)" class="edit-price-btn">Edit</button>
                       </span>
                       <span *ngIf="editingPrice[selectedRestaurantId+'::'+item.name]" style="display:flex;gap:.25rem;align-items:center">
                         <input type="number" [(ngModel)]="tempPrices[selectedRestaurantId+'::'+item.name]" class="price-input" />
-                        <button (click)="savePrice(selectedRestaurantId,item.name)" class="price-btn save">✅</button>
+                        <button (click)="savePrice(selectedRestaurantId,item.name)" class="price-btn save">✓</button>
                         <button (click)="cancelEditPrice(selectedRestaurantId,item.name)" class="price-btn cancel">✕</button>
                         <button (click)="resetPrice(selectedRestaurantId,item.name)" class="price-btn reset">↺</button>
                       </span>
@@ -242,14 +244,14 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
               </div>
             </div>
           </div>
-          <div *ngIf="!selectedRestaurantId" class="empty-hint">👆 Select a restaurant above to manage its menu items</div>
+          <div *ngIf="!selectedRestaurantId" class="empty-hint">Select a restaurant above to manage its menu items</div>
         </div>
 
         <!-- ════ COUPONS TAB ════ -->
         <div *ngIf="activeTab==='coupons'">
           <p class="tab-desc">Create coupon codes for discounts. Customers enter codes at checkout.</p>
           <div class="card">
-            <h3 class="card-title">➕ {{ editingCoupon ? 'Edit Coupon' : 'Add New Coupon' }}</h3>
+            <h3 class="card-title">{{ editingCoupon ? 'Edit Coupon' : 'Add New Coupon' }}</h3>
             <div class="coupon-form">
               <div class="form-row">
                 <div class="form-field">
@@ -283,7 +285,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
                 <label for="couponActive">Active (customers can use this coupon)</label>
               </div>
               <div class="form-actions">
-                <button class="btn-primary" (click)="saveCoupon()" [disabled]="saving">{{ saving ? 'Saving...' : editingCoupon ? '💾 Update Coupon' : '➕ Add Coupon' }}</button>
+                <button class="btn-primary" (click)="saveCoupon()" [disabled]="saving">{{ saving ? 'Saving...' : editingCoupon ? 'Update Coupon' : 'Add Coupon' }}</button>
                 <button *ngIf="editingCoupon" class="btn-ghost" (click)="cancelEdit()">Cancel</button>
               </div>
             </div>
@@ -301,9 +303,9 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
                 <p *ngIf="coupon.description" class="coupon-desc">{{ coupon.description }}</p>
               </div>
               <div class="coupon-actions">
-                <button class="btn-icon" title="Toggle active" (click)="toggleCouponActive(coupon)">{{ coupon.active ? '🔴' : '🟢' }}</button>
-                <button class="btn-icon" title="Edit" (click)="editCoupon(coupon)">✏️</button>
-                <button class="btn-icon danger" title="Delete" (click)="deleteCoupon(coupon)">🗑️</button>
+                <button class="btn-icon" title="Toggle active" (click)="toggleCouponActive(coupon)">{{ coupon.active ? 'OFF' : 'ON' }}</button>
+                <button class="btn-icon" title="Edit" (click)="editCoupon(coupon)">Edit</button>
+                <button class="btn-icon danger" title="Delete" (click)="deleteCoupon(coupon)">✕</button>
               </div>
             </div>
           </div>
@@ -311,7 +313,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
 
         <!-- ════ TODAY'S ORDERS TAB ════ -->
         <div *ngIf="activeTab==='orders'" class="tab-content">
-          <div *ngIf="ordersToast" class="inline-toast">📶 {{ ordersToast }}</div>
+          <div *ngIf="ordersToast" class="inline-toast">{{ ordersToast }}</div>
 
           <!-- UPDATE MODAL -->
           <div *ngIf="updModal" class="sheet-overlay" (click)="updModal=null">
@@ -330,7 +332,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
                   <button class="qty-btn" (click)="chUpdQty(idx,-1)" [disabled]="item.qty<=1">−</button>
                   <span class="qty-val">{{ item.qty }}</span>
                   <button class="qty-btn" (click)="chUpdQty(idx,1)">+</button>
-                  <button class="qty-btn danger" (click)="remUpdItem(idx)">🗑</button>
+                  <button class="qty-btn danger" (click)="remUpdItem(idx)">Clear</button>
                 </div>
               </div>
               <div class="add-item-section">
@@ -363,9 +365,9 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
               <div class="sheet-header"><h3 class="sheet-title">Payment Status</h3><button class="icon-btn" (click)="payModal=null">✕</button></div>
               <p class="sheet-sub" style="margin-bottom:16px">{{ payModal.token }} · {{ payModal.name }} · ₹{{ payModal.total }}</p>
               <div class="pay-options">
-                <button class="pay-opt" [class.sel-paid]="paySelStatus==='paid'"       (click)="paySelStatus='paid'">✅ Paid</button>
-                <button class="pay-opt" [class.sel-unpaid]="paySelStatus==='unpaid'"   (click)="paySelStatus='unpaid'">✕ Not Paid</button>
-                <button class="pay-opt" [class.sel-pending]="paySelStatus==='pending'" (click)="paySelStatus='pending'">📄 Pending</button>
+                <button class="pay-opt" [class.sel-paid]="paySelStatus==='paid'"       (click)="paySelStatus='paid'">Paid</button>
+                <button class="pay-opt" [class.sel-unpaid]="paySelStatus==='unpaid'"   (click)="paySelStatus='unpaid'">Not Paid</button>
+                <button class="pay-opt" [class.sel-pending]="paySelStatus==='pending'" (click)="paySelStatus='pending'">Pending</button>
               </div>
               <div *ngIf="paySelStatus==='pending'" style="margin-top:8px">
                 <input type="number" [(ngModel)]="payPendingAmt" placeholder="Enter amount" class="form-input" />
@@ -381,7 +383,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
           <div *ngIf="delModal" class="sheet-overlay" (click)="delModal=null">
             <div class="sheet" (click)="$event.stopPropagation()">
               <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-                <div class="del-icon">🗑️</div>
+                <div class="del-icon">✕</div>
                 <div><h3 class="sheet-title">Delete Order?</h3><p class="sheet-sub">{{ delModal.token }} · {{ delModal.name }}</p></div>
               </div>
               <p style="font-size:13px;color:#64748b;margin:0 0 20px">This will permanently remove this order from the database.</p>
@@ -395,12 +397,12 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
           <!-- Toolbar -->
           <div class="orders-toolbar">
             <div style="position:relative;flex:1;min-width:0">
-              <span class="search-icon">🔍</span>
+              <span class="search-icon"></span>
               <input type="text" [(ngModel)]="ordersSearch" placeholder="Name, #001, phone…" class="form-input" style="padding-left:36px" />
             </div>
-            <button class="icon-btn toolbar-icon-btn" (click)="loadOrdersData()" [disabled]="ordersLoading||busy" title="Refresh">🔄</button>
-            <button class="btn-primary sm" (click)="doExport()" [disabled]="busy||localOrders.length===0">⬇ XL</button>
-            <button [class]="ordersExported?'btn-danger sm':'btn-ghost sm'" (click)="doClear()" [disabled]="!ordersExported||busy||localOrders.length===0" title="Export first">🗑</button>
+            <button class="icon-btn toolbar-icon-btn" (click)="loadOrdersData()" [disabled]="ordersLoading||busy" title="Refresh">↺</button>
+            <button class="btn-primary sm" (click)="doExport()" [disabled]="busy||localOrders.length===0">↓ XL</button>
+            <button [class]="ordersExported?'btn-danger sm':'btn-ghost sm'" (click)="doClear()" [disabled]="!ordersExported||busy||localOrders.length===0" title="Export first">Clear</button>
           </div>
 
           <div class="orders-summary">
@@ -417,7 +419,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
             </div>
             <div class="orders-list">
               <div *ngFor="let o of pendingOrders" class="order-card" [class.fading]="o.fadingOut">
-                <!-- Top row: token + badges + dots -->
                 <div class="order-card-top">
                   <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
                     <span *ngIf="o.isNew" class="new-badge">NEW</span>
@@ -427,35 +428,28 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
                     <span *ngIf="o.paymentStatus==='unpaid'"  class="pay-badge unpaid">Unpaid</span>
                     <span *ngIf="o.paymentStatus==='pending'" class="pay-badge pend">Pending{{ o.pendingAmount?' ₹'+o.pendingAmount:'' }}</span>
                   </div>
-                  <!-- Dots menu — stopPropagation prevents global click handler from closing immediately -->
                   <div class="dots-wrap" (click)="$event.stopPropagation()">
-                    <button class="dots-btn" (click)="toggleDotsMenu(o.id)">•••</button>
+                    <button class="dots-btn" (click)="toggleDotsMenu(o.id)">···</button>
                     <div *ngIf="dotsOpenId===o.id" class="dots-drop">
-                      <button class="dots-item" (click)="openUpdModal(o); dotsOpenId=null">✏️ Edit</button>
-                      <button class="dots-item" (click)="callUser(o); dotsOpenId=null">📞 Call</button>
-                      <button class="dots-item danger" (click)="openDelModal(o); dotsOpenId=null">🗑️ Delete</button>
+                      <button class="dots-item" (click)="openUpdModal(o); dotsOpenId=null">Edit</button>
+                      <button class="dots-item" (click)="callUser(o); dotsOpenId=null">Call</button>
+                      <button class="dots-item danger" (click)="openDelModal(o); dotsOpenId=null">Delete</button>
                     </div>
                   </div>
                 </div>
-
-                <!-- Customer info -->
                 <div class="order-card-body">
                   <p class="order-cust-name">{{ o.name }}</p>
-                  <p class="order-phone">📞 {{ o.phone }}</p>
-                  <p class="order-time">🕒 {{ fmtDT(o.orderedAt) }}</p>
+                  <p class="order-phone">{{ o.phone }}</p>
+                  <p class="order-time">{{ fmtDT(o.orderedAt) }}</p>
                 </div>
-
-                <!-- Items -->
                 <div class="order-items-box">
                   <div *ngFor="let grp of groupItemsByRestaurant(o.items)">
-                    <div class="order-rest-label">🏪 {{ grp.restaurant }}</div>
+                    <div class="order-rest-label">{{ grp.restaurant }}</div>
                     <div *ngFor="let it of grp.items" class="order-item-row">
                       <span>{{ it.name }}</span><span class="item-qty-badge">×{{ it.qty }}</span>
                     </div>
                   </div>
                 </div>
-
-                <!-- Footer: total + deliver -->
                 <div class="order-card-footer">
                   <span class="order-total-big">₹{{ o.total }}</span>
                   <button class="deliver-btn" (click)="openPayModal(o)">✔ Deliver</button>
@@ -463,7 +457,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
               </div>
             </div>
           </div>
-          <div *ngIf="pendingOrders.length===0 && !ordersSearch" class="empty-hint" style="text-align:center;padding:2rem">✔ All caught up!</div>
+          <div *ngIf="pendingOrders.length===0 && !ordersSearch" class="empty-hint" style="text-align:center;padding:2rem">All caught up!</div>
           <div *ngIf="pendingOrders.length===0 && ordersSearch" class="empty-hint" style="text-align:center;padding:2rem">No pending orders match "{{ ordersSearch }}"</div>
 
           <!-- Delivered Orders -->
@@ -484,22 +478,22 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
                     <span *ngIf="o.paymentStatus==='pending'" class="pay-badge pend">Pending{{ o.pendingAmount?' ₹'+o.pendingAmount:'' }}</span>
                   </div>
                   <div class="dots-wrap" (click)="$event.stopPropagation()">
-                    <button class="dots-btn" (click)="toggleDotsMenu(o.id)">•••</button>
+                    <button class="dots-btn" (click)="toggleDotsMenu(o.id)">···</button>
                     <div *ngIf="dotsOpenId===o.id" class="dots-drop">
-                      <button class="dots-item" (click)="openUpdModal(o); dotsOpenId=null">✏️ Edit</button>
-                      <button class="dots-item" (click)="callUser(o); dotsOpenId=null">📞 Call</button>
-                      <button class="dots-item danger" (click)="openDelModal(o); dotsOpenId=null">🗑️ Delete</button>
+                      <button class="dots-item" (click)="openUpdModal(o); dotsOpenId=null">Edit</button>
+                      <button class="dots-item" (click)="callUser(o); dotsOpenId=null">Call</button>
+                      <button class="dots-item danger" (click)="openDelModal(o); dotsOpenId=null">Delete</button>
                     </div>
                   </div>
                 </div>
                 <div class="order-card-body">
                   <p class="order-cust-name">{{ o.name }}</p>
-                  <p class="order-phone">📞 {{ o.phone }}</p>
-                  <p class="order-time">🕒 {{ fmtDT(o.orderedAt) }}</p>
+                  <p class="order-phone">{{ o.phone }}</p>
+                  <p class="order-time">{{ fmtDT(o.orderedAt) }}</p>
                 </div>
                 <div class="order-items-box">
                   <div *ngFor="let grp of groupItemsByRestaurant(o.items)">
-                    <div class="order-rest-label">🏪 {{ grp.restaurant }}</div>
+                    <div class="order-rest-label">{{ grp.restaurant }}</div>
                     <div *ngFor="let it of grp.items" class="order-item-row">
                       <span>{{ it.name }}</span><span class="item-qty-badge">×{{ it.qty }}</span>
                     </div>
@@ -512,23 +506,23 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
               </div>
             </div>
           </div>
-          <div *ngIf="localOrders.length===0 && !ordersSearch" class="empty-hint" style="text-align:center;padding:3rem">📋 No orders today</div>
+          <div *ngIf="localOrders.length===0 && !ordersSearch" class="empty-hint" style="text-align:center;padding:3rem">No orders today</div>
         </div>
 
         <!-- ════ SHOW OFF TAB ════ -->
         <div *ngIf="activeTab==='showoff'" class="tab-content">
-          <div *ngIf="showoffToast" class="inline-toast">📶 {{ showoffToast }}</div>
+          <div *ngIf="showoffToast" class="inline-toast">{{ showoffToast }}</div>
 
           <!-- Toolbar -->
           <div class="orders-toolbar">
-            <button class="btn-wa" [disabled]="showoffDisplay.length===0" (click)="doWhatsApp()">💬 Share All</button>
-            <button class="btn-primary sm" (click)="doShowOffExport()" [disabled]="showoffDisplay.length===0">⬇ XL</button>
-            <button [class]="canShowOffClear?'btn-danger sm':'btn-ghost sm'" (click)="doShowOffClear()" [disabled]="!canShowOffClear">🗑 Clear</button>
+            <button class="btn-wa" [disabled]="showoffDisplay.length===0" (click)="doWhatsApp()">Share All</button>
+            <button class="btn-primary sm" (click)="doShowOffExport()" [disabled]="showoffDisplay.length===0">↓ XL</button>
+            <button [class]="canShowOffClear?'btn-danger sm':'btn-ghost sm'" (click)="doShowOffClear()" [disabled]="!canShowOffClear">Clear</button>
           </div>
 
           <!-- Overall banner -->
           <div class="perf-banner">
-            <div class="perf-header"><span>📈</span><span>Today's Performance</span></div>
+            <div class="perf-header"><span>Today's Performance</span></div>
             <p class="perf-num">{{ showoffTotal }}</p>
             <p class="perf-sub">Total items sold today</p>
             <div *ngIf="showoffTop && !showoffUiCleared" class="perf-top">
@@ -539,7 +533,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
 
           <!-- Restaurant dropdown selector -->
           <div *ngIf="showoffByRestaurant.length > 0" class="card" style="margin-bottom:12px">
-            <h3 class="card-title" style="margin-bottom:10px">🏪 Select Restaurant</h3>
+            <h3 class="card-title" style="margin-bottom:10px">Select Restaurant</h3>
             <select [(ngModel)]="selectedShowoffRestaurant" class="form-select">
               <option value="">— View all restaurants —</option>
               <option *ngFor="let r of showoffByRestaurant" [value]="r.restaurant">
@@ -553,16 +547,15 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
             <div *ngFor="let restSection of showoffByRestaurant" class="rest-showoff-section">
               <div class="rest-showoff-header">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span>🏪</span>
+                  
                   <span class="rest-showoff-name">{{ restSection.restaurant }}</span>
                   <span class="rest-showoff-count">{{ restSection.totalItems }} items</span>
                 </div>
                 <div style="display:flex;gap:6px">
-                  <button class="btn-wa sm" (click)="doRestaurantWhatsApp(restSection)">💬</button>
-                  <button class="btn-primary sm" (click)="doRestaurantExport(restSection)">⬇</button>
+                  <button class="btn-wa sm" (click)="doRestaurantWhatsApp(restSection)">Share</button>
+                  <button class="btn-primary sm" (click)="doRestaurantExport(restSection)">↓</button>
                 </div>
               </div>
-              <!-- Collapsed preview: top 3 items only -->
               <div class="list" style="border-radius:0 0 1rem 1rem">
                 <div *ngFor="let item of restSection.items.slice(0,3); let idx=index">
                   <hr *ngIf="idx>0" class="divider" />
@@ -586,13 +579,13 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
             <div class="rest-showoff-section">
               <div class="rest-showoff-header">
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span>🏪</span>
+                  
                   <span class="rest-showoff-name">{{ selectedShowoffSection.restaurant }}</span>
                   <span class="rest-showoff-count">{{ selectedShowoffSection.totalItems }} items</span>
                 </div>
                 <div style="display:flex;gap:6px">
-                  <button class="btn-wa sm" (click)="doRestaurantWhatsApp(selectedShowoffSection)">💬</button>
-                  <button class="btn-primary sm" (click)="doRestaurantExport(selectedShowoffSection)">⬇ XL</button>
+                  <button class="btn-wa sm" (click)="doRestaurantWhatsApp(selectedShowoffSection)">Share</button>
+                  <button class="btn-primary sm" (click)="doRestaurantExport(selectedShowoffSection)">↓ XL</button>
                 </div>
               </div>
               <div class="list" style="border-radius:0 0 1rem 1rem">
@@ -616,19 +609,18 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
             </div>
           </div>
 
-          <div *ngIf="showoffDisplay.length===0" class="empty-hint" style="text-align:center;padding:3rem">📈 No orders yet — start taking orders!</div>
+          <div *ngIf="showoffDisplay.length===0" class="empty-hint" style="text-align:center;padding:3rem">No orders yet — start taking orders!</div>
         </div>
 
       </div>
     </main>
   </div>
 </div>
-<div *ngIf="saveSuccess" class="toast">✅ Saved successfully!</div>
+<div *ngIf="saveSuccess" class="toast">Saved successfully!</div>
   `,
   styles: [`
     :host { --primary:#e8546c; --destructive:#ef4444; }
     * { box-sizing:border-box; }
-
     .admin-wrap { display:flex; min-height:100vh; background:#f8fafc; font-family:'Poppins',sans-serif; }
     .sidebar-overlay { position:fixed; inset:0; z-index:50; background:rgba(0,0,0,.45); backdrop-filter:blur(3px); }
     .sidebar { position:fixed; top:0; left:0; height:100%; width:260px; background:#fff; z-index:51; box-shadow:4px 0 32px rgba(0,0,0,.12); transform:translateX(-100%); transition:transform .3s cubic-bezier(.4,0,.2,1); display:flex; flex-direction:column; }
@@ -653,20 +645,17 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .status-badge { font-size:11px; font-weight:600; padding:2px 10px; border-radius:99px; }
     .status-badge.ok { background:#dcfce7; color:#16a34a; }
     .status-badge.err { background:#fee2e2; color:#dc2626; }
-
     .global-toast { position:fixed; top:64px; left:50%; transform:translateX(-50%); z-index:9999; display:flex; align-items:center; gap:10px; background:#fff3e6; color:#1e293b; padding:10px 16px; border-radius:99px; box-shadow:0 4px 20px rgba(232,84,108,.2); border:1.5px solid var(--primary); max-width:90vw; animation:slideIn .3s ease; }
     .toast-icon { width:26px; height:26px; border-radius:50%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-size:11px; color:#fff; }
     .toast-sub { margin:0; font-size:11px; color:#64748b; font-weight:500; }
     .toast-name { margin:0; font-size:13px; font-weight:800; color:#1e293b; }
     .toast-close { background:#f1f5f9; border:1px solid #e2e8f0; border-radius:99px; width:20px; height:20px; cursor:pointer; font-size:10px; margin-left:4px; }
-
     .card { background:#fff; border-radius:1rem; padding:1.25rem; box-shadow:0 1px 3px rgba(0,0,0,.07); }
     .card-title { font-size:1rem; font-weight:700; margin:0 0 1rem; color:#1e293b; }
     .label-cap { font-size:11px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:.06em; margin:0 0 12px; }
     .divider { border-top:1px solid #f1f5f9; margin:0; }
     .tab-desc { font-size:.875rem; color:#64748b; margin-bottom:1rem; }
     .empty-hint { padding:1.5rem; color:#94a3b8; font-size:.875rem; }
-
     .toggle { position:relative; display:inline-block; width:52px; height:28px; flex-shrink:0; }
     .toggle input { opacity:0; width:0; height:0; position:absolute; }
     .slider { position:absolute; cursor:pointer; inset:0; background:#cbd5e1; border-radius:28px; transition:.3s; }
@@ -674,7 +663,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     input:checked + .slider { background:var(--primary); }
     input:checked + .slider::before { transform:translateX(24px); }
     input:disabled + .slider { opacity:.5; cursor:not-allowed; }
-
     .orders-card { display:flex; align-items:center; justify-content:space-between; padding:1.5rem; border-radius:1rem; gap:1rem; flex-wrap:wrap; }
     .orders-card.open { background:linear-gradient(135deg,#dcfce7,#bbf7d0); border:2px solid #86efac; }
     .orders-card.closed { background:linear-gradient(135deg,#fee2e2,#fecaca); border:2px solid #fca5a5; }
@@ -698,7 +686,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .rr-name { font-size:13px; font-weight:600; color:#1e293b; margin:0; }
     .rr-sub { font-size:11px; color:#64748b; margin-top:2px; }
     .rr-total { font-size:13px; font-weight:700; color:#1e293b; margin:0; }
-
     .list { background:#fff; border-radius:1rem; box-shadow:0 1px 3px rgba(0,0,0,.07); overflow:hidden; }
     .list-item { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid #f1f5f9; gap:1rem; }
     .list-item:last-child { border-bottom:none; }
@@ -715,7 +702,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .price-btn.save { background:#16a34a; }
     .price-btn.cancel { background:#dc2626; }
     .price-btn.reset { background:#f59e0b; }
-
     .badge { padding:.2rem .6rem; border-radius:99px; font-size:.7rem; font-weight:600; }
     .badge-green { background:#dcfce7; color:#16a34a; }
     .badge-red { background:#fee2e2; color:#dc2626; }
@@ -723,7 +709,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .large-tag { font-size:13px; padding:4px 10px; }
     .tag-cod { font-size:11px; font-weight:600; color:#6f42c1; background:#f0ebfd; padding:2px 8px; border-radius:99px; }
     .tag-pre { font-size:11px; font-weight:600; color:#2c7be8; background:#e6effd; padding:2px 8px; border-radius:99px; }
-
     .form-select { width:100%; padding:.625rem .875rem; border:2px solid #e2e8f0; border-radius:.625rem; font-size:.875rem; outline:none; font-family:'Poppins',sans-serif; background:#fff; cursor:pointer; }
     .form-select:focus { border-color:var(--primary); }
     .form-input { width:100%; padding:.625rem .875rem; border:2px solid #e2e8f0; border-radius:.625rem; font-size:.875rem; outline:none; font-family:'Poppins',sans-serif; background:#fff; }
@@ -737,7 +722,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .form-check { display:flex; align-items:center; gap:.5rem; font-size:.875rem; color:#374151; cursor:pointer; }
     .form-actions { display:flex; gap:.75rem; flex-wrap:wrap; }
     .coupon-form { display:flex; flex-direction:column; gap:1rem; }
-
     .btn-primary { padding:.625rem 1.5rem; border-radius:.625rem; background:var(--primary); color:#fff; border:none; cursor:pointer; font-size:.875rem; font-weight:600; font-family:'Poppins',sans-serif; transition:all .2s; display:inline-flex; align-items:center; gap:6px; }
     .btn-primary:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(232,84,108,.3); }
     .btn-primary:disabled { opacity:.6; cursor:not-allowed; transform:none; }
@@ -755,7 +739,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .btn-icon { border:none; background:none; cursor:pointer; font-size:1.1rem; padding:.25rem; border-radius:.375rem; transition:background .2s; }
     .btn-icon:hover { background:#f1f5f9; }
     .btn-icon.danger:hover { background:#fee2e2; }
-
     .coupon-item { display:flex; align-items:flex-start; justify-content:space-between; padding:1rem 1.25rem; border-bottom:1px solid #f1f5f9; gap:1rem; }
     .coupon-item:last-child { border-bottom:none; }
     .coupon-left { flex:1; }
@@ -764,8 +747,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .coupon-detail { font-size:.75rem; color:#64748b; background:#f1f5f9; padding:.125rem .5rem; border-radius:99px; }
     .coupon-desc { font-size:.8rem; color:#94a3b8; margin-top:.25rem; }
     .coupon-actions { display:flex; align-items:center; gap:.25rem; flex-shrink:0; }
-
-    /* ── Orders toolbar ── */
     .orders-toolbar { display:flex; gap:8px; align-items:center; flex-wrap:nowrap; margin-bottom:10px; }
     .toolbar-icon-btn { width:38px; height:38px; flex-shrink:0; border:1px solid #e2e8f0; background:#f8fafc; border-radius:10px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:16px; }
     .toolbar-icon-btn:disabled { opacity:.45; cursor:not-allowed; }
@@ -776,8 +757,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .sec-label-text { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; white-space:nowrap; }
     .sec-count { font-size:11px; font-weight:600; padding:1px 7px; border-radius:99px; }
     .sec-line { flex:1; height:1px; background:#e2e8f0; }
-
-    /* ── Order cards — mobile-first, generous sizing ── */
     .orders-list { display:flex; flex-direction:column; gap:14px; }
     .order-card { background:#fff; border-radius:14px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,.08); overflow:hidden; transition:all .5s; }
     .order-card.fading { opacity:.3; transform:scale(.97); }
@@ -801,8 +780,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .pay-badge.paid   { background:#dcfce7; color:#16a34a; }
     .pay-badge.unpaid { background:#fee2e2; color:#dc2626; }
     .pay-badge.pend   { background:#fef9c3; color:#92400e; }
-
-    /* ── Dots menu — bigger tap targets on mobile ── */
     .dots-wrap { position:relative; flex-shrink:0; }
     .dots-btn { width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:10px; border:1.5px solid #e2e8f0; background:#f8fafc; cursor:pointer; font-size:18px; font-weight:700; color:#64748b; line-height:1; letter-spacing:0; }
     .dots-btn:hover, .dots-btn:active { background:#e2e8f0; }
@@ -812,8 +789,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .dots-item.danger { color:#dc2626; }
     .dots-item.danger:hover, .dots-item.danger:active { background:#fee2e2; }
     .upd-rest-tag { font-size:10px; font-weight:700; color:var(--primary); background:rgba(232,84,108,.1); padding:1px 5px; border-radius:4px; margin-right:4px; }
-
-    /* ── Modals ── */
     .sheet-overlay { position:fixed; inset:0; z-index:60; display:flex; align-items:flex-end; justify-content:center; background:rgba(0,0,0,.45); backdrop-filter:blur(3px); }
     .sheet { position:relative; width:100%; max-width:520px; background:#fff; border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(0,0,0,.15); padding:20px 20px 36px; font-family:'Poppins',sans-serif; z-index:61; max-height:90vh; overflow-y:auto; }
     .sheet-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
@@ -839,8 +814,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .pay-opt.sel-paid    { border-color:#86efac; background:#f0fdf4; color:#166534; }
     .pay-opt.sel-unpaid  { border-color:#fca5a5; background:#fef2f2; color:#b91c1c; }
     .pay-opt.sel-pending { border-color:#fcd34d; background:#fffbeb; color:#92400e; }
-
-    /* ── Show Off ── */
     .perf-banner { background:var(--primary); border-radius:1rem; padding:1.25rem; color:#fff; margin-bottom:16px; }
     .perf-header { display:flex; align-items:center; gap:8px; margin-bottom:8px; font-size:14px; font-weight:600; }
     .perf-num { font-size:2.25rem; font-weight:800; margin:0; }
@@ -852,10 +825,7 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
     .rest-showoff-header { display:flex; align-items:center; justify-content:space-between; background:#fff; border-radius:1rem 1rem 0 0; padding:12px 16px; border-bottom:1px solid #f1f5f9; box-shadow:0 1px 3px rgba(0,0,0,.07); }
     .rest-showoff-name { font-size:13px; font-weight:700; color:#1e293b; }
     .rest-showoff-count { font-size:11px; color:var(--primary); background:rgba(232,84,108,.1); padding:1px 7px; border-radius:99px; font-weight:600; }
-
     .toast { position:fixed; bottom:1.5rem; right:1.5rem; z-index:100; background:#1e293b; color:#fff; padding:.75rem 1.25rem; border-radius:.75rem; font-size:.875rem; font-weight:500; box-shadow:0 8px 24px rgba(0,0,0,.2); animation:slideUp .3s ease; font-family:'Poppins',sans-serif; }
-
-    /* ── Mobile tweaks ── */
     @media (max-width: 480px) {
       .content-inner { padding:.75rem; }
       .order-cust-name { font-size:15px; }
@@ -867,7 +837,6 @@ function groupItemsByRestaurant(items: OrderItem[]): { restaurant: string; items
       .order-items-box { padding:10px 12px; }
       .order-item-row { font-size:13px; }
     }
-
     @keyframes slideUp   { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
     @keyframes slideIn   { from{opacity:0;transform:translateX(-50%) translateY(-12px)} to{opacity:1;transform:translateX(-50%) translateY(0)} }
     @keyframes pulse     { 0%,100%{opacity:1} 50%{opacity:.4} }
@@ -896,7 +865,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   editingPrice: Record<string,boolean> = {};
   tempPrices: Record<string,number> = {};
 
-  // Orders state
   ordersLoading = false;
   apiOrders: Order[] = [];
   localOrders: LocalOrder[] = [];
@@ -912,15 +880,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   paySelStatus: 'paid'|'unpaid'|'pending'|null = null;
   payPendingAmt = 0;
 
-  // Dots menu
   dotsOpenId: number | string | null = null;
 
-  // Toasts
   globalToastName = '';
   ordersToast = '';
   showoffToast = '';
 
-  // Show off
   showoffExported = false;
   showoffUiCleared = false;
   selectedShowoffRestaurant = '';
@@ -944,7 +909,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     document.removeEventListener('click', this.closeDotsMenu);
   }
 
-  // Close dots on outside click — but only if the click is not inside a dots-wrap
   private closeDotsMenu = (e: MouseEvent) => {
     if (this.dotsOpenId !== null) {
       const target = e.target as HTMLElement;
@@ -987,9 +951,8 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     });
   }
 
-  // ── Overview ──────────────────────────────────────────────────────────────
   get tabTitle(): string {
-    const m: Record<AdminTab,string> = { overview:'📊 Overview', restaurants:'🏪 Restaurants', items:'🍽️ Menu Items', coupons:'🎟️ Coupons', orders:"📋 Today's Orders", showoff:'⭐ Show Off' };
+    const m: Record<AdminTab,string> = { overview:'Overview', restaurants:'Restaurants', items:'Menu Items', coupons:'Coupons', orders:"Today's Orders", showoff:'Show Off' };
     return m[this.activeTab];
   }
   get totalUnavailableItems(): number {
@@ -1019,12 +982,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     const delivered = this.apiOrders.filter(o=>o.deliver_status==='delivered').length;
     const pending   = this.apiOrders.filter(o=>o.deliver_status!=='delivered').length;
     return [
-      { label:'Revenue',      value:`₹${rev}`,                  icon:'📈', bg:'#FEF0E6' },
-      { label:'Total Orders', value:`${this.apiOrders.length}`, icon:'🛍️', bg:'#E6EFFD' },
-      { label:'Pending',      value:`${pending}`,               icon:'⏰', bg:'#FEF7E6' },
-      { label:'Delivered',    value:`${delivered}`,             icon:'✅', bg:'#E6F5EA' },
-      { label:'COD',          value:`₹${codRev}`,              icon:'💵', bg:'#F0EBFD' },
-      { label:'Prepaid',      value:`₹${preRev}`,              icon:'💳', bg:'#E6FBF6' },
+      { label:'Revenue',      value:`₹${rev}`,                  icon:'▲', bg:'#FEF0E6' },
+      { label:'Total Orders', value:`${this.apiOrders.length}`, icon:'#', bg:'#E6EFFD' },
+      { label:'Pending',      value:`${pending}`,               icon:'◷', bg:'#FEF7E6' },
+      { label:'Delivered',    value:`${delivered}`,             icon:'✓', bg:'#E6F5EA' },
+      { label:'COD',          value:`₹${codRev}`,              icon:'C', bg:'#F0EBFD' },
+      { label:'Prepaid',      value:`₹${preRev}`,              icon:'P', bg:'#E6FBF6' },
     ];
   }
   get recentOrders(): Order[] { return [...this.apiOrders].reverse().slice(0,5); }
@@ -1036,14 +999,12 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   async saveClosedMessage(): Promise<void> { await this.doSave(() => this.adminService.setOrdersOffMessage(this.closedMessage)); }
   async saveDeliveryTime(): Promise<void>  { await this.doSave(() => this.adminService.setDeliveryTime(this.deliveryTime)); }
 
-  // ── Restaurants ───────────────────────────────────────────────────────────
   isRestAvailable(id: string): boolean { return this.adminService.isRestaurantAvailable(id); }
   async toggleRestaurant(id: string, event: Event): Promise<void> {
     const available = (event.target as HTMLInputElement).checked;
     await this.doSave(() => this.adminService.setRestaurantAvailability(id, available));
   }
 
-  // ── Menu Items ────────────────────────────────────────────────────────────
   get selectedRestaurant() { return restaurants.find(r => r.id === this.selectedRestaurantId); }
   isItemAvail(restaurantId: string, itemName: string): boolean { return this.adminService.isItemAvailable(restaurantId, itemName); }
   async toggleItem(restaurantId: string, itemName: string, event: Event): Promise<void> {
@@ -1066,7 +1027,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.editingPrice[`${restaurantId}::${itemName}`] = false;
   }
 
-  // ── Coupons ───────────────────────────────────────────────────────────────
   async saveCoupon(): Promise<void> {
     if (!this.newCoupon.code || !this.newCoupon.value) return;
     if (this.editingCoupon?.id) {
@@ -1088,7 +1048,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   }
   private defaultCoupon(): Omit<Coupon,'id'> { return { code:'', type:'percent', value:0, min_order:0, active:true, description:'' }; }
 
-  // ── Today's Orders ────────────────────────────────────────────────────────
   openUpdModal(o: LocalOrder): void { this.updModal = o; this.updItems = o.items.map(i=>({...i})); }
   openPayModal(o: LocalOrder): void { this.payModal = o; this.paySelStatus = null; this.payPendingAmt = 0; }
   openDelModal(o: LocalOrder): void { this.delModal = o; }
@@ -1156,25 +1115,14 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     this.busy = false;
   }
 
-  /**
-   * Search fix: handles plain numbers (1 → #001), #-prefixed (#001), names, phone.
-   * Shows the order ONLY if it is an exact token match OR name/phone includes query.
-   */
   private matchSearch(o: LocalOrder): boolean {
     const q = this.ordersSearch.trim().toLowerCase();
     if (!q) return true;
-
-    // Normalise query for token comparison
-    const qStripped = q.replace(/^#/, '').replace(/^0+/, '') || '0'; // remove # and leading zeros
-    const tokenNum = String(o.tokenNum); // e.g. "1", "2", "12"
-
-    // Token matches: "1" matches #001, "001" matches #001, "#001" matches #001
+    const qStripped = q.replace(/^#/, '').replace(/^0+/, '') || '0';
+    const tokenNum = String(o.tokenNum);
     const tokenMatch = tokenNum === qStripped || o.token.toLowerCase() === q;
-
-    // Name / phone contains match (only for non-numeric queries or longer queries)
     const nameMatch  = o.name.toLowerCase().includes(q);
     const phoneMatch = o.phone.includes(q);
-
     return tokenMatch || nameMatch || phoneMatch;
   }
 
@@ -1183,7 +1131,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   get pendingCount(): number   { return this.localOrders.filter(o=>o.status==='pending').length; }
   get deliveredCount(): number { return this.localOrders.filter(o=>o.status==='delivered').length; }
 
-  // ── Suggestions ───────────────────────────────────────────────────────────
   onNewItemNameChange(): void {
     const q=this.newItemName.trim();
     this.filteredSugg=q ? MENU_SUGGESTIONS.filter(s=>s.toLowerCase().includes(q.toLowerCase())) : [];
@@ -1200,7 +1147,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   chUpdQty(idx: number, d: number): void { if(this.updItems[idx].qty+d>=1) this.updItems[idx].qty+=d; }
   remUpdItem(idx: number): void { this.updItems.splice(idx,1); }
 
-  // ── Show Off ──────────────────────────────────────────────────────────────
   get showoffTally(): { name: string; qty: number; restaurant: string }[] {
     const tally: Record<string,{ name:string; qty:number; restaurant:string }> = {};
     this.apiOrders.forEach(o=>(o.items??[]).forEach((it:any)=>{
@@ -1249,7 +1195,6 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
   doShowOffExport(): void { this.ordersService.exportShowOffXlsx(this.showoffDisplay, undefined); this.showoffExported=true; this.showShowOffToast('Exported ✓'); }
   doShowOffClear(): void { if(!this.canShowOffClear) return; this.showoffUiCleared=true; this.showoffExported=false; this.showShowOffToast('List cleared ✓'); }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
   fmtDT=(d:Date):string=>fmtDT(d);
   padToken(n:number):string { return String(n).padStart(3,'0'); }
   getItemNames(o:Order):string { return (o.items??[]).map((it:any)=>it.name).join(', '); }
@@ -1263,7 +1208,68 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
     catch(e) { alert('Error saving. Check Supabase connection.'); console.error(e); }
     finally { this.saving=false; }
   }
-  private showToast():void { this.saveSuccess=true; this.statusMsg='Saved ✓'; setTimeout(()=>{ this.saveSuccess=false; this.statusMsg=''; this.cdr.detectChanges(); },2500); }
+  exportStatsXlsx(): void {
+    const rev    = this.apiOrders.reduce((s,o) => s+(o.total??0),0);
+    const codRev = this.apiOrders.filter(o=>o.payment_mode==='cod').reduce((s,o)=>s+(o.total??0),0);
+    const preRev = this.apiOrders.filter(o=>o.payment_mode!=='cod').reduce((s,o)=>s+(o.total??0),0);
+    const delivered = this.apiOrders.filter(o=>o.deliver_status==='delivered').length;
+    const pending   = this.apiOrders.filter(o=>o.deliver_status!=='delivered').length;
+
+    const XLSX = (window as any).XLSX;
+    if (!XLSX) { alert('XLSX library not available'); return; }
+
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2,'0');
+    const mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][now.getMonth()];
+    const yyyy = now.getFullYear();
+    const dateStr = `${dd} ${mon} ${yyyy}`;
+
+    // Build rows: title, blank, headers, data
+    const aoa: any[][] = [
+      [`CLGBITES - Today's Stats | ${dateStr}`],
+      [],
+      ['Metric', 'Value'],
+      ['Total Revenue (Rs.)', rev],
+      ['Total Orders', this.apiOrders.length],
+      ['Pending Orders', pending],
+      ['Delivered Orders', delivered],
+      ['COD Revenue (Rs.)', codRev],
+      ['Prepaid Revenue (Rs.)', preRev],
+      ['Active Coupons', this.activeCoupons],
+      ['Total Restaurants', this.restaurants.length],
+      ['Unavailable Restaurants', this.adminService.settings().unavailable_restaurants.length],
+      ['Unavailable Items', this.totalUnavailableItems],
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws['!cols'] = [{ wch: 30 }, { wch: 18 }];
+
+    // Header row styling (row index 2 = row 3 in Excel)
+    const headerFill = { patternType: 'solid', fgColor: { rgb: 'FEF0E6' } };
+    const headerFont = { bold: true, name: 'Arial', sz: 11 };
+    const dataFont   = { name: 'Arial', sz: 11 };
+    const border     = {
+      top:    { style: 'thin', color: { rgb: 'D1D5DB' } },
+      bottom: { style: 'thin', color: { rgb: 'D1D5DB' } },
+      left:   { style: 'thin', color: { rgb: 'D1D5DB' } },
+      right:  { style: 'thin', color: { rgb: 'D1D5DB' } },
+    };
+
+    if (ws['A1']) ws['A1'].s = { font: { bold: true, name: 'Arial', sz: 13 } };
+    ['A3','B3'].forEach(addr => {
+      if (ws[addr]) ws[addr].s = { font: headerFont, fill: headerFill, border, alignment: { horizontal: 'center' } };
+    });
+    for (let r = 4; r <= aoa.length; r++) {
+      if (ws[`A${r}`]) ws[`A${r}`].s = { font: dataFont, border };
+      if (ws[`B${r}`]) ws[`B${r}`].s = { font: dataFont, border, alignment: { horizontal: 'center' } };
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Stats');
+    XLSX.writeFile(wb, `clgbites-stats-${dateStr.replace(/ /g, '-')}.xlsx`);
+  }
+
+  private showToast():void { this.saveSuccess=true; this.statusMsg='Saved'; setTimeout(()=>{ this.saveSuccess=false; this.statusMsg=''; this.cdr.detectChanges(); },2500); }
   private showGlobalToast(name:string):void { this.globalToastName=name; clearTimeout(this.globalToastTimer); this.globalToastTimer=setTimeout(()=>{ this.globalToastName=''; this.cdr.detectChanges(); },6000); }
   private showOrdersToast(msg:string):void { this.ordersToast=msg; clearTimeout(this.ordersToastTimer); this.ordersToastTimer=setTimeout(()=>{ this.ordersToast=''; this.cdr.detectChanges(); },3500); }
   private showShowOffToast(msg:string):void { this.showoffToast=msg; clearTimeout(this.showoffToastTimer); this.showoffToastTimer=setTimeout(()=>{ this.showoffToast=''; this.cdr.detectChanges(); },3000); }
