@@ -195,6 +195,51 @@ export const restaurants: Restaurant[] = [
     ]
   },
   {
+    id: 'A1Biryani',
+    name: 'A1 Biryani',
+    image: 'assets/images/A1.jpeg',
+    rating: 5,
+    description: 'Gaining popularity Briyanis',
+    categories: ['Biryani'],
+    bestItem: 'Dum Biryani',
+    menu: [
+      {
+        category: "Student's Choice",isVeg : false,
+        items: [
+          { name: 'Dum Biryani', price: 200, isStudentChoice: true },
+        ],
+      },
+      {
+        category: "Biryani",isVeg : false,
+        items: [
+          { name: 'Dum Biryani', price: 170},
+          { name: 'Fry Biryani', price: 190},
+          { name: 'Mixed Biryani', price: 200},
+          // { name: 'Fish Fry Biryani', price: 200},
+          // { name: 'Prawns Biryani', price: 250},
+          //{ name: 'Mutton Biryani', price: 710},
+          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+      // {
+      //   category: "Double Biryani",isVeg : false,
+      //   items: [
+      //     { name: 'Double Dum Biryani', price: 390},
+      //     { name: 'Double Fry Biryani', price: 390},
+      //     { name: 'Double Mixed Biryani', price: 390},
+      //     { name: 'Double Fish Fry Biryani', price: 390},
+      //     //{ name: 'Prawns Biryani', price: 550},
+      //     //{ name: 'Mutton Biryani', price: 550},
+      //     // { name: 'Chicken Haleem (1/4 kg)', price: 200},
+      //     // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+      //     // { name: 'Chicken Haleem (1 kg)', price: 200},
+      //   ],
+      // },
+    ]
+  },
+  {
     id: 'sindhu',
     name: 'Hotel Sindhu',
     image: 'assets/images/sindhu.jpg',
