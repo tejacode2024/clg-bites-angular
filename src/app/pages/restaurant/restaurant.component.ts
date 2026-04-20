@@ -31,19 +31,19 @@ import { AdminService } from '../../services/admin.service';
       <div class="hero-wrap">
         <div *ngIf="!imageLoaded" class="shimmer" style="position:absolute;inset:0;"></div>
         <img [src]="restaurant.image" [alt]="restaurant.name"
-          class="hero-img" [class.loaded]="imageLoaded" (load)="imageLoaded = true" />
+          class="hero-img" [class.loaded]="imageLoaded" (load)="imageLoaded = true" loading="eager" />
         <div class="hero-gradient"></div>
 
         <div class="hero-topbar">
-          <button class="hero-btn" (click)="goBack()">
+          <button class="hero-btn" (click)="goBack()" aria-label="Go back">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
-          <button class="hero-btn" (click)="goToCart()" style="position:relative;">
+          <button class="hero-btn" (click)="goToCart()" style="position:relative;" aria-label="Go to cart">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
             </svg>
@@ -51,7 +51,7 @@ import { AdminService } from '../../services/admin.service';
           </button>
         </div>
 
-        <div class="hero-info fade-slide-in">
+        <div class="hero-info">
           <p class="hero-name">{{ restaurant.name }}</p>
           <div class="hero-meta">
             <span *ngFor="let s of stars" class="star" [class.filled]="s < restaurant.rating">★</span>
@@ -63,7 +63,7 @@ import { AdminService } from '../../services/admin.service';
       </div>
 
       <!-- Offer popup for specific restaurants -->
-      <div *ngIf="restaurant.id === 'Amrutha' || restaurant.id === 'KonaseemaRuchulu'" class="offer-card fade-slide-in">
+      <div *ngIf="restaurant.id === 'Amrutha' || restaurant.id === 'KonaseemaRuchulu'" class="offer-card">
         <div class="offer-inner">
           <span class="offer-tag">🎉 Today's Special</span>
           <p class="offer-text">
@@ -86,21 +86,21 @@ import { AdminService } from '../../services/admin.service';
 
       <!-- Menu sections -->
       <div style="padding: 1rem;">
-        <div *ngFor="let menuCat of restaurant.menu"
+        <div *ngFor="let menuCat of restaurant.menu; trackBy: trackCat"
           [id]="'section-' + menuCat.category"
           style="margin-bottom: 0.625rem;">
 
           <div class="menu-cat-card">
-            <button class="cat-header" (click)="toggleCat(menuCat.category)">
+            <button class="cat-header" (click)="toggleCat(menuCat.category)" type="button">
               <div class="cat-header-left">
                 <span class="cat-name">{{ menuCat.category }}</span>
                 <span class="cat-count">{{ menuCat.items.length }}</span>
               </div>
-              <span class="cat-chevron">{{ expandedCats.has(menuCat.category) ? '▲' : '▼' }}</span>
+              <span class="cat-chevron" [class.open]="expandedCats.has(menuCat.category)">▼</span>
             </button>
 
             <div *ngIf="expandedCats.has(menuCat.category)" class="items-list">
-              <div *ngFor="let item of menuCat.items" class="menu-item-row">
+              <div *ngFor="let item of menuCat.items; trackBy: trackItem" class="menu-item-row">
                 <div style="flex:1;min-width:0;">
                   <p class="item-name">{{ item.name }}</p>
                   <p class="item-price">₹{{ item.price }}</p>
@@ -108,13 +108,13 @@ import { AdminService } from '../../services/admin.service';
                 </div>
                 <div class="item-actions">
                   <ng-container *ngIf="getQty(item) === 0; else qtyControl">
-                    <button class="add-btn" (click)="addItem(item)">Add</button>
+                    <button class="add-btn" (click)="addItem(item)" type="button">Add</button>
                   </ng-container>
                   <ng-template #qtyControl>
                     <div class="qty-row">
-                      <button class="qty-btn minus-btn" (click)="removeItem(item)">−</button>
+                      <button class="qty-btn minus-btn" (click)="removeItem(item)" type="button" aria-label="Remove one">−</button>
                       <span class="qty-num">{{ getQty(item) }}</span>
-                      <button class="qty-btn plus-btn" (click)="addItem(item)">+</button>
+                      <button class="qty-btn plus-btn" (click)="addItem(item)" type="button" aria-label="Add one">+</button>
                     </div>
                   </ng-template>
                 </div>
@@ -132,12 +132,12 @@ import { AdminService } from '../../services/admin.service';
     .closed-banner { background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; }
 
     .hero-wrap { position: relative; height: 190px; overflow: hidden; }
-    .hero-img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; opacity: 0; transition: opacity 0.5s; }
+    .hero-img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; opacity: 0; transition: opacity 0.5s ease; }
     .hero-img.loaded { opacity: 1; }
     .hero-gradient { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%); }
     .hero-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 2.5rem 1rem 0; }
-    .hero-btn { border: none; cursor: pointer; border-radius: 0.75rem; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); padding: 0.5rem; display: flex; align-items: center; color: #374151; transition: transform 0.15s; position: relative; }
-    .hero-btn:active { transform: scale(0.9); }
+    .hero-btn { border: none; cursor: pointer; border-radius: 0.75rem; background: rgba(255,255,255,0.88); backdrop-filter: blur(8px); padding: 0.5rem; display: flex; align-items: center; color: #374151; transition: transform 0.15s ease, background 0.15s ease; position: relative; -webkit-tap-highlight-color: transparent; }
+    .hero-btn:active { transform: scale(0.88); background: white; }
     .cart-badge { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-size: 0.6rem; font-weight: 900; display: flex; align-items: center; justify-content: center; }
     .hero-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.75rem 1rem; }
     .hero-name { color: white; font-size: 1.4rem; font-weight: 900; line-height: 1.2; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
@@ -154,18 +154,20 @@ import { AdminService } from '../../services/admin.service';
     .offer-text { font-size: 0.85rem; color: #1a1a2e; line-height: 1.5; margin: 0; }
     .offer-limit { font-size: 0.72rem; font-weight: 600; color: #dc2626; }
 
-    .cat-nav { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.75rem 1rem; border-bottom: 1px solid #fde8c8; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
-    .cat-pill { flex-shrink: 0; border-radius: 9999px; padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 700; border: 1px solid #fde8c8; cursor: pointer; background: white; color: #6b7280; transition: all 0.2s; }
-    .cat-pill:active { transform: scale(0.95); }
+    .cat-nav { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.75rem 1rem; border-bottom: 1px solid #fde8c8; box-shadow: 0 1px 6px rgba(0,0,0,0.06); scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; }
+    .cat-nav::-webkit-scrollbar { display: none; }
+    .cat-pill { flex-shrink: 0; border-radius: 9999px; padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 700; border: 1px solid #fde8c8; cursor: pointer; background: white; color: #6b7280; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; }
+    .cat-pill:active { transform: scale(0.93); }
     .cat-active { background: linear-gradient(135deg, #f97316, #ea580c) !important; color: white !important; border-color: transparent !important; box-shadow: 0 4px 10px rgba(249,115,22,0.3); }
 
     .menu-cat-card { background: white; border-radius: 1rem; border: 1px solid #fde8c8; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-    .cat-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1rem; background: none; border: none; cursor: pointer; transition: background 0.15s; }
+    .cat-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1rem; background: none; border: none; cursor: pointer; transition: background 0.15s ease; -webkit-tap-highlight-color: transparent; }
     .cat-header:active { background: #fff7ed; }
     .cat-header-left { display: flex; align-items: center; gap: 0.625rem; }
     .cat-name { font-weight: 700; color: #1f2937; font-size: 0.875rem; }
     .cat-count { font-size: 0.7rem; color: #9ca3af; background: #f3f4f6; padding: 0.1rem 0.5rem; border-radius: 9999px; }
-    .cat-chevron { font-size: 0.65rem; color: #9ca3af; }
+    .cat-chevron { font-size: 0.65rem; color: #9ca3af; transition: transform 0.25s ease; display: inline-block; }
+    .cat-chevron.open { transform: rotate(180deg); }
 
     .items-list { border-top: 1px solid #fef7ee; }
     .menu-item-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-bottom: 1px solid #fef7ee; }
@@ -175,14 +177,20 @@ import { AdminService } from '../../services/admin.service';
     .student-badge { display: inline-flex; align-items: center; font-size: 0.7rem; background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 600; margin-top: 0.25rem; }
 
     .item-actions { flex-shrink: 0; }
-    .add-btn { padding: 0.4rem 0.9rem; border-radius: 0.625rem; background: linear-gradient(135deg, #f97316, #ea580c); border: none; color: white; font-size: 0.82rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(249,115,22,0.3); transition: transform 0.15s; }
-    .add-btn:active { transform: scale(0.95); }
+    .add-btn { padding: 0.4rem 0.9rem; border-radius: 0.625rem; background: linear-gradient(135deg, #f97316, #ea580c); border: none; color: white; font-size: 0.82rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(249,115,22,0.3); transition: transform 0.15s ease, box-shadow 0.15s ease; -webkit-tap-highlight-color: transparent; }
+    .add-btn:active { transform: scale(0.9); box-shadow: 0 1px 4px rgba(249,115,22,0.2); }
     .qty-row { display: flex; align-items: center; gap: 0.375rem; }
-    .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; transition: transform 0.15s; }
-    .qty-btn:active { transform: scale(0.9); }
+    .qty-btn { width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; transition: transform 0.15s ease; -webkit-tap-highlight-color: transparent; }
+    .qty-btn:active { transform: scale(0.85); }
     .minus-btn { background: #fff7ed; border: 1.5px solid #fed7aa; color: #f97316; }
     .plus-btn { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
     .qty-num { font-weight: 900; color: #1f2937; font-size: 0.875rem; min-width: 20px; text-align: center; }
+
+    .shimmer { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
   `]
 })
 export class RestaurantComponent implements OnInit, OnDestroy {
@@ -191,8 +199,8 @@ export class RestaurantComponent implements OnInit, OnDestroy {
   imageLoaded = false;
   expandedCats = new Set<string>();
   readonly stars = [0, 1, 2, 3, 4];
-  private timerRef: any;
   private isScrollingToCategory = false;
+  private scrollHandler!: () => void;
 
   readonly adminService = inject(AdminService);
   private readonly cartService = inject(CartService);
@@ -215,8 +223,7 @@ export class RestaurantComponent implements OnInit, OnDestroy {
 
   addItem(item: any): void {
     if (!this.restaurant) return;
-    const overriddenItem = { ...item, price: item.price };
-    this.cartService.addItem(overriddenItem, this.restaurant);
+    this.cartService.addItem({ ...item }, this.restaurant);
   }
 
   removeItem(item: any): void {
@@ -233,22 +240,23 @@ export class RestaurantComponent implements OnInit, OnDestroy {
     this.expandedCats = new Set(this.expandedCats);
   }
 
+  trackCat(index: number, cat: any): string { return cat.category; }
+  trackItem(index: number, item: any): string { return item.name; }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
     this.restaurant = restaurants.find(r => r.id === id);
     if (this.categories.length > 0) {
       this.activeCategory = this.categories[0];
-      // Auto-expand first category
       const studentCat = this.restaurant?.menu.find(m => m.category === "Student's Choice");
       this.expandedCats.add(studentCat ? "Student's Choice" : this.categories[0]);
     }
-    this.timerRef = setInterval(() => {}, 60000);
-    window.addEventListener('scroll', this.handleScroll.bind(this), { passive: true });
+    this.scrollHandler = this.handleScroll.bind(this);
+    window.addEventListener('scroll', this.scrollHandler, { passive: true });
   }
 
   ngOnDestroy(): void {
-    clearInterval(this.timerRef);
-    window.removeEventListener('scroll', this.handleScroll.bind(this));
+    window.removeEventListener('scroll', this.scrollHandler);
   }
 
   private handleScroll(): void {
@@ -265,9 +273,15 @@ export class RestaurantComponent implements OnInit, OnDestroy {
   scrollToCategory(category: string): void {
     this.activeCategory = category;
     this.isScrollingToCategory = true;
-    const el = document.getElementById('section-' + category);
-    if (el) window.scrollTo({ top: el.offsetTop - 140, behavior: 'smooth' });
-    setTimeout(() => this.isScrollingToCategory = false, 600);
+    if (!this.expandedCats.has(category)) {
+      this.expandedCats.add(category);
+      this.expandedCats = new Set(this.expandedCats);
+    }
+    setTimeout(() => {
+      const el = document.getElementById('section-' + category);
+      if (el) window.scrollTo({ top: el.offsetTop - 140, behavior: 'smooth' });
+      setTimeout(() => this.isScrollingToCategory = false, 700);
+    }, 50);
   }
 
   goBack(): void { this.router.navigate(['/']); }

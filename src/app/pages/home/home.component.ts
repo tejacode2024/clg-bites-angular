@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, effect, HostListener, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppHeaderComponent } from '../../components/app-header/app-header.component';
 import { RestaurantCardComponent } from '../../components/restaurant-card/restaurant-card.component';
@@ -26,6 +26,15 @@ const categoryCards = [
 
 const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
 
+const studentReviews = [
+  { name: "Arjun K.", branch: "CSE 3rd Year", text: "Best biryani on campus! Delivery is always on time and hot. Love the student combos 🔥", rating: 5, emoji: "😍" },
+  { name: "Priya S.", branch: "ECE 2nd Year", text: "The app is so easy to use. Ordered from Amrutha twice this week already. Highly recommend!", rating: 5, emoji: "⭐" },
+  { name: "Rahul M.", branch: "Mech 4th Year", text: "COD option is great for us students. Food quality is consistently good across all outlets.", rating: 4, emoji: "👌" },
+  { name: "Sneha R.", branch: "IT 1st Year", text: "Fruits section is a lifesaver during exam season! Fresh and affordable every time.", rating: 5, emoji: "🍎" },
+  { name: "Vikram N.", branch: "Civil 3rd Year", text: "South Indian tiffins remind me of home. Authentic flavours and great prices!", rating: 5, emoji: "🙌" },
+  { name: "Divya T.", branch: "BioTech 2nd Year", text: "Free delivery to campus is amazing. Already recommended to my entire hostel block!", rating: 5, emoji: "💯" },
+];
+
 @Component({
   selector: 'app-home',
   standalone: true,
@@ -42,12 +51,20 @@ const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
       <div>
         <!-- Promo Carousel -->
         <div class="promo-wrap">
-          <div class="promo-track">
+          <div class="promo-track"
+            (touchstart)="onTouchStart($event)"
+            (touchmove)="onTouchMove($event)"
+            (touchend)="onTouchEnd()"
+            (mousedown)="onMouseDown($event)"
+            (mousemove)="onMouseMove($event)"
+            (mouseup)="onMouseUp()"
+            (mouseleave)="onMouseUp()"
+            style="cursor: grab; user-select: none;">
             <div *ngFor="let slide of promoSlides; let i = index" class="promo-slide"
               [style.background]="'linear-gradient(135deg,' + slide.from + ',' + slide.to + ')'"
               [class.active]="i === promoIdx"
               [class.inactive]="i !== promoIdx">
-              <img [src]="slide.img" alt="" class="promo-bg-img" />
+              <img [src]="slide.img" alt="" class="promo-bg-img" loading="lazy" />
               <div class="promo-content">
                 <div class="promo-text">
                   <p class="promo-badge">{{ slide.badge }}</p>
@@ -56,15 +73,20 @@ const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
                   <span class="promo-cta">🏷️ Order Now</span>
                 </div>
                 <div class="promo-thumb">
-                  <img [src]="slide.img" alt="" class="promo-thumb-img" />
+                  <img [src]="slide.img" alt="" class="promo-thumb-img" loading="lazy" />
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Arrow buttons -->
+          <button class="promo-arrow promo-arrow-left" (click)="prevSlide()" aria-label="Previous slide">&#8249;</button>
+          <button class="promo-arrow promo-arrow-right" (click)="nextSlide()" aria-label="Next slide">&#8250;</button>
+
           <div class="promo-dots">
             <button *ngFor="let slide of promoSlides; let i = index"
               class="promo-dot" [class.active-dot]="i === promoIdx"
-              (click)="promoIdx = i"></button>
+              (click)="goToSlide(i)" [attr.aria-label]="'Go to slide ' + (i+1)"></button>
           </div>
         </div>
 
@@ -73,11 +95,11 @@ const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
           <h2 class="section-title">What's on your mind?</h2>
           <div class="cat-cards-row scrollbar-hide">
             <button *ngFor="let card of categoryCards" class="cat-card"
-              (click)="selectedCategory = card.filter; filterRestaurants()"
+              (click)="selectCategory(card.filter)"
               [class.cat-card-active]="selectedCategory === card.filter">
               <div class="cat-img-wrap"
                 [style.box-shadow]="selectedCategory === card.filter ? '0 0 0 2.5px #f97316,0 4px 12px rgba(249,115,22,0.25)' : '0 2px 8px rgba(0,0,0,0.10)'">
-                <img [src]="card.img" [alt]="card.label" class="cat-img" />
+                <img [src]="card.img" [alt]="card.label" class="cat-img" loading="lazy" />
               </div>
               <span class="cat-label" [style.color]="selectedCategory === card.filter ? '#ea580c' : '#374151'">{{ card.label }}</span>
             </button>
@@ -88,7 +110,7 @@ const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
         <div class="pills-row scrollbar-hide" style="padding: 0.5rem 1rem 0.75rem;">
           <button *ngFor="let cat of allCategories"
             class="pill" [class.pill-active]="selectedCategory === cat"
-            (click)="selectedCategory = cat; filterRestaurants()">
+            (click)="selectCategory(cat)">
             {{ cat }}
           </button>
         </div>
@@ -111,16 +133,39 @@ const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
 
           <div *ngIf="filteredRestaurants.length > 0" style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.75rem;">
             <app-restaurant-card
-              *ngFor="let restaurant of filteredRestaurants; let i = index"
+              *ngFor="let restaurant of filteredRestaurants; let i = index; trackBy: trackRestaurant"
               [restaurant]="restaurant"
               [index]="i">
             </app-restaurant-card>
           </div>
 
-          <div *ngIf="filteredRestaurants.length === 0" class="empty-state page-transition">
+          <div *ngIf="filteredRestaurants.length === 0" class="empty-state">
             <p style="font-size:2.5rem;">🍽️</p>
             <p style="font-size:1rem;font-weight:700;color:#374151;margin-top:0.5rem;">No restaurants found</p>
             <p style="font-size:0.8rem;color:#9ca3af;margin-top:0.25rem;">Try a different search or category</p>
+          </div>
+        </div>
+
+        <!-- Student Reviews Section -->
+        <div class="reviews-section">
+          <div class="reviews-header">
+            <h2 class="reviews-title">💬 What Students Say</h2>
+            <p class="reviews-sub">Real reviews from VIT-AP students</p>
+          </div>
+          <div class="reviews-track scrollbar-hide">
+            <div *ngFor="let review of studentReviews" class="review-card">
+              <div class="review-top">
+                <div class="review-avatar">{{ review.emoji }}</div>
+                <div>
+                  <p class="review-name">{{ review.name }}</p>
+                  <p class="review-branch">{{ review.branch }}</p>
+                </div>
+                <div class="review-stars">
+                  <span *ngFor="let s of [0,1,2,3,4]" class="rev-star" [class.filled]="s < review.rating">★</span>
+                </div>
+              </div>
+              <p class="review-text">"{{ review.text }}"</p>
+            </div>
           </div>
         </div>
 
@@ -141,11 +186,12 @@ const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
     </div>
   `,
   styles: [`
-    .promo-wrap { padding: 1rem 1rem 0; }
+    /* Carousel */
+    .promo-wrap { padding: 1rem 1rem 0; position: relative; }
     .promo-track { position: relative; border-radius: 1rem; overflow: hidden; height: 168px; }
-    .promo-slide { position: absolute; inset: 0; transition: opacity 0.5s, transform 0.5s; border-radius: 1rem; overflow: hidden; }
-    .promo-slide.active { opacity: 1; transform: scale(1); pointer-events: auto; }
-    .promo-slide.inactive { opacity: 0; transform: scale(0.97); pointer-events: none; }
+    .promo-slide { position: absolute; inset: 0; border-radius: 1rem; overflow: hidden; will-change: opacity, transform; }
+    .promo-slide.active { opacity: 1; transform: scale(1); transition: opacity 0.4s ease, transform 0.4s ease; pointer-events: auto; }
+    .promo-slide.inactive { opacity: 0; transform: scale(0.97); transition: opacity 0.4s ease, transform 0.4s ease; pointer-events: none; }
     .promo-bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: overlay; opacity: 0.3; }
     .promo-content { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; height: 100%; }
     .promo-text { flex: 1; }
@@ -155,39 +201,71 @@ const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
     .promo-cta { display: inline-block; margin-top: 0.6rem; background: rgba(255,255,255,0.25); color: white; font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 9999px; backdrop-filter: blur(4px); }
     .promo-thumb { width: 7rem; height: 7rem; border-radius: 1rem; overflow: hidden; flex-shrink: 0; margin-left: 1rem; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
     .promo-thumb-img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* Arrow Buttons */
+    .promo-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.88); backdrop-filter: blur(6px); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 1.3rem; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #374151; box-shadow: 0 2px 8px rgba(0,0,0,0.18); transition: transform 0.15s, background 0.15s; padding: 0; }
+    .promo-arrow:active { transform: translateY(-50%) scale(0.9); background: white; }
+    .promo-arrow-left { left: 0.5rem; }
+    .promo-arrow-right { right: 0.5rem; }
+
     .promo-dots { display: flex; justify-content: center; gap: 0.375rem; margin-top: 0.6rem; }
-    .promo-dot { width: 6px; height: 6px; border-radius: 9999px; background: #d1d5db; border: none; cursor: pointer; padding: 0; transition: width 0.3s, background 0.3s; }
+    .promo-dot { width: 6px; height: 6px; border-radius: 9999px; background: #d1d5db; border: none; cursor: pointer; padding: 0; transition: width 0.3s ease, background 0.3s ease; }
     .promo-dot.active-dot { width: 20px; background: #f97316; }
 
+    /* Category */
     .section-block { background: white; padding: 1rem 1rem 0.75rem; border-bottom: 1px solid #f3f4f6; margin-top: 0.75rem; }
     .section-title { font-size: 0.95rem; font-weight: 900; color: #d97706; margin-bottom: 0.875rem; }
-    .cat-cards-row { display: flex; gap: 1.25rem; overflow-x: auto; padding-bottom: 0.25rem; }
-    .cat-card { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; background: none; border: none; cursor: pointer; min-width: 72px; transition: transform 0.15s; }
-    .cat-card:active { transform: scale(0.95); }
-    .cat-img-wrap { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; transition: box-shadow 0.2s; }
+    .cat-cards-row { display: flex; gap: 1.25rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; }
+    .cat-card { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; background: none; border: none; cursor: pointer; min-width: 72px; transition: transform 0.15s ease; }
+    .cat-card:active { transform: scale(0.93); }
+    .cat-img-wrap { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; transition: box-shadow 0.2s ease; }
     .cat-img { width: 100%; height: 100%; object-fit: cover; }
     .cat-label { font-size: 0.72rem; font-weight: 600; text-align: center; max-width: 72px; line-height: 1.3; }
 
-    .pills-row { display: flex; gap: 0.5rem; overflow-x: auto; }
-    .pill { flex-shrink: 0; padding: 0.45rem 1rem; border-radius: 0.75rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; background: white; color: #6b7280; border: 1px solid #fde8c8; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: all 0.2s; }
-    .pill:active { transform: scale(0.95); }
+    /* Pills */
+    .pills-row { display: flex; gap: 0.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .pill { flex-shrink: 0; padding: 0.45rem 1rem; border-radius: 0.75rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; background: white; color: #6b7280; border: 1px solid #fde8c8; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: all 0.2s ease; }
+    .pill:active { transform: scale(0.93); }
     .pill.pill-active { background: linear-gradient(135deg, #f97316, #ea580c); color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(249,115,22,0.35); }
 
+    /* Search */
     .search-wrap { position: relative; }
     .search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); font-size: 0.875rem; }
     .search-input { width: 100%; padding: 0.7rem 1rem 0.7rem 2.5rem; border-radius: 0.875rem; border: 1px solid #fde8c8; background: white; font-size: 0.875rem; color: #374151; outline: none; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; }
     .search-input:focus { border-color: #f97316; box-shadow: 0 0 0 2px rgba(249,115,22,0.15); }
 
+    /* Restaurants */
     .rest-header { display: flex; align-items: center; justify-content: space-between; }
     .rest-count { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 9999px; background: #fef3e2; color: #d97706; }
-
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1rem; text-align: center; }
 
+    /* Reviews */
+    .reviews-section { background: white; margin-top: 0.75rem; padding: 1.25rem 0 1rem; border-top: 1px solid #fde8c8; border-bottom: 1px solid #fde8c8; }
+    .reviews-header { padding: 0 1rem 0.75rem; }
+    .reviews-title { font-size: 0.95rem; font-weight: 900; color: #d97706; margin-bottom: 0.2rem; }
+    .reviews-sub { font-size: 0.72rem; color: #9ca3af; }
+    .reviews-track { display: flex; gap: 0.875rem; overflow-x: auto; padding: 0.25rem 1rem 0.5rem; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
+    .review-card { flex-shrink: 0; width: 240px; background: #fffbf5; border: 1.5px solid #fde8c8; border-radius: 1rem; padding: 0.875rem; box-shadow: 0 2px 10px rgba(249,115,22,0.07); scroll-snap-align: start; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .review-card:active { transform: scale(0.97); }
+    .review-top { display: flex; align-items: center; gap: 0.625rem; margin-bottom: 0.625rem; }
+    .review-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #fef3c7, #fed7aa); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .review-name { font-size: 0.8rem; font-weight: 800; color: #1f2937; }
+    .review-branch { font-size: 0.68rem; color: #9ca3af; margin-top: 0.1rem; }
+    .review-stars { margin-left: auto; display: flex; gap: 1px; }
+    .rev-star { font-size: 0.7rem; color: #e5e7eb; }
+    .rev-star.filled { color: #fbbf24; }
+    .review-text { font-size: 0.78rem; color: #4b5563; line-height: 1.55; font-style: italic; }
+
+    /* Footer */
     .home-footer { background: white; padding: 1.5rem 1rem; border-top: 1px solid #fde8c8; }
     .footer-logo { font-size: 1.25rem; font-weight: 900; font-family: 'Playfair Display','Georgia',serif; background: linear-gradient(135deg, #ea580c, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
     .footer-sub { font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem; margin-bottom: 1rem; }
     .footer-contacts { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.75rem; color: #6b7280; margin-bottom: 1rem; }
     .footer-copy { font-size: 0.7rem; color: #d1d5db; text-align: center; }
+
+    /* Scrollbar hide */
+    .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
   `]
 })
 export class HomeComponent implements OnInit, OnDestroy {
@@ -196,11 +274,16 @@ export class HomeComponent implements OnInit, OnDestroy {
   filteredRestaurants: Restaurant[] = [];
   promoIdx = 0;
   private promoTimer: any;
-  private filterTimer: any;
+
+  // Touch/swipe state
+  private touchStartX = 0;
+  private touchDeltaX = 0;
+  private isDragging = false;
 
   readonly promoSlides = promoSlides;
   readonly categoryCards = categoryCards;
   readonly allCategories = allCategories;
+  readonly studentReviews = studentReviews;
   readonly adminService = inject(AdminService);
 
   constructor() {
@@ -212,15 +295,86 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.filterRestaurants();
-    this.promoTimer = setInterval(() => {
-      this.promoIdx = (this.promoIdx + 1) % promoSlides.length;
-    }, 4000);
-    this.filterTimer = setInterval(() => this.filterRestaurants(), 2000);
+    this.startAutoPlay();
   }
 
   ngOnDestroy(): void {
     clearInterval(this.promoTimer);
-    clearInterval(this.filterTimer);
+  }
+
+  private startAutoPlay(): void {
+    this.promoTimer = setInterval(() => {
+      this.promoIdx = (this.promoIdx + 1) % promoSlides.length;
+    }, 4000);
+  }
+
+  private resetAutoPlay(): void {
+    clearInterval(this.promoTimer);
+    this.startAutoPlay();
+  }
+
+  goToSlide(i: number): void {
+    this.promoIdx = i;
+    this.resetAutoPlay();
+  }
+
+  nextSlide(): void {
+    this.promoIdx = (this.promoIdx + 1) % promoSlides.length;
+    this.resetAutoPlay();
+  }
+
+  prevSlide(): void {
+    this.promoIdx = (this.promoIdx - 1 + promoSlides.length) % promoSlides.length;
+    this.resetAutoPlay();
+  }
+
+  // Touch events for swipe
+  onTouchStart(e: TouchEvent): void {
+    this.touchStartX = e.touches[0].clientX;
+    this.touchDeltaX = 0;
+  }
+
+  onTouchMove(e: TouchEvent): void {
+    this.touchDeltaX = e.touches[0].clientX - this.touchStartX;
+  }
+
+  onTouchEnd(): void {
+    if (Math.abs(this.touchDeltaX) > 40) {
+      if (this.touchDeltaX < 0) this.nextSlide();
+      else this.prevSlide();
+    }
+    this.touchDeltaX = 0;
+  }
+
+  // Mouse drag events for desktop
+  onMouseDown(e: MouseEvent): void {
+    this.isDragging = true;
+    this.touchStartX = e.clientX;
+    this.touchDeltaX = 0;
+  }
+
+  onMouseMove(e: MouseEvent): void {
+    if (!this.isDragging) return;
+    this.touchDeltaX = e.clientX - this.touchStartX;
+  }
+
+  onMouseUp(): void {
+    if (!this.isDragging) return;
+    this.isDragging = false;
+    if (Math.abs(this.touchDeltaX) > 40) {
+      if (this.touchDeltaX < 0) this.nextSlide();
+      else this.prevSlide();
+    }
+    this.touchDeltaX = 0;
+  }
+
+  selectCategory(cat: string): void {
+    this.selectedCategory = cat;
+    this.filterRestaurants();
+  }
+
+  trackRestaurant(index: number, r: Restaurant): string {
+    return r.id;
   }
 
   filterRestaurants(): void {
