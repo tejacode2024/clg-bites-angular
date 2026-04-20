@@ -7,7 +7,7 @@ import { CartService } from '../../services/cart.service';
 import { FormsModule } from '@angular/forms';
 import { restaurants, Restaurant } from '../../services/restaurants';
 import { AdminService } from '../../services/admin.service';
-
+//admin
 @Component({
   selector: 'app-restaurant',
   standalone: true,
