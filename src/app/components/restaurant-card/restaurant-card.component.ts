@@ -9,58 +9,102 @@ import type { Restaurant } from '../../services/restaurants';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="card-anim" [style.animation-delay]="index * 0.1 + 's'">
-      <div class="card card-hover"
+    <div class="card-anim" [style.animation-delay]="index * 0.08 + 's'">
+      <button class="rest-card"
         [class.unavailable]="!isAvailable"
-        (click)="navigate()" (keydown.enter)="navigate()"
-        tabindex="0" role="button" [attr.aria-label]="'Open ' + restaurant.name">
+        (click)="navigate()"
+        [attr.aria-label]="'Open ' + restaurant.name">
 
+        <!-- Image strip -->
         <div class="img-wrap">
           <div *ngIf="!imageLoaded" class="shimmer" style="position:absolute;inset:0;"></div>
-          <img [src]="restaurant.image" 
-  [alt]="restaurant.name" class="restaurant-img"
-            [class.loaded]="imageLoaded" (load)="imageLoaded = true" />
-          <div class="img-overlay"></div>
+          <img [src]="restaurant.image" [alt]="restaurant.name"
+            class="rest-img" [class.loaded]="imageLoaded" (load)="imageLoaded = true" />
+          <div class="img-gradient"></div>
 
-          <!-- Unavailable banner -->
-          <div *ngIf="!isAvailable" class="unavail-banner">🔴 Currently Unavailable</div>
+          <!-- Category badge -->
+          <span class="tag-badge">{{ restaurant.categories[0] }}</span>
 
-          <button class="fav-btn" (click)="toggleFavorite($event)">
-            <span [style.color]="isFavorite ? 'var(--primary)' : '#9ca3af'">{{ isFavorite ? '❤️' : '🤍' }}</span>
-          </button>
+          <!-- Delivery badge -->
+          <span class="delivery-badge">🌿 Free delivery</span>
+
+          <!-- Unavailable overlay -->
+          <div *ngIf="!isAvailable" class="unavail-overlay">🔴 Currently Unavailable</div>
         </div>
 
+        <!-- Info row -->
         <div class="card-info">
-          <h3 class="card-name">{{ restaurant.name }}</h3>
-          <p class="card-desc">{{ restaurant.description }}</p>
-          <div class="stars-row">
-            <span *ngFor="let s of stars">{{ s < restaurant.rating ? '⭐' : '☆' }}</span>
-            <span class="rating-text">({{ restaurant.rating }}.0)</span>
+          <div class="card-main">
+            <p class="card-name">{{ restaurant.name }}</p>
+            <p class="card-desc">{{ restaurant.description }}</p>
+            <div class="stars-row">
+              <span *ngFor="let s of stars" class="star" [class.filled]="s < restaurant.rating">★</span>
+              <span class="rating-text">{{ restaurant.rating }}.0</span>
+              <span class="dot">·</span>
+              <span class="time-text">⏱ 20-35 min</span>
+            </div>
+          </div>
+          <div class="price-col">
+            <p class="from-label">From</p>
+            <p class="min-price">₹{{ minPrice }}</p>
           </div>
         </div>
-      </div>
+      </button>
     </div>
   `,
   styles: [`
     .card-anim { animation: fadeInUp 0.4s ease both; }
-    @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-    .card { display:block; width:100%; overflow:hidden; border-radius:1rem; background:var(--card); box-shadow:0 1px 2px rgba(0,0,0,0.05); cursor:pointer; }
-    .card.unavailable { opacity:0.65; }
-    .card:focus { outline:2px solid rgba(232,84,108,0.3); }
-    .img-wrap { position:relative; aspect-ratio:16/10; overflow:hidden; }
-    .restaurant-img { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.5s,transform 0.7s; }
-    .restaurant-img.loaded { opacity:1; }
-    .card:hover .restaurant-img { transform:scale(1.1); }
-    .img-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(26,26,46,0.3),transparent,transparent); opacity:0; transition:opacity 0.3s; }
-    .card:hover .img-overlay { opacity:1; }
-    .unavail-banner { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); color:white; font-size:0.75rem; font-weight:600; text-align:center; padding:0.375rem; }
-    .fav-btn { position:absolute; right:0.75rem; top:0.75rem; z-index:10; border:none; cursor:pointer; border-radius:50%; background:rgba(255,255,255,0.9); padding:0.4rem; display:flex; align-items:center; font-size:1rem; }
-    .card-info { padding:0.75rem; }
-    .card-name { font-size:1rem; font-weight:600; color:var(--card-foreground); transition:color 0.2s; }
-    .card:hover .card-name { color:var(--primary); }
-    .card-desc { margin-top:0.125rem; font-size:0.75rem; color:var(--muted-foreground); overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:1; }
-    .stars-row { display:flex; align-items:center; gap:0.1rem; margin-top:0.5rem; font-size:0.75rem; }
-    .rating-text { font-size:0.75rem; color:var(--muted-foreground); margin-left:0.25rem; }
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+
+    .rest-card {
+      display: block; width: 100%; background: #ffffff; border: none;
+      border-radius: 1rem; overflow: hidden; cursor: pointer; text-align: left;
+      border: 1px solid #fde8c8; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      transition: transform 0.2s, box-shadow 0.2s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .rest-card:active { transform: scale(0.98); }
+    .rest-card.unavailable { opacity: 0.6; }
+
+    .img-wrap { position: relative; height: 90px; overflow: hidden; }
+    .rest-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.5s; }
+    .rest-img.loaded { opacity: 1; }
+    .img-gradient {
+      position: absolute; inset: 0;
+      background: linear-gradient(to right, rgba(0,0,0,0.35) 0%, transparent 60%);
+    }
+    .tag-badge {
+      position: absolute; top: 0.5rem; left: 0.5rem;
+      font-size: 0.7rem; font-weight: 700; color: white;
+      padding: 0.2rem 0.5rem; border-radius: 0.4rem;
+      background: rgba(249,115,22,0.85); backdrop-filter: blur(4px);
+    }
+    .delivery-badge {
+      position: absolute; top: 0.5rem; right: 0.5rem;
+      font-size: 0.7rem; font-weight: 700;
+      background: rgba(255,255,255,0.92); color: #16a34a;
+      padding: 0.2rem 0.5rem; border-radius: 0.4rem;
+    }
+    .unavail-overlay {
+      position: absolute; inset: 0; display: flex; align-items: center;
+      justify-content: center; background: rgba(0,0,0,0.6);
+      color: white; font-size: 0.8rem; font-weight: 700;
+    }
+
+    .card-info { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; }
+    .card-main { flex: 1; min-width: 0; }
+    .card-name { font-weight: 900; color: #111827; font-size: 0.875rem; line-height: 1.3; }
+    .card-desc { color: #9ca3af; font-size: 0.72rem; margin-top: 0.125rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .stars-row { display: flex; align-items: center; gap: 0.15rem; margin-top: 0.375rem; }
+    .star { font-size: 0.65rem; color: #e5e7eb; }
+    .star.filled { color: #fbbf24; }
+    .rating-text { font-size: 0.7rem; color: #9ca3af; margin-left: 0.2rem; }
+    .dot { width: 3px; height: 3px; border-radius: 50%; background: #d1d5db; margin: 0 0.25rem; }
+    .time-text { font-size: 0.7rem; color: #9ca3af; }
+
+    .price-col { text-align: right; flex-shrink: 0; }
+    .from-label { font-size: 0.65rem; color: #9ca3af; }
+    .min-price { font-size: 1rem; font-weight: 900; color: #f97316; }
   `]
 })
 export class RestaurantCardComponent {
@@ -71,11 +115,14 @@ export class RestaurantCardComponent {
   private readonly adminService = inject(AdminService);
 
   imageLoaded = false;
-  isFavorite = false;
   readonly stars = [0, 1, 2, 3, 4];
 
   get isAvailable(): boolean { return this.adminService.isRestaurantAvailable(this.restaurant.id); }
 
+  get minPrice(): number {
+    const prices = this.restaurant.menu.flatMap(m => m.items).map(i => i.price);
+    return prices.length ? Math.min(...prices) : 0;
+  }
+
   navigate(): void { this.router.navigate(['/restaurant', this.restaurant.id]); }
-  toggleFavorite(e: MouseEvent): void { e.preventDefault(); e.stopPropagation(); this.isFavorite = !this.isFavorite; }
 }

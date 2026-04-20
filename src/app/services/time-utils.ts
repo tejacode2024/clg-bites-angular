@@ -48,5 +48,7 @@ export function getCurrentTime(): string {
 // Calculate delivery charges
 // Rule: ₹10 per item, but flat ₹80 if total items >= 10
 export function calculateDeliveryCharges(totalItems: number): number {
-  return 0;
+  if (totalItems === 0) return 0;
+  if (totalItems >= 10) return 80;
+  return totalItems * 10;
 }

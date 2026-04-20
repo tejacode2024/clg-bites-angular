@@ -1,296 +1,253 @@
-import {
-  Component, OnInit, OnDestroy, ViewChild, ElementRef, AfterViewInit
-} from '@angular/core';
-import { inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FloatingEmojisComponent } from '../../components/floating-emojis/floating-emojis.component';
-import { MenuItemCardComponent } from '../../components/menu-item-card/menu-item-card.component';
 import { FloatingCartBarComponent } from '../../components/floating-cart-bar/floating-cart-bar.component';
 import { CartService } from '../../services/cart.service';
-import { isOrderingAllowed } from '../../services/time-utils';
 import { FormsModule } from '@angular/forms';
 import { restaurants, Restaurant } from '../../services/restaurants';
 import { AdminService } from '../../services/admin.service';
 
-
 @Component({
   selector: 'app-restaurant',
   standalone: true,
-  imports: [
-    CommonModule,
-     FormsModule,
-    FloatingEmojisComponent,
-    MenuItemCardComponent,
-    FloatingCartBarComponent,
-  ],
+  imports: [CommonModule, FormsModule, FloatingEmojisComponent, FloatingCartBarComponent],
   template: `
-    <!-- Not found -->
-    <div *ngIf="!restaurant" style="display:flex;min-height:100vh;align-items:center;justify-content:center;background:var(--background);">
-      <p style="color:var(--muted-foreground);">Restaurant not found</p>
+    <div *ngIf="!restaurant" style="display:flex;min-height:100vh;align-items:center;justify-content:center;background:#fffbf5;">
+      <p style="color:#9ca3af;">Restaurant not found</p>
     </div>
-    <!-- Restaurant unavailable banner -->
-   <div *ngIf="restaurant && !adminService.isRestaurantAvailable(restaurant.id)" class="closed-banner">
-    🔴 This restaurant is currently unavailable. Please check back later.
-      </div>
 
-    <!-- Orders closed banner -->
-   <div *ngIf="restaurant && !adminService.isOrdersAccepting()" class="closed-banner">
-    🔴 {{ adminService.settings().orders_off_message }}
-</div>
-    <!-- Restaurant page -->
-    <div *ngIf="restaurant" style="position:relative;min-height:100vh;background:var(--background);padding-bottom:7rem;">
+    <div *ngIf="restaurant && !adminService.isRestaurantAvailable(restaurant.id)" class="status-banner closed-banner" style="margin:0.75rem;">
+      🔴 This restaurant is currently unavailable.
+    </div>
+    <div *ngIf="restaurant && !adminService.isOrdersAccepting()" class="status-banner closed-banner" style="margin:0.75rem;">
+      🔴 {{ adminService.settings().orders_off_message }}
+    </div>
+
+    <div *ngIf="restaurant" style="min-height:100vh;background:#fffbf5;padding-bottom:7rem;">
       <app-floating-emojis></app-floating-emojis>
 
-      <!-- Banner -->
-      <div class="banner">
+      <!-- Hero -->
+      <div class="hero-wrap">
         <div *ngIf="!imageLoaded" class="shimmer" style="position:absolute;inset:0;"></div>
-        <img
-          [src]="restaurant.image"
-          [alt]="restaurant.name"
-          class="banner-img"
-          [class.loaded]="imageLoaded"
-          (load)="imageLoaded = true"
-        />
-        <div class="banner-gradient"></div>
+        <img [src]="restaurant.image" [alt]="restaurant.name"
+          class="hero-img" [class.loaded]="imageLoaded" (load)="imageLoaded = true" />
+        <div class="hero-gradient"></div>
 
-        <!-- Back button -->
-        <button class="back-btn" (click)="goBack()" aria-label="Go back">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
-            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <polyline points="15 18 9 12 15 6"/>
-          </svg>
-        </button>
+        <div class="hero-topbar">
+          <button class="hero-btn" (click)="goBack()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <button class="hero-btn" (click)="goToCart()" style="position:relative;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none"
+              viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            <span *ngIf="cartCount > 0" class="cart-badge">{{ cartCount }}</span>
+          </button>
+        </div>
 
-        <!-- Info overlay -->
-        <div class="banner-info fade-slide-in">
-          <h1 class="banner-title">{{ restaurant.name }}</h1>
-          <div style="display:flex;align-items:center;gap:0.5rem;margin-top:0.25rem;">
-            <div style="display:flex;align-items:center;gap:0.25rem;">
-              <svg *ngFor="let s of stars" xmlns="http://www.w3.org/2000/svg" width="16" height="16"
-                viewBox="0 0 24 24" stroke="none"
-                [attr.fill]="s < restaurant.rating ? '#fbbf24' : 'rgba(255,255,255,0.3)'">
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-              </svg>
-            </div>
-            <span style="font-size:0.875rem;color:rgba(255,255,255,0.9);">{{ restaurant.description }}</span>
+        <div class="hero-info fade-slide-in">
+          <p class="hero-name">{{ restaurant.name }}</p>
+          <div class="hero-meta">
+            <span *ngFor="let s of stars" class="star" [class.filled]="s < restaurant.rating">★</span>
+            <span class="rating-num">{{ restaurant.rating }}.0</span>
+            <span class="meta-dot">·</span>
+            <span class="hero-desc">{{ restaurant.description }}</span>
           </div>
         </div>
       </div>
-      <!-- Today's Offer Popup -->
-      <div *ngIf="restaurant.id === 'Amrutha'" class="offer-popup fade-slide-in">
-        <div class="offer-inner">
-          <span class="offer-tag">🎉 Today's Special</span>
-          <p class="offer-text">
-            🍳 <strong>Dum & Fry Biryani</strong><br>
-            + <strong>FREE Egg - </strong>  <strong>₹0 extra!</strong>
-          </p>
-          <span class="offer-limit">⏳ Limited Time Only</span>
-        </div>
-      </div>
-      <!-- Today's Offer Popup -->
-      <div *ngIf="restaurant.id === 'KonaseemaRuchulu'" class="offer-popup fade-slide-in">
-        <div class="offer-inner">
-          <span class="offer-tag">🎉 Today's Special</span>
-          <p class="offer-text">
-            🍳 <strong>Kodi Palao</strong><br>
-            + <strong>FREE Egg - </strong>  <strong>₹0 extra!</strong>
-          </p>
-          <span class="offer-limit">⏳ Limited Time Only</span>
-        </div>
-      </div>
 
+      <!-- Offer popup for specific restaurants -->
+      <div *ngIf="restaurant.id === 'Amrutha' || restaurant.id === 'KonaseemaRuchulu'" class="offer-card fade-slide-in">
+        <div class="offer-inner">
+          <span class="offer-tag">🎉 Today's Special</span>
+          <p class="offer-text">
+            🍳 <strong>{{ restaurant.id === 'Amrutha' ? 'Dum & Fry Biryani' : 'Kodi Palao' }}</strong>
+            + <strong>FREE Egg — ₹0 extra!</strong>
+          </p>
+          <span class="offer-limit">⏳ Limited Time Only</span>
+        </div>
+      </div>
 
       <!-- Sticky category nav -->
-
-
-      <div class="category-nav sticky-nav scrollbar-hide">
-        <button
-          *ngFor="let cat of categories"
+      <div class="cat-nav scrollbar-hide">
+        <button *ngFor="let cat of categories"
           (click)="scrollToCategory(cat)"
-          [class.active]="activeCategory === cat"
-          class="cat-btn"
-        >{{ cat }}</button>
+          [class.cat-active]="activeCategory === cat"
+          class="cat-pill">
+          {{ cat }}
+        </button>
       </div>
-
-      <!-- Multi-restaurant info -->
-      <div *ngIf="hasOtherRestaurantItems" class="multi-rest-info">
-        <p style="font-size:0.875rem;color:var(--primary);">
-          Your cart has items from {{ otherRestaurants.join(', ') }}. You can order from multiple restaurants!
-        </p>
-      </div>
-
 
       <!-- Menu sections -->
-      <div style="position:relative;z-index:10;padding:1rem;">
-        <div
-      *ngFor="let menuCat of getFilteredMenu(restaurant.menu); let i = index"          [id]="'section-' + menuCat.category"
-          style="margin-bottom:1.5rem;"
-        >
-          <h2 style="font-size:1.125rem;font-weight:600;color:var(--foreground);margin-bottom:0.75rem;">
-            {{ menuCat.category }}
-          </h2>
-          <div style="display:flex;flex-direction:column;gap:0.5rem;">
-            <app-menu-item-card
-              *ngFor="let item of menuCat.items"
-              [item]="item"
-              [restaurant]="restaurant"
-            ></app-menu-item-card>
+      <div style="padding: 1rem;">
+        <div *ngFor="let menuCat of restaurant.menu"
+          [id]="'section-' + menuCat.category"
+          style="margin-bottom: 0.625rem;">
+
+          <div class="menu-cat-card">
+            <button class="cat-header" (click)="toggleCat(menuCat.category)">
+              <div class="cat-header-left">
+                <span class="cat-name">{{ menuCat.category }}</span>
+                <span class="cat-count">{{ menuCat.items.length }}</span>
+              </div>
+              <span class="cat-chevron">{{ expandedCats.has(menuCat.category) ? '▲' : '▼' }}</span>
+            </button>
+
+            <div *ngIf="expandedCats.has(menuCat.category)" class="items-list">
+              <div *ngFor="let item of menuCat.items" class="menu-item-row">
+                <div style="flex:1;min-width:0;">
+                  <p class="item-name">{{ item.name }}</p>
+                  <p class="item-price">₹{{ item.price }}</p>
+                  <span *ngIf="item.isStudentChoice" class="student-badge">⭐ Student Pick</span>
+                </div>
+                <div class="item-actions">
+                  <ng-container *ngIf="getQty(item) === 0; else qtyControl">
+                    <button class="add-btn" (click)="addItem(item)">Add</button>
+                  </ng-container>
+                  <ng-template #qtyControl>
+                    <div class="qty-row">
+                      <button class="qty-btn minus-btn" (click)="removeItem(item)">−</button>
+                      <span class="qty-num">{{ getQty(item) }}</span>
+                      <button class="qty-btn plus-btn" (click)="addItem(item)">+</button>
+                    </div>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <app-floating-cart-bar></app-floating-cart-bar>
-
-      
+    </div>
   `,
   styles: [`
-  .offer-popup {
-  margin: 0.75rem 1rem;
-  border-radius: 1rem;
-  background: linear-gradient(135deg, #fff7ed, #fef3c7);
-  border: 1.5px solid #fbbf24;
-  padding: 0.875rem 1rem;
-  box-shadow: 0 4px 12px rgba(251,191,36,0.25);
-  }
-  .offer-inner { display: flex; flex-direction: column; gap: 0.4rem; }
-  .offer-tag { font-size: 0.75rem; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.05em; }
-  .offer-text { font-size: 0.875rem; color: #1a1a2e; line-height: 1.5; margin: 0; }
-  .offer-limit { font-size: 0.75rem; font-weight: 600; color: #dc2626; }
+    .status-banner { border-radius: 0.75rem; padding: 0.75rem 1rem; font-weight: 600; font-size: 0.875rem; text-align: center; }
+    .closed-banner { background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; }
 
-   .closed-banner {
-  background: #fee2e2;
-  border: 1px solid #fca5a5;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: #dc2626;
-  font-weight: 600;
-  font-size: 0.875rem;
-  margin: 1rem;
-  text-align: center;
-}
+    .hero-wrap { position: relative; height: 190px; overflow: hidden; }
+    .hero-img { width: 100%; height: 100%; object-fit: cover; object-position: center 15%; opacity: 0; transition: opacity 0.5s; }
+    .hero-img.loaded { opacity: 1; }
+    .hero-gradient { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(0,0,0,0.25) 0%, rgba(0,0,0,0.55) 100%); }
+    .hero-topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 10; display: flex; align-items: center; justify-content: space-between; padding: 2.5rem 1rem 0; }
+    .hero-btn { border: none; cursor: pointer; border-radius: 0.75rem; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); padding: 0.5rem; display: flex; align-items: center; color: #374151; transition: transform 0.15s; position: relative; }
+    .hero-btn:active { transform: scale(0.9); }
+    .cart-badge { position: absolute; top: -4px; right: -4px; width: 18px; height: 18px; border-radius: 50%; background: linear-gradient(135deg, #f97316, #ea580c); color: white; font-size: 0.6rem; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+    .hero-info { position: absolute; bottom: 0; left: 0; right: 0; padding: 0.75rem 1rem; }
+    .hero-name { color: white; font-size: 1.4rem; font-weight: 900; line-height: 1.2; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+    .hero-meta { display: flex; align-items: center; gap: 0.25rem; margin-top: 0.25rem; flex-wrap: wrap; }
+    .star { font-size: 0.75rem; color: rgba(255,255,255,0.4); }
+    .star.filled { color: #fbbf24; }
+    .rating-num { font-size: 0.8rem; color: rgba(255,255,255,0.9); margin-left: 0.25rem; }
+    .meta-dot { color: rgba(255,255,255,0.5); margin: 0 0.2rem; }
+    .hero-desc { font-size: 0.8rem; color: rgba(255,255,255,0.85); }
 
-    .banner {
-      position: relative; height: 12rem; overflow: hidden;
-    }
-    @media (min-width: 640px) { .banner { height: 14rem; } }
-    .banner-img {
-      width: 100%; height: 100%; object-fit: cover; object-position: center 15%;
-      opacity: 0; transition: opacity 0.5s;
-    }
-    .banner-img.loaded { opacity: 1; }
-    .banner-gradient {
-      position: absolute; inset: 0;
-      background: linear-gradient(to top, rgba(26,26,46,0.7), transparent);
-    }
-    .back-btn {
-      position: absolute; left: 1rem; top: 1rem; z-index: 10;
-      border: none; cursor: pointer;
-      border-radius: 50%; background: rgba(255,255,255,0.9);
-      padding: 0.5rem; backdrop-filter: blur(4px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      display: flex; align-items: center;
-      color: var(--card-foreground); transition: transform 0.2s;
-    }
-    .back-btn:hover { transform: scale(1.1); }
-    .banner-info {
-      position: absolute; bottom: 0; left: 0; right: 0; padding: 1rem;
-    }
-    .banner-title {
-      font-size: 1.5rem; font-weight: 700; color: white;
-      filter: drop-shadow(0 4px 3px rgba(0,0,0,0.15));
-    }
-    .sticky-nav {
-      position: sticky; top: 0; z-index: 30;
-      background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.75rem 1rem;
-    }
-    .cat-btn {
-      flex-shrink: 0; border-radius: 9999px;
-      padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500;
-      border: none; cursor: pointer;
-      background: var(--secondary); color: var(--secondary-foreground);
-      transition: all 0.2s;
-    }
-    .cat-btn:hover { background: rgba(253,232,236,0.8); }
-    .cat-btn.active {
-      background: var(--primary); color: var(--primary-foreground);
-      box-shadow: 0 4px 6px -1px rgba(232,84,108,0.3);
-    }
-    .toggle { position:relative; display:inline-block; width:44px; height:24px; }
-    .toggle input { opacity:0; width:0; height:0; }
-    .slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:24px; transition:0.3s; }
-    .slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.3s; }
-    .toggle input:checked + .slider { background:#16a34a; }
-    .toggle input:checked + .slider:before { transform:translateX(20px); }
-    .multi-rest-info {
-      margin: 1rem; border-radius: 0.75rem;
-      background: rgba(232,84,108,0.1);
-      border: 1px solid rgba(232,84,108,0.2);
-      padding: 0.75rem;
-      animation: fadeInUp 0.3s ease;
-    }
-    
-    
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translate(-50%, 20px); }
-      to { opacity: 1; transform: translate(-50%, 0); }
-    }
+    .offer-card { margin: 0.75rem 1rem 0; border-radius: 1rem; background: linear-gradient(135deg, #fff7ed, #fef3c7); border: 1.5px solid #fbbf24; padding: 0.875rem 1rem; box-shadow: 0 4px 12px rgba(251,191,36,0.25); }
+    .offer-inner { display: flex; flex-direction: column; gap: 0.35rem; }
+    .offer-tag { font-size: 0.7rem; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.06em; }
+    .offer-text { font-size: 0.85rem; color: #1a1a2e; line-height: 1.5; margin: 0; }
+    .offer-limit { font-size: 0.72rem; font-weight: 600; color: #dc2626; }
+
+    .cat-nav { position: sticky; top: 0; z-index: 30; background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); display: flex; gap: 0.5rem; overflow-x: auto; padding: 0.75rem 1rem; border-bottom: 1px solid #fde8c8; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+    .cat-pill { flex-shrink: 0; border-radius: 9999px; padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 700; border: 1px solid #fde8c8; cursor: pointer; background: white; color: #6b7280; transition: all 0.2s; }
+    .cat-pill:active { transform: scale(0.95); }
+    .cat-active { background: linear-gradient(135deg, #f97316, #ea580c) !important; color: white !important; border-color: transparent !important; box-shadow: 0 4px 10px rgba(249,115,22,0.3); }
+
+    .menu-cat-card { background: white; border-radius: 1rem; border: 1px solid #fde8c8; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+    .cat-header { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0.875rem 1rem; background: none; border: none; cursor: pointer; transition: background 0.15s; }
+    .cat-header:active { background: #fff7ed; }
+    .cat-header-left { display: flex; align-items: center; gap: 0.625rem; }
+    .cat-name { font-weight: 700; color: #1f2937; font-size: 0.875rem; }
+    .cat-count { font-size: 0.7rem; color: #9ca3af; background: #f3f4f6; padding: 0.1rem 0.5rem; border-radius: 9999px; }
+    .cat-chevron { font-size: 0.65rem; color: #9ca3af; }
+
+    .items-list { border-top: 1px solid #fef7ee; }
+    .menu-item-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-bottom: 1px solid #fef7ee; }
+    .menu-item-row:last-child { border-bottom: none; }
+    .item-name { font-size: 0.85rem; font-weight: 600; color: #1f2937; line-height: 1.3; }
+    .item-price { font-size: 0.85rem; font-weight: 900; color: #f97316; margin-top: 0.125rem; }
+    .student-badge { display: inline-flex; align-items: center; font-size: 0.7rem; background: #fffbeb; color: #b45309; border: 1px solid #fde68a; padding: 0.15rem 0.5rem; border-radius: 9999px; font-weight: 600; margin-top: 0.25rem; }
+
+    .item-actions { flex-shrink: 0; }
+    .add-btn { padding: 0.4rem 0.9rem; border-radius: 0.625rem; background: linear-gradient(135deg, #f97316, #ea580c); border: none; color: white; font-size: 0.82rem; font-weight: 700; cursor: pointer; box-shadow: 0 2px 8px rgba(249,115,22,0.3); transition: transform 0.15s; }
+    .add-btn:active { transform: scale(0.95); }
+    .qty-row { display: flex; align-items: center; gap: 0.375rem; }
+    .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; transition: transform 0.15s; }
+    .qty-btn:active { transform: scale(0.9); }
+    .minus-btn { background: #fff7ed; border: 1.5px solid #fed7aa; color: #f97316; }
+    .plus-btn { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
+    .qty-num { font-weight: 900; color: #1f2937; font-size: 0.875rem; min-width: 20px; text-align: center; }
   `]
 })
 export class RestaurantComponent implements OnInit, OnDestroy {
   restaurant: Restaurant | undefined;
   activeCategory = '';
   imageLoaded = false;
-  orderingAllowed = true;
-  onlyVeg = false;
-  otherRestaurants: string[] = [];
-  stars = [0, 1, 2, 3, 4];
+  expandedCats = new Set<string>();
+  readonly stars = [0, 1, 2, 3, 4];
   private timerRef: any;
   private isScrollingToCategory = false;
 
-  get categories(): string[] {
-    const menu = this.restaurant?.menu || [];
-  if (this.adminService.onlyVeg()) {
-    return menu.filter(m => m.isVeg === true).map(m => m.category);
-  }
-  return menu.map(m => m.category);
-  }
   readonly adminService = inject(AdminService);
-
-  get hasOtherRestaurantItems(): boolean {
-    return this.otherRestaurants.length > 0;
-  }
+  private readonly cartService = inject(CartService);
 
   constructor(
     private readonly route: ActivatedRoute,
     private readonly router: Router,
-    private readonly cartService: CartService
   ) {}
-  getFilteredMenu(menu: any[]): any[] {
-  if (!this.adminService.onlyVeg()) return menu;
-  return menu.filter(cat => cat.isVeg === true);
-}
+
+  get categories(): string[] {
+    return this.restaurant?.menu.map(m => m.category) || [];
+  }
+
+  get cartCount(): number { return this.cartService.totalItems(); }
+
+  getQty(item: any): number {
+    if (!this.restaurant) return 0;
+    return this.cartService.getItemQuantity(item.name, this.restaurant.id);
+  }
+
+  addItem(item: any): void {
+    if (!this.restaurant) return;
+    const overriddenItem = { ...item, price: item.price };
+    this.cartService.addItem(overriddenItem, this.restaurant);
+  }
+
+  removeItem(item: any): void {
+    if (!this.restaurant) return;
+    const qty = this.getQty(item);
+    const id = `${this.restaurant.id}-${item.name.toLowerCase().replace(/\s+/g, '-')}`;
+    if (qty <= 1) this.cartService.removeItem(id);
+    else this.cartService.updateQuantity(id, qty - 1);
+  }
+
+  toggleCat(category: string): void {
+    if (this.expandedCats.has(category)) this.expandedCats.delete(category);
+    else this.expandedCats.add(category);
+    this.expandedCats = new Set(this.expandedCats);
+  }
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
-    this.restaurant = restaurants.find((r) => r.id === id);
+    this.restaurant = restaurants.find(r => r.id === id);
     if (this.categories.length > 0) {
       this.activeCategory = this.categories[0];
+      // Auto-expand first category
+      const studentCat = this.restaurant?.menu.find(m => m.category === "Student's Choice");
+      this.expandedCats.add(studentCat ? "Student's Choice" : this.categories[0]);
     }
-    this.updateOtherRestaurants();
-    this.checkTime();
-    this.timerRef = setInterval(() => {
-      this.checkTime();
-      this.updateOtherRestaurants();
-    }, 60000);
-
-    // Listen for scroll
+    this.timerRef = setInterval(() => {}, 60000);
     window.addEventListener('scroll', this.handleScroll.bind(this), { passive: true });
   }
 
   ngOnDestroy(): void {
-    if (this.timerRef) clearInterval(this.timerRef);
+    clearInterval(this.timerRef);
     window.removeEventListener('scroll', this.handleScroll.bind(this));
   }
 
@@ -309,25 +266,10 @@ export class RestaurantComponent implements OnInit, OnDestroy {
     this.activeCategory = category;
     this.isScrollingToCategory = true;
     const el = document.getElementById('section-' + category);
-    if (el) {
-      const y = el.offsetTop - 140;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
-    setTimeout(() => (this.isScrollingToCategory = false), 600);
+    if (el) window.scrollTo({ top: el.offsetTop - 140, behavior: 'smooth' });
+    setTimeout(() => this.isScrollingToCategory = false, 600);
   }
 
-  goBack(): void {
-    this.router.navigate(['/']);
-  }
-
-  private updateOtherRestaurants(): void {
-    if (!this.restaurant) return;
-    this.otherRestaurants = this.cartService
-      .getRestaurantNames()
-      .filter((n) => n !== this.restaurant!.name);
-  }
-
-  private checkTime(): void {
-    this.orderingAllowed = isOrderingAllowed();
-  }
+  goBack(): void { this.router.navigate(['/']); }
+  goToCart(): void { this.router.navigate(['/cart']); }
 }

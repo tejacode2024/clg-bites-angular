@@ -14,8 +14,7 @@ import { categories } from '../../services/restaurants';
         [attr.aria-selected]="selected === category"
         (click)="onSelect.emit(category)"
         [class.active]="selected === category"
-        class="filter-btn"
-      >
+        class="filter-btn">
         {{ category }}
       </button>
     </div>
@@ -28,17 +27,16 @@ import { categories } from '../../services/restaurants';
     }
     .filters-row::-webkit-scrollbar { display: none; }
     .filter-btn {
-      flex-shrink: 0;
-      padding: 0.5rem 1rem; border-radius: 9999px;
-      font-size: 0.875rem; font-weight: 500;
-      border: none; cursor: pointer;
-      background: var(--card); color: var(--muted-foreground);
-      transition: all 0.2s;
+      flex-shrink: 0; padding: 0.45rem 1rem; border-radius: 0.75rem;
+      font-size: 0.8rem; font-weight: 700; border: 1px solid #fde8c8;
+      cursor: pointer; background: white; color: #6b7280;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: all 0.2s;
     }
-    .filter-btn:hover { background: var(--secondary); color: var(--card-foreground); }
+    .filter-btn:active { transform: scale(0.95); }
     .filter-btn.active {
-      background: var(--primary); color: var(--primary-foreground);
-      box-shadow: 0 4px 6px -1px rgba(232,84,108,0.3);
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: white; border-color: transparent;
+      box-shadow: 0 4px 12px rgba(249,115,22,0.35);
     }
   `]
 })

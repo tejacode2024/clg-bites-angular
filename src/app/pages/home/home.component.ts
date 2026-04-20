@@ -1,206 +1,240 @@
 import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
-import { Inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AppHeaderComponent } from '../../components/app-header/app-header.component';
-import { SearchBarComponent } from '../../components/search-bar/search-bar.component';
-import { CategoryFiltersComponent } from '../../components/category-filters/category-filters.component';
 import { RestaurantCardComponent } from '../../components/restaurant-card/restaurant-card.component';
 import { FloatingCartBarComponent } from '../../components/floating-cart-bar/floating-cart-bar.component';
 import { FloatingEmojisComponent } from '../../components/floating-emojis/floating-emojis.component';
 import { restaurants, Restaurant } from '../../services/restaurants';
-import { isOrderingAllowed } from '../../services/time-utils';
 import { AdminService } from '../../services/admin.service';
 import { FormsModule } from '@angular/forms';
+
+const promoSlides = [
+  { badge: "Today's Deal", title: "Free Delivery!", sub: "On all orders to VIT-AP Campus", from: "#f97316", to: "#ea580c", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80" },
+  { badge: "Student Pick", title: "Student Specials", sub: "Curated best-value picks", from: "#8b5cf6", to: "#7c3aed", img: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400&q=80" },
+  { badge: "Most Popular", title: "Fresh Biryanis", sub: "From 10+ local restaurants", from: "#f59e0b", to: "#d97706", img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&q=80" },
+  { badge: "Easy Payment", title: "Pay on Delivery", sub: "COD available everywhere", from: "#10b981", to: "#059669", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&q=80" },
+];
+
+const categoryCards = [
+  { label: "Biryani", filter: "Biryani", img: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=300&q=90&fit=crop&crop=center" },
+  { label: "South Indian", filter: "Tiffins", img: "https://images.unsplash.com/photo-1630409351241-e90e7eb139b3?w=300&q=90&fit=crop&crop=center" },
+  { label: "Fast Food", filter: "Fast Food", img: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=300&q=90&fit=crop&crop=center" },
+  { label: "Starters", filter: "Fast Food", img: "https://images.unsplash.com/photo-1601050690597-df0568f70950?w=300&q=90&fit=crop&crop=center" },
+  { label: "Pizzas", filter: "Fast Food", img: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=300&q=90&fit=crop&crop=center" },
+  { label: "Fruits", filter: "Fruits", img: "https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=300&q=90&fit=crop&crop=center" },
+];
+
+const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
 
 @Component({
   selector: 'app-home',
   standalone: true,
   imports: [
-    CommonModule,
-    FormsModule,
-    AppHeaderComponent,
-    SearchBarComponent,
-    CategoryFiltersComponent,
-    RestaurantCardComponent,
-    FloatingCartBarComponent,
-    FloatingEmojisComponent,
+    CommonModule, FormsModule,
+    AppHeaderComponent, RestaurantCardComponent,
+    FloatingCartBarComponent, FloatingEmojisComponent,
   ],
   template: `
-    <div style="position:relative; min-height:100vh; background:var(--background); padding-bottom:6rem;">
+    <div style="min-height:100vh; background:#fffbf5; padding-bottom:6rem;">
       <app-floating-emojis></app-floating-emojis>
       <app-header></app-header>
-   <div *ngIf="!adminService.isOrdersAccepting()" class="closed-banner">
-  ❗ {{ adminService.settings().orders_off_message }}
-</div>
-<div *ngIf="adminService.settings().delivery_time" class="delivery-banner">
-  🚚 Estimated Delivery Time: <strong>{{ adminService.settings().delivery_time }}</strong>
-</div>
-      <main style="position:relative;z-index:10;margin:0 auto;max-width:42rem;padding:1rem;">
-        <!--Offer Banner -->
-        <div class="offer-banner fade-slide-in" style = "margin-bottom:1rem">
-          <div class="offer-banner-inner">
-            <span class="offer-banner-tag">🎉 Special Offer — Amrutha & Konaseema</span>
-            <p class="offer-banner-text">
-              🍳 <strong>DUM|FRY|KODI PALAO</strong> + <strong>FREE Egg — </strong><strong>₹0 extra cost</strong>
-            </p>
-            <span class="offer-limit">⏳ Limited Time Only</span>
+
+      <div>
+        <!-- Promo Carousel -->
+        <div class="promo-wrap">
+          <div class="promo-track">
+            <div *ngFor="let slide of promoSlides; let i = index" class="promo-slide"
+              [style.background]="'linear-gradient(135deg,' + slide.from + ',' + slide.to + ')'"
+              [class.active]="i === promoIdx"
+              [class.inactive]="i !== promoIdx">
+              <img [src]="slide.img" alt="" class="promo-bg-img" />
+              <div class="promo-content">
+                <div class="promo-text">
+                  <p class="promo-badge">{{ slide.badge }}</p>
+                  <p class="promo-title">{{ slide.title }}</p>
+                  <p class="promo-sub">{{ slide.sub }}</p>
+                  <span class="promo-cta">🏷️ Order Now</span>
+                </div>
+                <div class="promo-thumb">
+                  <img [src]="slide.img" alt="" class="promo-thumb-img" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="promo-dots">
+            <button *ngFor="let slide of promoSlides; let i = index"
+              class="promo-dot" [class.active-dot]="i === promoIdx"
+              (click)="promoIdx = i"></button>
           </div>
         </div>
 
-       
+        <!-- Category image cards -->
+        <div class="section-block">
+          <h2 class="section-title">What's on your mind?</h2>
+          <div class="cat-cards-row scrollbar-hide">
+            <button *ngFor="let card of categoryCards" class="cat-card"
+              (click)="selectedCategory = card.filter; filterRestaurants()"
+              [class.cat-card-active]="selectedCategory === card.filter">
+              <div class="cat-img-wrap"
+                [style.box-shadow]="selectedCategory === card.filter ? '0 0 0 2.5px #f97316,0 4px 12px rgba(249,115,22,0.25)' : '0 2px 8px rgba(0,0,0,0.10)'">
+                <img [src]="card.img" [alt]="card.label" class="cat-img" />
+              </div>
+              <span class="cat-label" [style.color]="selectedCategory === card.filter ? '#ea580c' : '#374151'">{{ card.label }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter pills -->
+        <div class="pills-row scrollbar-hide" style="padding: 0.5rem 1rem 0.75rem;">
+          <button *ngFor="let cat of allCategories"
+            class="pill" [class.pill-active]="selectedCategory === cat"
+            (click)="selectedCategory = cat; filterRestaurants()">
+            {{ cat }}
+          </button>
+        </div>
 
         <!-- Search -->
-        <!-- Search -->
-        <div style="margin-bottom:1rem;">
-          <app-search-bar [value]="search" (onChange)="search = $event; filterRestaurants()"></app-search-bar>
+        <div style="padding: 0 1rem 0.75rem;">
+          <div class="search-wrap">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="search-input" placeholder="Search restaurants, dishes..."
+              [(ngModel)]="search" (input)="filterRestaurants()" />
+          </div>
         </div>
 
-        <!-- Veg Toggle -->
-        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
-          <label class="toggle">
-          <input type="checkbox" [checked]="adminService.onlyVeg()" (change)="adminService.toggleVeg(); filterRestaurants()">            <span class="slider"></span>
-          </label>
-          <span style="font-size:0.875rem;font-weight:600;color:#16a34a;">🥦 Only Veg</span>
-        </div>
+        <!-- Restaurants -->
+        <div style="padding: 0 1rem 1rem;">
+          <div class="rest-header">
+            <h2 class="section-title" style="margin:0;">Restaurants Near You</h2>
+            <span class="rest-count">{{ filteredRestaurants.length }} open</span>
+          </div>
 
-        <!-- Category Filters -->
-        <div style="margin-bottom:1.25rem;">
-          <app-category-filters [selected]="selectedCategory" (onSelect)="onCategorySelect($event)"></app-category-filters>
-        </div>
-
-        <!-- Restaurant Grid -->
-        <section aria-label="Restaurants">
-          <div *ngIf="filteredRestaurants.length > 0" class="restaurant-grid">
+          <div *ngIf="filteredRestaurants.length > 0" style="display:flex;flex-direction:column;gap:0.75rem;margin-top:0.75rem;">
             <app-restaurant-card
               *ngFor="let restaurant of filteredRestaurants; let i = index"
               [restaurant]="restaurant"
-              [index]="i"
-            ></app-restaurant-card>
+              [index]="i">
+            </app-restaurant-card>
           </div>
+
           <div *ngIf="filteredRestaurants.length === 0" class="empty-state page-transition">
-            <p style="font-size:1.125rem;font-weight:500;color:var(--muted-foreground);">No restaurants found</p>
-            <p style="margin-top:0.25rem;font-size:0.875rem;color:var(--muted-foreground);">Try a different search or category</p>
+            <p style="font-size:2.5rem;">🍽️</p>
+            <p style="font-size:1rem;font-weight:700;color:#374151;margin-top:0.5rem;">No restaurants found</p>
+            <p style="font-size:0.8rem;color:#9ca3af;margin-top:0.25rem;">Try a different search or category</p>
           </div>
-        </section>
+        </div>
 
         <!-- Footer -->
-        <footer style="margin-top:2.5rem;padding-bottom:1.5rem;text-align:center;">
-          <p style="font-size:0.75rem;color:var(--muted-foreground);">Made with care for college food lovers</p>
+        <footer class="home-footer">
+          <p class="footer-logo">CLGBITES</p>
+          <p class="footer-sub">Your campus food delivery partner</p>
+          <div class="footer-contacts">
+            <span>📍 VIT-AP University & Ainavolu Village</span>
+            <span>📞 7396018423</span>
+            <span>✉️ clgbites&#64;gmail.com</span>
+          </div>
+          <p class="footer-copy">© 2025 CLGBITES. All rights reserved.</p>
         </footer>
-      </main>
+      </div>
 
       <app-floating-cart-bar></app-floating-cart-bar>
-
-      
+    </div>
   `,
   styles: [`
-  .offer-banner {
-  margin: 0.75rem 1rem 0;
-  border-radius: 1rem;
-  background: linear-gradient(135deg, #fff7ed, #fef3c7);
-  border: 1.5px solid #fbbf24;
-  padding: 0.875rem 1rem;
-  box-shadow: 0 4px 12px rgba(251,191,36,0.25);
-}
-.offer-limit { color : red;}
-.offer-banner-inner { display:flex; flex-direction:column; gap:0.4rem; }
-.offer-banner-tag { font-size:0.75rem; font-weight:700; color:#d97706; text-transform:uppercase; letter-spacing:0.05em; }
-.offer-banner-text { font-size:0.875rem; color:#1a1a2e; line-height:1.5; margin:0; }
-    .closed-banner {
-  background: #fee2e2;
-  border: 1px solid #fca5a5;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: #dc2626;
-  font-weight: 600;
-  font-size: 0.875rem;
-  margin: 1rem;
-  text-align: center;
-}
-    .notice-bar {
-      display: flex; align-items: center; gap: 0.5rem;
-      border-radius: 0.75rem; background: rgba(232,84,108,0.1);
-      padding: 0.75rem 1rem; font-size: 0.875rem; margin-bottom: 1rem;
-    }
-    .restaurant-grid {
-      display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;
-    }
-    @media (min-width: 640px) { .restaurant-grid { gap: 1rem; } }
-    .empty-state {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 4rem 1rem;
-    }
-    .toggle { position:relative; display:inline-block; width:44px; height:24px; }
-    .toggle input { opacity:0; width:0; height:0; }
-    .slider { position:absolute; cursor:pointer; inset:0; background:#ccc; border-radius:24px; transition:0.3s; }
-    .slider:before { position:absolute; content:""; height:18px; width:18px; left:3px; bottom:3px; background:white; border-radius:50%; transition:0.3s; }
-    .toggle input:checked + .slider { background:#16a34a; }
-    .toggle input:checked + .slider:before { transform:translateX(20px); }
-  .delivery-banner {
-  background: #dcfce7;
-  border: 1px solid #86efac;
-  border-radius: 0.75rem;
-  padding: 0.75rem 1rem;
-  color: #16a34a;
-  font-size: 0.875rem;
-  margin: 0 1rem;
-  margin-top:10px;
-  text-align: center;
-}
+    .promo-wrap { padding: 1rem 1rem 0; }
+    .promo-track { position: relative; border-radius: 1rem; overflow: hidden; height: 168px; }
+    .promo-slide { position: absolute; inset: 0; transition: opacity 0.5s, transform 0.5s; border-radius: 1rem; overflow: hidden; }
+    .promo-slide.active { opacity: 1; transform: scale(1); pointer-events: auto; }
+    .promo-slide.inactive { opacity: 0; transform: scale(0.97); pointer-events: none; }
+    .promo-bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: overlay; opacity: 0.3; }
+    .promo-content { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; height: 100%; }
+    .promo-text { flex: 1; }
+    .promo-badge { color: rgba(255,255,255,0.8); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.25rem; }
+    .promo-title { color: white; font-size: 1.4rem; font-weight: 900; line-height: 1.2; }
+    .promo-sub { color: rgba(255,255,255,0.85); font-size: 0.8rem; font-weight: 500; margin-top: 0.25rem; }
+    .promo-cta { display: inline-block; margin-top: 0.6rem; background: rgba(255,255,255,0.25); color: white; font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 9999px; backdrop-filter: blur(4px); }
+    .promo-thumb { width: 7rem; height: 7rem; border-radius: 1rem; overflow: hidden; flex-shrink: 0; margin-left: 1rem; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+    .promo-thumb-img { width: 100%; height: 100%; object-fit: cover; }
+    .promo-dots { display: flex; justify-content: center; gap: 0.375rem; margin-top: 0.6rem; }
+    .promo-dot { width: 6px; height: 6px; border-radius: 9999px; background: #d1d5db; border: none; cursor: pointer; padding: 0; transition: width 0.3s, background 0.3s; }
+    .promo-dot.active-dot { width: 20px; background: #f97316; }
+
+    .section-block { background: white; padding: 1rem 1rem 0.75rem; border-bottom: 1px solid #f3f4f6; margin-top: 0.75rem; }
+    .section-title { font-size: 0.95rem; font-weight: 900; color: #d97706; margin-bottom: 0.875rem; }
+    .cat-cards-row { display: flex; gap: 1.25rem; overflow-x: auto; padding-bottom: 0.25rem; }
+    .cat-card { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; background: none; border: none; cursor: pointer; min-width: 72px; transition: transform 0.15s; }
+    .cat-card:active { transform: scale(0.95); }
+    .cat-img-wrap { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; transition: box-shadow 0.2s; }
+    .cat-img { width: 100%; height: 100%; object-fit: cover; }
+    .cat-label { font-size: 0.72rem; font-weight: 600; text-align: center; max-width: 72px; line-height: 1.3; }
+
+    .pills-row { display: flex; gap: 0.5rem; overflow-x: auto; }
+    .pill { flex-shrink: 0; padding: 0.45rem 1rem; border-radius: 0.75rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; background: white; color: #6b7280; border: 1px solid #fde8c8; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: all 0.2s; }
+    .pill:active { transform: scale(0.95); }
+    .pill.pill-active { background: linear-gradient(135deg, #f97316, #ea580c); color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(249,115,22,0.35); }
+
+    .search-wrap { position: relative; }
+    .search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); font-size: 0.875rem; }
+    .search-input { width: 100%; padding: 0.7rem 1rem 0.7rem 2.5rem; border-radius: 0.875rem; border: 1px solid #fde8c8; background: white; font-size: 0.875rem; color: #374151; outline: none; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; }
+    .search-input:focus { border-color: #f97316; box-shadow: 0 0 0 2px rgba(249,115,22,0.15); }
+
+    .rest-header { display: flex; align-items: center; justify-content: space-between; }
+    .rest-count { font-size: 0.75rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 9999px; background: #fef3e2; color: #d97706; }
+
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1rem; text-align: center; }
+
+    .home-footer { background: white; padding: 1.5rem 1rem; border-top: 1px solid #fde8c8; }
+    .footer-logo { font-size: 1.25rem; font-weight: 900; font-family: 'Playfair Display','Georgia',serif; background: linear-gradient(135deg, #ea580c, #7c3aed); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .footer-sub { font-size: 0.75rem; color: #9ca3af; margin-top: 0.25rem; margin-bottom: 1rem; }
+    .footer-contacts { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.75rem; color: #6b7280; margin-bottom: 1rem; }
+    .footer-copy { font-size: 0.7rem; color: #d1d5db; text-align: center; }
   `]
 })
 export class HomeComponent implements OnInit, OnDestroy {
   search = '';
   selectedCategory = 'All';
   filteredRestaurants: Restaurant[] = [];
-  orderingAllowed = true;
-  onlyVeg = false;
-  private timerRef: any;
-readonly adminService = inject(AdminService);
-   constructor() {
+  promoIdx = 0;
+  private promoTimer: any;
+  private filterTimer: any;
+
+  readonly promoSlides = promoSlides;
+  readonly categoryCards = categoryCards;
+  readonly allCategories = allCategories;
+  readonly adminService = inject(AdminService);
+
+  constructor() {
     effect(() => {
       this.adminService.settings();
       this.filterRestaurants();
-  });
-}
-   ngOnInit(): void {
-    this.filterRestaurants();
-    this.checkTime();
-    this.timerRef = setInterval(() => this.checkTime(), 60000);
-    // Re-sort when admin settings change (e.g. restaurant availability loads from Supabase)
-    setInterval(() => this.filterRestaurants(), 2000);
+    });
   }
- 
+
+  ngOnInit(): void {
+    this.filterRestaurants();
+    this.promoTimer = setInterval(() => {
+      this.promoIdx = (this.promoIdx + 1) % promoSlides.length;
+    }, 4000);
+    this.filterTimer = setInterval(() => this.filterRestaurants(), 2000);
+  }
+
   ngOnDestroy(): void {
-    if (this.timerRef) clearInterval(this.timerRef);
+    clearInterval(this.promoTimer);
+    clearInterval(this.filterTimer);
   }
 
   filterRestaurants(): void {
-  this.filteredRestaurants = restaurants.filter((r) => {
-    const matchesSearch =
-      this.search === '' ||
-      r.name.toLowerCase().includes(this.search.toLowerCase()) ||
-      r.description.toLowerCase().includes(this.search.toLowerCase());
-    const matchesCategory =
-      this.selectedCategory === 'All' || r.categories.includes(this.selectedCategory);
-    const matchesVeg = !this.adminService.onlyVeg() || r.menu.some(cat => cat.isVeg === true);
-    return matchesSearch && matchesCategory && matchesVeg;
-  }).sort((a, b) => {
-   const aAvail = this.adminService.isRestaurantAvailable(a.id) ? 0 : 1;
-    const bAvail = this.adminService.isRestaurantAvailable(b.id) ? 0 : 1;
-    if (aAvail !== bAvail) return aAvail - bAvail;
-    // Keep original order for same availability status
-    return restaurants.indexOf(a) - restaurants.indexOf(b);
-  });
-}
-  
-
-  onCategorySelect(category: string): void {
-    this.selectedCategory = category;
-    this.filterRestaurants();
-  }
-
-  private checkTime(): void {
-    this.orderingAllowed = isOrderingAllowed();
+    this.filteredRestaurants = restaurants.filter(r => {
+      const matchSearch = this.search === '' ||
+        r.name.toLowerCase().includes(this.search.toLowerCase()) ||
+        r.description.toLowerCase().includes(this.search.toLowerCase());
+      const matchCategory = this.selectedCategory === 'All' || r.categories.includes(this.selectedCategory);
+      return matchSearch && matchCategory;
+    }).sort((a, b) => {
+      const aAvail = this.adminService.isRestaurantAvailable(a.id) ? 0 : 1;
+      const bAvail = this.adminService.isRestaurantAvailable(b.id) ? 0 : 1;
+      if (aAvail !== bAvail) return aAvail - bAvail;
+      return restaurants.indexOf(a) - restaurants.indexOf(b);
+    });
   }
 }
