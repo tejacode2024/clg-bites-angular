@@ -78,3 +78,6 @@ body {
 
 .fade-slide-in { animation: fadeInUp 0.5s ease both; }
 .btn-press:active { transform: scale(0.96); }
+/* Utility classes used by components */
+.pointer-events-none { pointer-events: none !important; }
+.select-none { user-select: none; -webkit-user-select: none; }

@@ -1,5 +1,6 @@
-import { Component, OnInit, OnDestroy, inject, effect, HostListener, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { AppHeaderComponent } from '../../components/app-header/app-header.component';
 import { RestaurantCardComponent } from '../../components/restaurant-card/restaurant-card.component';
 import { FloatingCartBarComponent } from '../../components/floating-cart-bar/floating-cart-bar.component';
@@ -26,7 +27,7 @@ const categoryCards = [
 
 const allCategories = ["All", "Biryani", "Fast Food", "Tiffins", "Fruits"];
 
-const studentReviews = [
+export const studentReviews = [
   { name: "Arjun K.", branch: "CSE 3rd Year", text: "Best biryani on campus! Delivery is always on time and hot. Love the student combos 🔥", rating: 5, emoji: "😍" },
   { name: "Priya S.", branch: "ECE 2nd Year", text: "The app is so easy to use. Ordered from Amrutha twice this week already. Highly recommend!", rating: 5, emoji: "⭐" },
   { name: "Rahul M.", branch: "Mech 4th Year", text: "COD option is great for us students. Food quality is consistently good across all outlets.", rating: 4, emoji: "👌" },
@@ -49,18 +50,14 @@ const studentReviews = [
       <app-header></app-header>
 
       <div>
-        <!-- Promo Carousel -->
+        <!-- Promo Carousel — touch/swipe only, no mouse drag to avoid blocking clicks -->
         <div class="promo-wrap">
           <div class="promo-track"
             (touchstart)="onTouchStart($event)"
-            (touchmove)="onTouchMove($event)"
-            (touchend)="onTouchEnd()"
-            (mousedown)="onMouseDown($event)"
-            (mousemove)="onMouseMove($event)"
-            (mouseup)="onMouseUp()"
-            (mouseleave)="onMouseUp()"
-            style="cursor: grab; user-select: none;">
-            <div *ngFor="let slide of promoSlides; let i = index" class="promo-slide"
+            (touchend)="onTouchEnd($event)">
+
+            <div *ngFor="let slide of promoSlides; let i = index"
+              class="promo-slide"
               [style.background]="'linear-gradient(135deg,' + slide.from + ',' + slide.to + ')'"
               [class.active]="i === promoIdx"
               [class.inactive]="i !== promoIdx">
@@ -77,16 +74,17 @@ const studentReviews = [
                 </div>
               </div>
             </div>
-          </div>
 
-          <!-- Arrow buttons -->
-          <button class="promo-arrow promo-arrow-left" (click)="prevSlide()" aria-label="Previous slide">&#8249;</button>
-          <button class="promo-arrow promo-arrow-right" (click)="nextSlide()" aria-label="Next slide">&#8250;</button>
+            <!-- Arrow buttons inside track -->
+            <button class="promo-arrow promo-arrow-left" (click)="prevSlide()" type="button" aria-label="Previous">&#8249;</button>
+            <button class="promo-arrow promo-arrow-right" (click)="nextSlide()" type="button" aria-label="Next">&#8250;</button>
+          </div>
 
           <div class="promo-dots">
             <button *ngFor="let slide of promoSlides; let i = index"
+              type="button"
               class="promo-dot" [class.active-dot]="i === promoIdx"
-              (click)="goToSlide(i)" [attr.aria-label]="'Go to slide ' + (i+1)"></button>
+              (click)="goToSlide(i)"></button>
           </div>
         </div>
 
@@ -94,7 +92,7 @@ const studentReviews = [
         <div class="section-block">
           <h2 class="section-title">What's on your mind?</h2>
           <div class="cat-cards-row scrollbar-hide">
-            <button *ngFor="let card of categoryCards" class="cat-card"
+            <button *ngFor="let card of categoryCards" type="button" class="cat-card"
               (click)="selectCategory(card.filter)"
               [class.cat-card-active]="selectedCategory === card.filter">
               <div class="cat-img-wrap"
@@ -108,7 +106,7 @@ const studentReviews = [
 
         <!-- Filter pills -->
         <div class="pills-row scrollbar-hide" style="padding: 0.5rem 1rem 0.75rem;">
-          <button *ngFor="let cat of allCategories"
+          <button *ngFor="let cat of allCategories" type="button"
             class="pill" [class.pill-active]="selectedCategory === cat"
             (click)="selectCategory(cat)">
             {{ cat }}
@@ -147,16 +145,17 @@ const studentReviews = [
         </div>
 
         <!-- Student Reviews Section -->
-        <div class="reviews-section">
+        <div id="reviews-section" class="reviews-section">
           <div class="reviews-header">
             <h2 class="reviews-title">💬 What Students Say</h2>
-            <p class="reviews-sub">Real reviews from VIT-AP students</p>
+            <p class="reviews-sub">Swipe to read reviews from VIT-AP students →</p>
           </div>
+          <!-- Native scroll container — works on all devices without JS -->
           <div class="reviews-track scrollbar-hide">
             <div *ngFor="let review of studentReviews" class="review-card">
               <div class="review-top">
                 <div class="review-avatar">{{ review.emoji }}</div>
-                <div>
+                <div style="flex:1;min-width:0;">
                   <p class="review-name">{{ review.name }}</p>
                   <p class="review-branch">{{ review.branch }}</p>
                 </div>
@@ -187,37 +186,36 @@ const studentReviews = [
   `,
   styles: [`
     /* Carousel */
-    .promo-wrap { padding: 1rem 1rem 0; position: relative; }
+    .promo-wrap { padding: 1rem 1rem 0; }
     .promo-track { position: relative; border-radius: 1rem; overflow: hidden; height: 168px; }
-    .promo-slide { position: absolute; inset: 0; border-radius: 1rem; overflow: hidden; will-change: opacity, transform; }
-    .promo-slide.active { opacity: 1; transform: scale(1); transition: opacity 0.4s ease, transform 0.4s ease; pointer-events: auto; }
-    .promo-slide.inactive { opacity: 0; transform: scale(0.97); transition: opacity 0.4s ease, transform 0.4s ease; pointer-events: none; }
+    .promo-slide { position: absolute; inset: 0; border-radius: 1rem; overflow: hidden; }
+    .promo-slide.active  { opacity: 1; transform: scale(1);    transition: opacity 0.45s ease, transform 0.45s ease; pointer-events: auto; }
+    .promo-slide.inactive{ opacity: 0; transform: scale(0.97); transition: opacity 0.45s ease, transform 0.45s ease; pointer-events: none; }
     .promo-bg-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: overlay; opacity: 0.3; }
     .promo-content { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; padding: 1.25rem 1.5rem; height: 100%; }
     .promo-text { flex: 1; }
-    .promo-badge { color: rgba(255,255,255,0.8); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.25rem; }
+    .promo-badge { color: rgba(255,255,255,0.85); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; margin-bottom: 0.25rem; }
     .promo-title { color: white; font-size: 1.4rem; font-weight: 900; line-height: 1.2; }
-    .promo-sub { color: rgba(255,255,255,0.85); font-size: 0.8rem; font-weight: 500; margin-top: 0.25rem; }
-    .promo-cta { display: inline-block; margin-top: 0.6rem; background: rgba(255,255,255,0.25); color: white; font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 9999px; backdrop-filter: blur(4px); }
+    .promo-sub   { color: rgba(255,255,255,0.85); font-size: 0.8rem; font-weight: 500; margin-top: 0.25rem; }
+    .promo-cta   { display: inline-block; margin-top: 0.6rem; background: rgba(255,255,255,0.25); color: white; font-size: 0.75rem; font-weight: 700; padding: 0.35rem 0.85rem; border-radius: 9999px; backdrop-filter: blur(4px); }
     .promo-thumb { width: 7rem; height: 7rem; border-radius: 1rem; overflow: hidden; flex-shrink: 0; margin-left: 1rem; border: 2px solid rgba(255,255,255,0.3); box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
     .promo-thumb-img { width: 100%; height: 100%; object-fit: cover; }
 
-    /* Arrow Buttons */
-    .promo-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.88); backdrop-filter: blur(6px); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 1.3rem; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #374151; box-shadow: 0 2px 8px rgba(0,0,0,0.18); transition: transform 0.15s, background 0.15s; padding: 0; }
-    .promo-arrow:active { transform: translateY(-50%) scale(0.9); background: white; }
-    .promo-arrow-left { left: 0.5rem; }
+    .promo-arrow { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; background: rgba(255,255,255,0.88); border: none; border-radius: 50%; width: 32px; height: 32px; font-size: 1.4rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #374151; box-shadow: 0 2px 8px rgba(0,0,0,0.18); transition: transform 0.15s, background 0.15s; padding: 0; line-height: 1; }
+    .promo-arrow:active { transform: translateY(-50%) scale(0.88); }
+    .promo-arrow-left  { left: 0.5rem; }
     .promo-arrow-right { right: 0.5rem; }
 
     .promo-dots { display: flex; justify-content: center; gap: 0.375rem; margin-top: 0.6rem; }
     .promo-dot { width: 6px; height: 6px; border-radius: 9999px; background: #d1d5db; border: none; cursor: pointer; padding: 0; transition: width 0.3s ease, background 0.3s ease; }
     .promo-dot.active-dot { width: 20px; background: #f97316; }
 
-    /* Category */
+    /* Categories */
     .section-block { background: white; padding: 1rem 1rem 0.75rem; border-bottom: 1px solid #f3f4f6; margin-top: 0.75rem; }
     .section-title { font-size: 0.95rem; font-weight: 900; color: #d97706; margin-bottom: 0.875rem; }
     .cat-cards-row { display: flex; gap: 1.25rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; }
     .cat-card { flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; background: none; border: none; cursor: pointer; min-width: 72px; transition: transform 0.15s ease; }
-    .cat-card:active { transform: scale(0.93); }
+    .cat-card:active { transform: scale(0.92); }
     .cat-img-wrap { width: 72px; height: 72px; border-radius: 50%; overflow: hidden; transition: box-shadow 0.2s ease; }
     .cat-img { width: 100%; height: 100%; object-fit: cover; }
     .cat-label { font-size: 0.72rem; font-weight: 600; text-align: center; max-width: 72px; line-height: 1.3; }
@@ -225,7 +223,7 @@ const studentReviews = [
     /* Pills */
     .pills-row { display: flex; gap: 0.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .pill { flex-shrink: 0; padding: 0.45rem 1rem; border-radius: 0.75rem; font-size: 0.8rem; font-weight: 700; cursor: pointer; background: white; color: #6b7280; border: 1px solid #fde8c8; box-shadow: 0 1px 4px rgba(0,0,0,0.06); transition: all 0.2s ease; }
-    .pill:active { transform: scale(0.93); }
+    .pill:active { transform: scale(0.92); }
     .pill.pill-active { background: linear-gradient(135deg, #f97316, #ea580c); color: white; border-color: transparent; box-shadow: 0 4px 12px rgba(249,115,22,0.35); }
 
     /* Search */
@@ -240,18 +238,35 @@ const studentReviews = [
     .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem 1rem; text-align: center; }
 
     /* Reviews */
-    .reviews-section { background: white; margin-top: 0.75rem; padding: 1.25rem 0 1rem; border-top: 1px solid #fde8c8; border-bottom: 1px solid #fde8c8; }
-    .reviews-header { padding: 0 1rem 0.75rem; }
+    .reviews-section { background: white; margin-top: 0.75rem; padding: 1.25rem 0 1.25rem; border-top: 1px solid #fde8c8; border-bottom: 1px solid #fde8c8; }
+    .reviews-header { padding: 0 1rem 0.875rem; }
     .reviews-title { font-size: 0.95rem; font-weight: 900; color: #d97706; margin-bottom: 0.2rem; }
     .reviews-sub { font-size: 0.72rem; color: #9ca3af; }
-    .reviews-track { display: flex; gap: 0.875rem; overflow-x: auto; padding: 0.25rem 1rem 0.5rem; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; }
-    .review-card { flex-shrink: 0; width: 240px; background: #fffbf5; border: 1.5px solid #fde8c8; border-radius: 1rem; padding: 0.875rem; box-shadow: 0 2px 10px rgba(249,115,22,0.07); scroll-snap-align: start; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-    .review-card:active { transform: scale(0.97); }
+
+    /* KEY FIX: pure CSS scroll — no JS needed, works on all devices */
+    .reviews-track {
+      display: flex;
+      gap: 0.875rem;
+      overflow-x: scroll;
+      padding: 0.375rem 1rem 0.75rem;
+      -webkit-overflow-scrolling: touch;
+      scroll-snap-type: x mandatory;
+      overscroll-behavior-x: contain;
+    }
+    .review-card {
+      flex: 0 0 240px;
+      background: #fffbf5;
+      border: 1.5px solid #fde8c8;
+      border-radius: 1rem;
+      padding: 0.875rem;
+      box-shadow: 0 2px 10px rgba(249,115,22,0.07);
+      scroll-snap-align: start;
+    }
     .review-top { display: flex; align-items: center; gap: 0.625rem; margin-bottom: 0.625rem; }
     .review-avatar { width: 38px; height: 38px; border-radius: 50%; background: linear-gradient(135deg, #fef3c7, #fed7aa); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
     .review-name { font-size: 0.8rem; font-weight: 800; color: #1f2937; }
     .review-branch { font-size: 0.68rem; color: #9ca3af; margin-top: 0.1rem; }
-    .review-stars { margin-left: auto; display: flex; gap: 1px; }
+    .review-stars { display: flex; gap: 1px; flex-shrink: 0; }
     .rev-star { font-size: 0.7rem; color: #e5e7eb; }
     .rev-star.filled { color: #fbbf24; }
     .review-text { font-size: 0.78rem; color: #4b5563; line-height: 1.55; font-style: italic; }
@@ -263,7 +278,6 @@ const studentReviews = [
     .footer-contacts { display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.75rem; color: #6b7280; margin-bottom: 1rem; }
     .footer-copy { font-size: 0.7rem; color: #d1d5db; text-align: center; }
 
-    /* Scrollbar hide */
     .scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
   `]
@@ -275,10 +289,9 @@ export class HomeComponent implements OnInit, OnDestroy {
   promoIdx = 0;
   private promoTimer: any;
 
-  // Touch/swipe state
-  private touchStartX = 0;
-  private touchDeltaX = 0;
-  private isDragging = false;
+  // Touch swipe — only for carousel, separate from page scroll
+  private swipeStartX = 0;
+  private swipeStartY = 0;
 
   readonly promoSlides = promoSlides;
   readonly categoryCards = categoryCards;
@@ -313,59 +326,23 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.startAutoPlay();
   }
 
-  goToSlide(i: number): void {
-    this.promoIdx = i;
-    this.resetAutoPlay();
-  }
+  goToSlide(i: number): void { this.promoIdx = i; this.resetAutoPlay(); }
+  nextSlide(): void { this.promoIdx = (this.promoIdx + 1) % promoSlides.length; this.resetAutoPlay(); }
+  prevSlide(): void { this.promoIdx = (this.promoIdx - 1 + promoSlides.length) % promoSlides.length; this.resetAutoPlay(); }
 
-  nextSlide(): void {
-    this.promoIdx = (this.promoIdx + 1) % promoSlides.length;
-    this.resetAutoPlay();
-  }
-
-  prevSlide(): void {
-    this.promoIdx = (this.promoIdx - 1 + promoSlides.length) % promoSlides.length;
-    this.resetAutoPlay();
-  }
-
-  // Touch events for swipe
   onTouchStart(e: TouchEvent): void {
-    this.touchStartX = e.touches[0].clientX;
-    this.touchDeltaX = 0;
+    this.swipeStartX = e.touches[0].clientX;
+    this.swipeStartY = e.touches[0].clientY;
   }
 
-  onTouchMove(e: TouchEvent): void {
-    this.touchDeltaX = e.touches[0].clientX - this.touchStartX;
-  }
-
-  onTouchEnd(): void {
-    if (Math.abs(this.touchDeltaX) > 40) {
-      if (this.touchDeltaX < 0) this.nextSlide();
+  onTouchEnd(e: TouchEvent): void {
+    const dx = e.changedTouches[0].clientX - this.swipeStartX;
+    const dy = e.changedTouches[0].clientY - this.swipeStartY;
+    // Only register as horizontal swipe if more horizontal than vertical
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+      if (dx < 0) this.nextSlide();
       else this.prevSlide();
     }
-    this.touchDeltaX = 0;
-  }
-
-  // Mouse drag events for desktop
-  onMouseDown(e: MouseEvent): void {
-    this.isDragging = true;
-    this.touchStartX = e.clientX;
-    this.touchDeltaX = 0;
-  }
-
-  onMouseMove(e: MouseEvent): void {
-    if (!this.isDragging) return;
-    this.touchDeltaX = e.clientX - this.touchStartX;
-  }
-
-  onMouseUp(): void {
-    if (!this.isDragging) return;
-    this.isDragging = false;
-    if (Math.abs(this.touchDeltaX) > 40) {
-      if (this.touchDeltaX < 0) this.nextSlide();
-      else this.prevSlide();
-    }
-    this.touchDeltaX = 0;
   }
 
   selectCategory(cat: string): void {
@@ -373,9 +350,7 @@ export class HomeComponent implements OnInit, OnDestroy {
     this.filterRestaurants();
   }
 
-  trackRestaurant(index: number, r: Restaurant): string {
-    return r.id;
-  }
+  trackRestaurant(_: number, r: Restaurant): string { return r.id; }
 
   filterRestaurants(): void {
     this.filteredRestaurants = restaurants.filter(r => {
