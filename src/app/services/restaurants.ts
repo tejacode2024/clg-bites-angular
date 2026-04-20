@@ -212,9 +212,38 @@ export const restaurants: Restaurant[] = [
       {
         category: "Biryani",isVeg : false,
         items: [
+          { name: 'Dum Biryani', price: 180},
+          { name: 'Fry Biryani', price: 200},
+          { name: 'Mixed Biryani', price: 210},
+          // { name: 'Fish Fry Biryani', price: 200},
+          // { name: 'Prawns Biryani', price: 250},
+          //{ name: 'Mutton Biryani', price: 710},
+          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
+          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
+          // { name: 'Chicken Haleem (1 kg)', price: 200},
+        ],
+      },
+  {
+    id: 'TajBiryani',
+    name: 'TajBiryani',
+    image: 'assets/images/Taj.jpeg',
+    rating: 5,
+    description: 'Newly Launched',
+    categories: ['Biryani'],
+    bestItem: 'Fry Biryani',
+    menu: [
+      {
+        category: "Student's Choice",isVeg : false,
+        items: [
+          { name: 'Fry Biryani', price: 200, isStudentChoice: true },
+        ],
+      },
+      {
+        category: "Biryani",isVeg : false,
+        items: [
           { name: 'Dum Biryani', price: 170},
           { name: 'Fry Biryani', price: 190},
-          { name: 'Mixed Biryani', price: 200},
+          { name: 'Mixed Biryani', price: 210},
           // { name: 'Fish Fry Biryani', price: 200},
           // { name: 'Prawns Biryani', price: 250},
           //{ name: 'Mutton Biryani', price: 710},
@@ -260,8 +289,8 @@ export const restaurants: Restaurant[] = [
           { name: 'Dum Biryani', price: 200},
           { name: 'Fry Biryani', price: 200},
           { name: 'Mixed Biryani', price: 200},
-          { name: 'Fish Fry Biryani', price: 200},
-          { name: 'Prawns Biryani', price: 250},
+         // { name: 'Fish Fry Biryani', price: 200},
+        //  { name: 'Prawns Biryani', price: 250},
           //{ name: 'Mutton Biryani', price: 710},
           // { name: 'Chicken Haleem (1/4 kg)', price: 200},
           // { name: 'Chicken Haleem (1/2 kg)', price: 200},
