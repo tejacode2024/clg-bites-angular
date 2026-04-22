@@ -9,73 +9,62 @@ import type { Restaurant } from '../../services/restaurants';
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="card-anim" [style.animation-delay]="index * 0.1 + 's'">
-      <div class="card card-hover"
-        [class.unavailable]="!isAvailable"
-        (click)="navigate()" (keydown.enter)="navigate()"
-        tabindex="0" role="button" [attr.aria-label]="'Open ' + restaurant.name">
+    <div class="card-wrap" (click)="navigate()" (keydown.enter)="navigate()" tabindex="0" role="button" [attr.aria-label]="'Open ' + restaurant.name">
+      <div class="card" [class.unavailable]="!isAvailable">
 
+        <!-- Image -->
         <div class="img-wrap">
-          <div *ngIf="!imageLoaded" class="shimmer" style="position:absolute;inset:0;"></div>
-          <img [src]="restaurant.image" 
-  [alt]="restaurant.name" class="restaurant-img"
-            [class.loaded]="imageLoaded" (load)="imageLoaded = true" />
+          <div *ngIf="!imageLoaded" class="shimmer"></div>
+          <img [src]="restaurant.image" [alt]="restaurant.name" class="rest-img" [class.loaded]="imageLoaded" (load)="imageLoaded = true"/>
           <div class="img-overlay"></div>
-
-          <!-- Unavailable banner -->
-          <div *ngIf="!isAvailable" class="unavail-banner">🔴 Currently Unavailable</div>
-
-          <button class="fav-btn" (click)="toggleFavorite($event)">
-            <span [style.color]="isFavorite ? 'var(--primary)' : '#9ca3af'">{{ isFavorite ? '❤️' : '🤍' }}</span>
-          </button>
+          <div *ngIf="!isAvailable" class="unavail-banner">🔴 Unavailable</div>
+          <!-- Rating badge -->
+          <div class="rating-badge">
+            <span class="star">★</span> {{ restaurant.rating }}.0
+          </div>
         </div>
 
+        <!-- Info -->
         <div class="card-info">
           <h3 class="card-name">{{ restaurant.name }}</h3>
           <p class="card-desc">{{ restaurant.description }}</p>
-          <div class="stars-row">
-            <span *ngFor="let s of stars">{{ s < restaurant.rating ? '⭐' : '☆' }}</span>
-            <span class="rating-text">({{ restaurant.rating }}.0)</span>
-          </div>
-          <div *ngIf="restaurant.todayOrders" class="orders-row">
-            <div class="orders-left">
-              <span class="orders-icon">👥</span>
-              <span class="orders-count">{{ restaurant.todayOrders }} orders today</span>
-            </div>
-          </div>
-          <div *ngIf="restaurant.todayOrders" class="order-bar-wrap">
-            <div class="order-bar-fill" [style.width]="getOrderPercent() + '%'"></div>
+          <div class="card-footer">
+            <span class="orders-badge">🔥 {{ restaurant.todayOrders || 0 }}+ orders</span>
+            <span class="arrow-icon">→</span>
           </div>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .card-anim { animation: fadeInUp 0.4s ease both; }
-    @keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-    .card { display:block; width:100%; overflow:hidden; border-radius:1rem; background:var(--card); box-shadow:0 1px 2px rgba(0,0,0,0.05); cursor:pointer; }
-    .card.unavailable { opacity:0.65; }
-    .card:focus { outline:2px solid rgba(232,84,108,0.3); }
-    .img-wrap { position:relative; aspect-ratio:16/10; overflow:hidden; }
-    .restaurant-img { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.5s,transform 0.7s; }
-    .restaurant-img.loaded { opacity:1; }
-    .card:hover .restaurant-img { transform:scale(1.1); }
-    .img-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(26,26,46,0.3),transparent,transparent); opacity:0; transition:opacity 0.3s; }
-    .card:hover .img-overlay { opacity:1; }
-    .unavail-banner { position:absolute; bottom:0; left:0; right:0; background:rgba(0,0,0,0.7); color:white; font-size:0.75rem; font-weight:600; text-align:center; padding:0.375rem; }
-    .fav-btn { position:absolute; right:0.75rem; top:0.75rem; z-index:10; border:none; cursor:pointer; border-radius:50%; background:rgba(255,255,255,0.9); padding:0.4rem; display:flex; align-items:center; font-size:1rem; }
-    .card-info { padding:0.75rem; }
-    .card-name { font-size:1rem; font-weight:600; color:var(--card-foreground); transition:color 0.2s; }
-    .card:hover .card-name { color:var(--primary); }
-    .card-desc { margin-top:0.125rem; font-size:0.75rem; color:var(--muted-foreground); overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:1; }
-    .stars-row { display:flex; align-items:center; gap:0.1rem; margin-top:0.5rem; font-size:0.75rem; }
-    .rating-text { font-size:0.75rem; color:var(--muted-foreground); margin-left:0.25rem; }
-    .orders-row { display:flex; align-items:center; justify-content:space-between; margin-top:0.5rem; }
-    .orders-left { display:flex; align-items:center; gap:0.25rem; }
-    .orders-icon { font-size:0.7rem; }
-    .orders-count { font-size:0.7rem; font-weight:600; color:#ea580c; }
-    .order-bar-wrap { height:0.2rem; background:#f3d5da; border-radius:9999px; overflow:hidden; margin-top:0.375rem; }
-    .order-bar-fill { height:100%; background:linear-gradient(to right, #f97316, #fbbf24); border-radius:9999px; transition:width 0.5s; }
+    .card-wrap { cursor: pointer; }
+    .card-wrap:focus { outline: none; }
+    .card {
+      border-radius: 1rem; background: white;
+      border: 1px solid #fed7aa;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(249,115,22,0.15); }
+    .card.unavailable { opacity: 0.6; }
+    .img-wrap { position: relative; aspect-ratio: 16/10; overflow: hidden; }
+    .shimmer { position: absolute; inset: 0; background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); animation: shimmer 1.5s infinite; }
+    @keyframes shimmer { 0%{background-position:-200%} 100%{background-position:200%} }
+    .rest-img { width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.4s, transform 0.5s; }
+    .rest-img.loaded { opacity: 1; }
+    .card:hover .rest-img { transform: scale(1.05); }
+    .img-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.4), transparent, transparent); }
+    .unavail-banner { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.75); color: white; font-size: 0.6875rem; font-weight: 700; text-align: center; padding: 0.25rem; }
+    .rating-badge { position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(255,255,255,0.95); border-radius: 9999px; padding: 0.2rem 0.5rem; font-size: 0.625rem; font-weight: 700; color: #1f2937; display: flex; align-items: center; gap: 0.125rem; }
+    .star { color: #f59e0b; }
+    .card-info { padding: 0.625rem 0.75rem 0.75rem; }
+    .card-name { font-size: 0.875rem; font-weight: 700; color: #111827; margin: 0 0 0.125rem; transition: color 0.2s; }
+    .card:hover .card-name { color: #f97316; }
+    .card-desc { font-size: 0.6875rem; color: #6b7280; margin: 0 0 0.5rem; overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 1; }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; }
+    .orders-badge { font-size: 0.5625rem; font-weight: 600; color: #ea580c; background: #fff7ed; border: 1px solid #fed7aa; border-radius: 9999px; padding: 0.1rem 0.4rem; }
+    .arrow-icon { font-size: 0.75rem; color: #f97316; font-weight: 700; }
   `]
 })
 export class RestaurantCardComponent {
@@ -86,15 +75,7 @@ export class RestaurantCardComponent {
   private readonly adminService = inject(AdminService);
 
   imageLoaded = false;
-  isFavorite = false;
-  readonly stars = [0, 1, 2, 3, 4];
 
   get isAvailable(): boolean { return this.adminService.isRestaurantAvailable(this.restaurant.id); }
-
   navigate(): void { this.router.navigate(['/restaurant', this.restaurant.id]); }
-  toggleFavorite(e: MouseEvent): void { e.preventDefault(); e.stopPropagation(); this.isFavorite = !this.isFavorite; }
-  getOrderPercent(): number {
-    const max = 50; // approximate max daily orders
-    return Math.min(100, Math.round(((this.restaurant.todayOrders ?? 0) / max) * 100));
-  }
 }
