@@ -37,6 +37,15 @@ import type { Restaurant } from '../../services/restaurants';
             <span *ngFor="let s of stars">{{ s < restaurant.rating ? '⭐' : '☆' }}</span>
             <span class="rating-text">({{ restaurant.rating }}.0)</span>
           </div>
+          <div *ngIf="restaurant.todayOrders" class="orders-row">
+            <div class="orders-left">
+              <span class="orders-icon">👥</span>
+              <span class="orders-count">{{ restaurant.todayOrders }} orders today</span>
+            </div>
+          </div>
+          <div *ngIf="restaurant.todayOrders" class="order-bar-wrap">
+            <div class="order-bar-fill" [style.width]="getOrderPercent() + '%'"></div>
+          </div>
         </div>
       </div>
     </div>
@@ -61,6 +70,12 @@ import type { Restaurant } from '../../services/restaurants';
     .card-desc { margin-top:0.125rem; font-size:0.75rem; color:var(--muted-foreground); overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:1; }
     .stars-row { display:flex; align-items:center; gap:0.1rem; margin-top:0.5rem; font-size:0.75rem; }
     .rating-text { font-size:0.75rem; color:var(--muted-foreground); margin-left:0.25rem; }
+    .orders-row { display:flex; align-items:center; justify-content:space-between; margin-top:0.5rem; }
+    .orders-left { display:flex; align-items:center; gap:0.25rem; }
+    .orders-icon { font-size:0.7rem; }
+    .orders-count { font-size:0.7rem; font-weight:600; color:#ea580c; }
+    .order-bar-wrap { height:0.2rem; background:#f3d5da; border-radius:9999px; overflow:hidden; margin-top:0.375rem; }
+    .order-bar-fill { height:100%; background:linear-gradient(to right, #f97316, #fbbf24); border-radius:9999px; transition:width 0.5s; }
   `]
 })
 export class RestaurantCardComponent {
@@ -78,4 +93,8 @@ export class RestaurantCardComponent {
 
   navigate(): void { this.router.navigate(['/restaurant', this.restaurant.id]); }
   toggleFavorite(e: MouseEvent): void { e.preventDefault(); e.stopPropagation(); this.isFavorite = !this.isFavorite; }
+  getOrderPercent(): number {
+    const max = 50; // approximate max daily orders
+    return Math.min(100, Math.round(((this.restaurant.todayOrders ?? 0) / max) * 100));
+  }
 }

@@ -10,7 +10,13 @@ import { CartService } from '../../services/cart.service';
   template: `
     <!-- Header -->
     <header class="app-header">
-      <h1 class="logo-text">Clg<span>Bites</span></h1>
+      <div style="display:flex;align-items:center;gap:0.5rem;">
+        <h1 class="logo-text">Clg<span>Bites</span></h1>
+        <div class="vit-badge">
+          <span class="vit-dot"></span>
+          <span class="vit-label">VIT-AP</span>
+        </div>
+      </div>
       <div style="display:flex; align-items:center; gap:0.5rem;">
         <!-- Cart Icon -->
         <button class="icon-btn" (click)="goToCart()" aria-label="Open cart">
@@ -163,6 +169,14 @@ import { CartService } from '../../services/cart.service';
       font-size: 0.75rem; color: var(--muted-foreground);
       text-align: center; line-height: 1.625;
     }
+    .vit-badge {
+      display:flex; align-items:center; gap:0.25rem;
+      background: rgba(255,255,255,0.2); border-radius:9999px;
+      padding:0.2rem 0.5rem;
+    }
+    .vit-dot { width:0.375rem; height:0.375rem; border-radius:50%; background:white; animation:pulseDot 2s infinite; }
+    .vit-label { font-size:0.65rem; color:rgba(255,255,255,0.9); font-weight:600; }
+    @keyframes pulseDot { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
   `]
 })
 export class AppHeaderComponent {

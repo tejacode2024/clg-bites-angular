@@ -19,6 +19,7 @@ export interface Restaurant {
   description: string;
   categories: string[];
   bestItem: string;
+  todayOrders?: number;
   menu: MenuCategory[];
 }
 
@@ -31,6 +32,7 @@ export const restaurants: Restaurant[] = [
     description: 'Fresh fruits available daily at market prices',
     categories: ['Fruits'],
     bestItem: 'Fresh Seasonal Fruits',
+    todayOrders: 19,
     menu: [
       {
         category: 'Fresh Fruits', isVeg: true ,
@@ -89,6 +91,7 @@ export const restaurants: Restaurant[] = [
     description: 'Bagara Rice + Fry Piece Curry',
     categories: ['Biryani'],
     bestItem: 'Andhra Fry Piece Palao',
+    todayOrders: 35,
     menu: [
       {
         category: "Student's Choice",isVeg : false,
@@ -135,6 +138,7 @@ export const restaurants: Restaurant[] = [
     description: 'Mughalai Birynai is Famous Here',
     categories: ['Biryani'],
     bestItem: 'Mughalai Biryani',
+    todayOrders: 28,
     menu: [
       {
         category: "Student's Choice",isVeg : false,
@@ -202,6 +206,7 @@ export const restaurants: Restaurant[] = [
     description: 'Gaining popularity Briyanis',
     categories: ['Biryani'],
     bestItem: 'Dum Biryani',
+    todayOrders: 22,
     menu: [
       {
         category: "Student's Choice",isVeg : false,
@@ -247,6 +252,7 @@ export const restaurants: Restaurant[] = [
     description: 'Best Biryanis in Mandadam',
     categories: ['Biryani'],
     bestItem: 'Dum Biryani',
+    todayOrders: 18,
     menu: [
       {
         category: "Student's Choice",isVeg : false,
@@ -293,6 +299,7 @@ export const restaurants: Restaurant[] = [
     description: 'Food & Bavarages',
     categories: ['Food'],
     bestItem: 'pizza',
+    todayOrders: 25,
     menu: [
       {
         category: "Student's Choice",isVeg : false,
@@ -449,6 +456,7 @@ export const restaurants: Restaurant[] = [
     description: 'Your go-to spot for quick Chinese & Fast Foods',
     categories: ['Fast Food'],
     bestItem: 'Chicken Noodles',
+    todayOrders: 37,
     menu: [
       {
         category: "Student's Choice",isVeg : false ,
@@ -508,6 +516,7 @@ export const restaurants: Restaurant[] = [
     description: 'Lollipop Biryani is famous here',
     categories: ['Biryani'],
     bestItem: 'Lollipop Biryani',
+    todayOrders: 20,
     menu: [
       {
         category: "Student's Choice",isVeg : false,
@@ -544,6 +553,7 @@ export const restaurants: Restaurant[] = [
     description: 'Authentic restaurant-style veg and non-veg dishes',
     categories: ['Biryani', 'Veg Meals'],
     bestItem: 'Biryanis, Starters, Soups & Curries',
+    todayOrders: 43,
     menu: [
       {
         category: 'Veg Biryanis',isVeg : true,
@@ -945,6 +955,7 @@ export const restaurants: Restaurant[] = [
     description: 'Best Pulkha & Egg Burji combos at budget prices',
     categories: ['Veg Meals'],
     bestItem: '3 Pulkha + Egg Burji Combo',
+    todayOrders: 31,
     menu: [
       {
         category: "Student's Choice",isVeg : false,
@@ -988,6 +999,7 @@ export const restaurants: Restaurant[] = [
     description: 'Choose from two or more outlets for South Indian breakfast',
     categories: ['Tiffins'],
     bestItem: 'Masala Dosa & Idli',
+    todayOrders: 27,
     menu: [
       {
         category: 'Breakfast & Snacks(Prices Revised By Restaurents)',isVeg : true,

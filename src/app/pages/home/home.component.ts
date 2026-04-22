@@ -11,6 +11,8 @@ import { restaurants, Restaurant } from '../../services/restaurants';
 import { isOrderingAllowed } from '../../services/time-utils';
 import { AdminService } from '../../services/admin.service';
 import { FormsModule } from '@angular/forms';
+import { LiveTickerComponent } from '../../components/live-ticker/live-ticker.component';
+import { TrendingSectionComponent } from '../../components/trending-section/trending-section.component';
 
 @Component({
   selector: 'app-home',
@@ -24,6 +26,8 @@ import { FormsModule } from '@angular/forms';
     RestaurantCardComponent,
     FloatingCartBarComponent,
     FloatingEmojisComponent,
+    LiveTickerComponent,
+    TrendingSectionComponent,
   ],
   template: `
     <div style="position:relative; min-height:100vh; background:var(--background); padding-bottom:6rem;">
@@ -35,6 +39,11 @@ import { FormsModule } from '@angular/forms';
 <div *ngIf="adminService.settings().delivery_time" class="delivery-banner">
   🚚 Estimated Delivery Time: <strong>{{ adminService.settings().delivery_time }}</strong>
 </div>
+      <!-- Live Activity Ticker -->
+      <div style="padding: 0 1rem;">
+        <app-live-ticker></app-live-ticker>
+      </div>
+
       <main style="position:relative;z-index:10;margin:0 auto;max-width:42rem;padding:1rem;">
         <!--Offer Banner -->
         <div class="offer-banner fade-slide-in" style = "margin-bottom:1rem">
@@ -66,6 +75,20 @@ import { FormsModule } from '@angular/forms';
         <!-- Category Filters -->
         <div style="margin-bottom:1.25rem;">
           <app-category-filters [selected]="selectedCategory" (onSelect)="onCategorySelect($event)"></app-category-filters>
+        </div>
+
+        <!-- Trending Section -->
+        <div style="margin-bottom:1.5rem;">
+          <app-trending-section></app-trending-section>
+        </div>
+
+        <!-- Restaurant Grid Header -->
+        <div class="section-header">
+          <div class="section-title-row">
+            <span class="section-icon">🍽️</span>
+            <h2 class="section-title">All Restaurants</h2>
+          </div>
+          <span class="section-count">{{ filteredRestaurants.length }} open</span>
         </div>
 
         <!-- Restaurant Grid -->
@@ -126,6 +149,11 @@ import { FormsModule } from '@angular/forms';
       display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;
     }
     @media (min-width: 640px) { .restaurant-grid { gap: 1rem; } }
+    .section-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:0.75rem; }
+    .section-title-row { display:flex; align-items:center; gap:0.375rem; }
+    .section-icon { font-size:1rem; }
+    .section-title { font-size:0.95rem; font-weight:800; color:#111827; }
+    .section-count { font-size:0.7rem; font-weight:600; color:#f97316; background:#fff7ed; border:1px solid #fed7aa; padding:0.2rem 0.5rem; border-radius:9999px; }
     .empty-state {
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; padding: 4rem 1rem;
