@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -8,288 +8,237 @@ import { OrdersService } from '../../services/orders.service';
 import { isOrderingAllowed } from '../../services/time-utils';
 import { FloatingEmojisComponent } from '../../components/floating-emojis/floating-emojis.component';
 
-const LOCATIONS = [
-  { label: 'VIT-AP University', fee: 0 },
-  { label: 'Ainavolu Village', fee: 10 },
-];
-
 @Component({
   selector: 'app-cart',
   standalone: true,
   imports: [CommonModule, FormsModule, FloatingEmojisComponent],
   template: `
     <!-- Empty cart -->
-    <div *ngIf="items().length === 0" style="min-height:100vh;background:#fffbf5;">
+    <div *ngIf="items().length === 0" style="position:relative;min-height:100vh;background:var(--background);">
       <app-floating-emojis></app-floating-emojis>
       <div class="cart-header">
-        <button class="back-btn" (click)="goBack()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <h1 class="cart-title">Your Order</h1>
-        <span class="cart-count">0 items</span>
+        <button class="back-btn" (click)="goBack()">←</button>
+        <h1>Your Cart</h1>
       </div>
       <div class="empty-state fade-slide-in">
-        <div class="empty-icon-wrap">🛒</div>
-        <h2 class="empty-title">Your cart is empty</h2>
-        <p class="empty-sub">Add some delicious items from your favourite restaurants</p>
+        <div class="empty-icon">🛍️</div>
+        <h2>Your cart is empty</h2>
+        <p>Add some delicious items from your favorite restaurants</p>
         <button class="browse-btn" (click)="goHome()">Browse Restaurants</button>
       </div>
     </div>
 
     <!-- Cart with items -->
-    <div *ngIf="items().length > 0" style="position:relative;min-height:100vh;background:#fffbf5;padding-bottom:9rem;">
+    <div *ngIf="items().length > 0" style="position:relative;min-height:100vh;background:var(--background);padding-bottom:9rem;">
       <app-floating-emojis></app-floating-emojis>
 
-      <!-- Header -->
       <div class="cart-header">
-        <button class="back-btn" (click)="goBack()">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
-        </button>
-        <h1 class="cart-title">Your Order</h1>
-        <span class="cart-count">{{ totalItems() }} item{{ totalItems() !== 1 ? 's' : '' }}</span>
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+          <button class="back-btn" (click)="goBack()">←</button>
+          <h1>Your Cart</h1>
+        </div>
+        <button class="clear-btn" (click)="clearCart()">Clear All</button>
       </div>
 
-      <div style="padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem;">
+      <div style="position:relative;z-index:10;padding:1rem;">
 
         <!-- Orders closed banner -->
-        <div *ngIf="!adminService.settings().orders_accepting" class="status-banner closed-banner">
+        <div *ngIf="!adminService.settings().orders_accepting" class="closed-banner">
           🔴 {{ adminService.settings().orders_off_message }}
         </div>
 
-        <!-- Cart Items Card -->
-        <div class="section-card">
-          <div class="section-card-header">
-            <span>🛒</span>
-            <span class="section-card-title">Your Items</span>
-          </div>
-          <div *ngFor="let entry of itemsByRestaurantEntries">
-            <div class="rest-label">🏪 {{ entry.restaurantName }}</div>
-            <div *ngFor="let item of entry.items" class="cart-item-row">
-              <div style="flex:1;min-width:0;">
-                <p class="item-name">{{ item.name }}</p>
-                <p class="item-unit">₹{{ item.price }} each</p>
-              </div>
-              <div class="item-controls">
-                <button class="qty-btn minus-btn" (click)="updateQty(item.id, item.quantity - 1)">−</button>
-                <span class="qty-num">{{ item.quantity }}</span>
-                <button class="qty-btn plus-btn" (click)="updateQty(item.id, item.quantity + 1)">+</button>
-              </div>
-              <span class="item-total">₹{{ item.price * item.quantity }}</span>
-            </div>
-          </div>
-          <div class="add-more-row">
-            <button class="add-more-btn" (click)="goBack()">+ Add More Items</button>
-          </div>
+        <!-- Restaurant count -->
+        <div class="notice-bar" style="margin-bottom:1rem;">
+          <p style="font-size:0.875rem;font-weight:500;color:var(--primary);">
+            Ordering from {{ restaurantNames.length }} {{ restaurantNames.length === 1 ? 'restaurant' : 'restaurants' }}
+          </p>
         </div>
 
-        <!-- Customer Details Card -->
-        <div class="section-card">
-          <div class="section-card-header">
-            <span>👤</span>
-            <span class="section-card-title">Delivery Details</span>
-            <span *ngIf="saved" style="margin-left:auto;color:#16a34a;font-size:0.85rem;">✅ Saved</span>
-          </div>
-          <div style="padding: 0.875rem; display: flex; flex-direction: column; gap: 0.625rem;">
-            <div *ngIf="validationError" class="error-box">{{ validationError }}</div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
-              <div>
-                <label class="field-label">👤 Name</label>
-                <input type="text" [(ngModel)]="name" (input)="saved = false" placeholder="Your name"
-                  class="form-input" [class.input-error]="triedSubmit && !name.trim()" />
-                <p *ngIf="triedSubmit && !name.trim()" class="field-error">Required</p>
-              </div>
-              <div>
-                <label class="field-label">📱 Mobile</label>
-                <input type="tel" [(ngModel)]="mobile" (input)="saved = false" placeholder="10-digit no."
-                  maxlength="10" class="form-input" [class.input-error]="triedSubmit && mobile.trim().length < 10" />
-                <p *ngIf="triedSubmit && mobile.trim().length < 10" class="field-error">10 digits</p>
-              </div>
+        <!-- Cart items grouped by restaurant -->
+        <div style="margin-bottom:1.5rem;display:flex;flex-direction:column;gap:1.5rem;">
+          <div *ngFor="let entry of itemsByRestaurantEntries" class="rest-group">
+            <div class="rest-group-header">
+              🏪 <h3>{{ entry.restaurantName }}</h3>
             </div>
-
             <div>
-              <label class="field-label">📍 Delivery Location</label>
-              <div style="position:relative;">
-                <select [(ngModel)]="selectedLocation" (change)="saved = false" class="form-input" style="appearance:none;padding-right:2rem;">
-                  <option *ngFor="let loc of locations" [value]="loc.label">
-                    {{ loc.label }}{{ loc.fee > 0 ? ' (+₹' + loc.fee + ')' : ' (Free)' }}
-                  </option>
-                </select>
-                <span style="position:absolute;right:0.75rem;top:50%;transform:translateY(-50%);color:#9ca3af;pointer-events:none;">▾</span>
+              <div *ngFor="let item of entry.items" class="cart-item">
+                <div style="flex:1;">
+                  <h4>{{ item.name }}</h4>
+                  <p style="font-size:0.875rem;color:var(--muted-foreground);">₹{{ item.price }} each</p>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                  <div class="qty-row">
+                    <button class="qty-btn" (click)="updateQty(item.id, item.quantity - 1)">−</button>
+                    <span class="qty-num">{{ item.quantity }}</span>
+                    <button class="qty-btn" (click)="updateQty(item.id, item.quantity + 1)">+</button>
+                  </div>
+                  <span style="min-width:4rem;text-align:right;font-weight:600;color:var(--foreground);">₹{{ item.price * item.quantity }}</span>
+                  <button class="remove-btn" (click)="removeItem(item.id)">🗑️</button>
+                </div>
               </div>
-              <p class="delivery-note" [class.fee-note]="deliveryFee > 0">
-                {{ deliveryFee > 0 ? '📍 +₹' + deliveryFee + ' delivery fee' : '📍 Free delivery' }}
-              </p>
             </div>
-
-            <button *ngIf="!saved" class="save-btn" (click)="handleSave()">Save Details</button>
-            <div *ngIf="saved" class="saved-pill">✅ Details Saved</div>
-          </div>
-        </div>
-
-        <!-- Payment Mode Card -->
-        <div class="section-card">
-          <div class="section-card-header">
-            <span>📦</span>
-            <span class="section-card-title">Payment Mode</span>
-          </div>
-          <div style="padding: 0.75rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-            <button *ngFor="let mode of ['cod', 'prepay']"
-              class="pay-option" [class.pay-active]="deliveryType === mode"
-              (click)="setDeliveryType(mode)">
-              <span class="pay-label">{{ mode === 'cod' ? 'Cash on Delivery' : 'Prepaid (UPI)' }}</span>
-              <span class="pay-sub">{{ mode === 'cod' ? 'Pay on arrival' : 'Get QR from us' }}</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Coupon Card -->
-        <div class="section-card">
-          <div class="section-card-header">
-            <span>🎟️</span>
-            <span class="section-card-title">Coupon Code</span>
-          </div>
-          <div style="padding: 0.75rem;">
-            <div class="coupon-row">
-              <input type="text" [(ngModel)]="couponCode" placeholder="Enter coupon code"
-                class="form-input coupon-input" [disabled]="!!appliedCoupon"
-                (input)="couponCode = couponCode.toUpperCase()" />
-              <button *ngIf="!appliedCoupon" class="apply-btn" (click)="applyCoupon()" [disabled]="!couponCode.trim()">Apply</button>
-              <button *ngIf="appliedCoupon" class="remove-coupon-btn" (click)="removeCoupon()">✕</button>
-            </div>
-            <div *ngIf="couponError" class="coupon-error">❌ {{ couponError }}</div>
-            <div *ngIf="appliedCoupon" class="coupon-success">
-              ✅ <strong>{{ appliedCoupon.code }}</strong> applied! You save ₹{{ couponDiscount }}
+            <div class="rest-subtotal">
+              <span style="font-size:0.875rem;color:var(--muted-foreground);">Subtotal</span>
+              <span style="font-weight:600;color:var(--foreground);">₹{{ entry.subtotal }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Price Summary Card -->
-        <div class="section-card">
-          <div class="section-card-header">
-            <span>💰</span>
-            <span class="section-card-title">Price Summary</span>
+        <!-- Coupon section -->
+        <div class="summary-card" style="margin-bottom:1.5rem;">
+          <h3 class="card-title">🎟️ Coupon Code</h3>
+          <div class="coupon-input-row">
+            <input
+              type="text"
+              [(ngModel)]="couponCode"
+              placeholder="Enter coupon code"
+              class="form-input coupon-input"
+              [disabled]="!!appliedCoupon"
+              (input)="couponCode = couponCode.toUpperCase()"
+            />
+            <button *ngIf="!appliedCoupon" class="apply-btn" (click)="applyCoupon()" [disabled]="!couponCode.trim()">Apply</button>
+            <button *ngIf="appliedCoupon" class="remove-coupon-btn" (click)="removeCoupon()">✕ Remove</button>
           </div>
-          <div style="padding: 0.875rem; display: flex; flex-direction: column; gap: 0.5rem;">
-            <div class="summary-row"><span>Subtotal</span><span>₹{{ totalAmount() }}</span></div>
+          <div *ngIf="couponError" class="coupon-error">❌ {{ couponError }}</div>
+          <div *ngIf="appliedCoupon" class="coupon-success">
+            ✅ <strong>{{ appliedCoupon.code }}</strong> applied!
+            {{ appliedCoupon.type === 'percent' ? appliedCoupon.value + '% off' : '₹' + appliedCoupon.value + ' off' }}
+            — You save ₹{{ couponDiscount }}
+          </div>
+        </div>
+
+        <!-- Price summary -->
+        <div class="summary-card" style="margin-bottom:1.5rem;">
+          <h3 class="card-title">Order Summary</h3>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
             <div class="summary-row">
-              <span>Delivery</span>
-              <span [style.color]="deliveryFee > 0 ? '#d97706' : '#16a34a'" style="font-weight:600;">{{ deliveryFee > 0 ? '₹' + deliveryFee : 'FREE' }}</span>
+              <span style="color:var(--muted-foreground);">Items Total ({{ totalItems() }} items)</span>
+              <span>₹{{ totalAmount() }}</span>
             </div>
-            <div *ngIf="appliedCoupon" class="summary-row" style="color:#16a34a;">
-              <span>Coupon ({{ appliedCoupon.code }})</span>
-              <span>− ₹{{ couponDiscount }}</span>
+            <div class="summary-row">
+              <span style="color:var(--muted-foreground);">Delivery Charges</span>
+              <span style="font-weight:500;color:#16a34a;">🚚 Free</span>
             </div>
-            <div class="summary-row"><span>GST</span><span style="color:#16a34a;">No GST</span></div>
-            <div class="summary-total">
-              <span>Total</span>
-              <span style="color:#f97316;">₹{{ grandTotal }}</span>
+            <div *ngIf="appliedCoupon" class="summary-row">
+              <span style="color:#16a34a;">Coupon Discount ({{ appliedCoupon.code }})</span>
+              <span style="color:#16a34a;font-weight:600;">− ₹{{ couponDiscount }}</span>
+            </div>
+            <div class="summary-row">
+              <span style="color:var(--muted-foreground);">GST</span>
+              <span style="color:#16a34a;font-weight:500;">No GST</span>
+            </div>
+            <div style="border-top:1px solid var(--border);padding-top:0.5rem;margin-top:0.25rem;">
+              <div class="summary-row">
+                <span style="font-weight:600;color:var(--foreground);">Final Total</span>
+                <span style="font-size:1.125rem;font-weight:700;color:var(--primary);">₹{{ grandTotal }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="delivery-tip">
+            <p style="font-size:0.875rem;font-weight:500;color:var(--primary);">
+              🎉 Free Delivery on all orders!
+            </p>
+          </div>
+        </div>
+
+        <!-- Delivery Type -->
+        <div class="summary-card" style="margin-bottom:1.5rem;">
+          <h3 class="card-title">Delivery Type</h3>
+          <div style="display:flex;gap:1.5rem;">
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;font-weight:500;">
+              <input type="radio" name="deliveryType" value="prepay" [(ngModel)]="deliveryType"> PrePay
+            </label>
+            <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;font-size:0.875rem;font-weight:500;">
+              <input type="radio" name="deliveryType" value="cod" [(ngModel)]="deliveryType"> COD (Cash on Delivery)
+            </label>
+          </div>
+        </div>
+
+        <!-- Customer Details -->
+        <div class="summary-card" style="margin-bottom:1.5rem;">
+          <h3 class="card-title">Customer Details</h3>
+          <div *ngIf="validationError" class="error-box">{{ validationError }}</div>
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <div>
+              <label style="display:block;font-size:0.875rem;font-weight:500;color:var(--foreground);margin-bottom:0.375rem;">Name <span style="color:var(--destructive);">*</span></label>
+              <input type="text" [(ngModel)]="name" placeholder="Enter your name" class="form-input" />
+            </div>
+            <div>
+              <label style="display:block;font-size:0.875rem;font-weight:500;color:var(--foreground);margin-bottom:0.375rem;">Mobile Number <span style="color:var(--destructive);">*</span></label>
+              <input type="tel" [(ngModel)]="mobile" placeholder="Enter your mobile number" class="form-input" />
             </div>
           </div>
         </div>
 
       </div>
 
-      <!-- Sticky checkout bar -->
+      <!-- Checkout button -->
       <div class="checkout-bar">
-        <p *ngIf="!saved" class="pre-order-note">Please save your details before ordering</p>
-        <button class="checkout-btn"
-          [class.checkout-ready]="saved && items().length > 0"
-          [disabled]="isSubmitting || items().length === 0"
-          (click)="handleCheckout()">
-          💬 {{ isSubmitting ? 'Placing Order...' : 'Order on WhatsApp · ₹' + grandTotal }}
+        <button class="checkout-btn" [class.valid]="isFormValid" [disabled]="isSubmitting || !isFormValid" (click)="handleCheckout()">
+          💬 {{ isSubmitting ? 'Placing Order...' : 'Checkout via WhatsApp — ₹' + grandTotal }}
         </button>
         <div *ngIf="!adminService.settings().orders_accepting && !orderingAllowed"
-          style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:#ef4444;">
+          style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--destructive);">
           🕐 Orders not accepted right now
         </div>
-        <p style="margin-top:0.5rem;text-align:center;font-size:0.7rem;color:#9ca3af;">
-          Order is saved to database & sent via WhatsApp
+        <p *ngIf="(orderingAllowed && adminService.settings().orders_accepting) && !isFormValid"
+          style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--destructive);">
+          Please fill all required fields to checkout
+        </p>
+        <p style="margin-top:0.5rem;text-align:center;font-size:0.75rem;color:var(--muted-foreground);">
+          Order is saved to database &amp; sent to restaurant via WhatsApp
         </p>
       </div>
     </div>
   `,
   styles: [`
-    /* Header */
-    .cart-header { position: sticky; top: 0; z-index: 30; display: flex; align-items: center; gap: 0.75rem; background: rgba(255,255,255,0.95); padding: 0.875rem 1rem; border-bottom: 1px solid #fde8c8; box-shadow: 0 2px 8px rgba(0,0,0,0.05); backdrop-filter: blur(12px); }
-    .cart-title { font-size: 1.1rem; font-weight: 900; color: #d97706; margin: 0; }
-    .cart-count { margin-left: auto; font-size: 0.8rem; color: #9ca3af; font-weight: 500; }
-    .back-btn { border: none; background: #fff7ed; cursor: pointer; border-radius: 0.75rem; padding: 0.5rem; color: #f97316; display: flex; align-items: center; transition: transform 0.15s; }
-    .back-btn:active { transform: scale(0.9); }
-
-    /* Empty state */
-    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 4rem 1rem; }
-    .empty-icon-wrap { font-size: 3.5rem; margin-bottom: 1rem; }
-    .empty-title { font-size: 1.2rem; font-weight: 700; color: #374151; }
-    .empty-sub { color: #9ca3af; font-size: 0.85rem; text-align: center; margin-top: 0.375rem; }
-    .browse-btn { margin-top: 1.25rem; border-radius: 1rem; background: linear-gradient(135deg, #f97316, #ea580c); padding: 0.75rem 2rem; font-weight: 700; color: white; border: none; cursor: pointer; font-size: 0.9rem; }
-
-    /* Section cards */
-    .section-card { background: white; border-radius: 1rem; border: 1px solid #fde8c8; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-    .section-card-header { display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem 1rem; background: linear-gradient(135deg, #fff7ed, #fef3e2); border-bottom: 1px solid #fde8c8; }
-    .section-card-title { font-weight: 700; font-size: 0.875rem; color: #d97706; }
-
-    /* Cart items */
-    .rest-label { font-size: 0.75rem; font-weight: 700; color: #9ca3af; padding: 0.5rem 1rem 0; text-transform: uppercase; letter-spacing: 0.05em; }
-    .cart-item-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1rem; border-bottom: 1px solid #fef3e2; }
-    .cart-item-row:last-of-type { border-bottom: none; }
-    .item-name { font-size: 0.85rem; font-weight: 600; color: #1f2937; }
-    .item-unit { font-size: 0.72rem; color: #9ca3af; margin-top: 0.1rem; }
-    .item-controls { display: flex; align-items: center; gap: 0.375rem; }
-    .qty-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; font-size: 1rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: transform 0.15s; }
-    .qty-btn:active { transform: scale(0.9); }
-    .minus-btn { background: #fff7ed; border: 1.5px solid #fed7aa; color: #f97316; }
-    .plus-btn { background: linear-gradient(135deg, #f97316, #ea580c); color: white; }
-    .qty-num { font-weight: 900; color: #1f2937; font-size: 0.875rem; min-width: 20px; text-align: center; }
-    .item-total { font-weight: 900; color: #f97316; font-size: 0.875rem; min-width: 3rem; text-align: right; flex-shrink: 0; }
-    .add-more-row { padding: 0.75rem 1rem; border-top: 1px solid #fef3e2; }
-    .add-more-btn { width: 100%; padding: 0.6rem; border-radius: 0.75rem; font-weight: 600; font-size: 0.85rem; color: #f97316; background: #fff7ed; border: 1.5px dashed #fed7aa; cursor: pointer; }
-
-    /* Status */
-    .status-banner { border-radius: 0.75rem; padding: 0.75rem 1rem; font-weight: 600; font-size: 0.875rem; text-align: center; }
-    .closed-banner { background: #fee2e2; border: 1px solid #fca5a5; color: #dc2626; }
-
-    /* Form fields */
-    .field-label { display: block; font-size: 0.72rem; font-weight: 700; color: #9ca3af; margin-bottom: 0.375rem; }
-    .form-input { width: 100%; padding: 0.625rem 0.875rem; border-radius: 0.75rem; border: 1px solid #e5e7eb; background: #f9fafb; font-size: 0.85rem; color: #1f2937; outline: none; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; box-sizing: border-box; }
-    .form-input:focus { border-color: #f97316; box-shadow: 0 0 0 2px rgba(249,115,22,0.15); }
-    .input-error { border-color: #fca5a5 !important; }
-    .field-error { font-size: 0.7rem; color: #ef4444; margin-top: 0.25rem; }
-    .delivery-note { font-size: 0.75rem; font-weight: 600; margin-top: 0.3rem; color: #16a34a; }
-    .fee-note { color: #d97706 !important; }
-    .save-btn { width: 100%; padding: 0.7rem; border-radius: 0.875rem; font-weight: 700; font-size: 0.9rem; color: white; border: none; cursor: pointer; background: linear-gradient(135deg, #f97316, #ea580c); }
-    .saved-pill { width: 100%; padding: 0.7rem; border-radius: 0.875rem; background: #f0fdf4; border: 1.5px solid #bbf7d0; color: #16a34a; font-weight: 700; font-size: 0.875rem; text-align: center; }
-    .error-box { border-radius: 0.5rem; background: rgba(239,68,68,0.1); padding: 0.6rem 0.75rem; font-size: 0.8rem; color: #ef4444; }
-
-    /* Payment */
-    .pay-option { padding: 0.75rem; border-radius: 0.875rem; border: 2px solid #e5e7eb; background: #f9fafb; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 0.2rem; transition: all 0.2s; }
-    .pay-option:active { transform: scale(0.96); }
-    .pay-active { border-color: #f97316 !important; background: #fff7ed !important; }
-    .pay-label { font-size: 0.78rem; font-weight: 800; color: #374151; }
-    .pay-active .pay-label { color: #c2410c; }
-    .pay-sub { font-size: 0.68rem; color: #9ca3af; }
-    .pay-active .pay-sub { color: #f97316; }
-
+    .cart-header { position:sticky; top:0; z-index:30; display:flex; align-items:center; justify-content:space-between; gap:0.75rem; background:rgba(255,255,255,0.95); padding:1rem; box-shadow:0 1px 2px rgba(0,0,0,0.05); backdrop-filter:blur(12px); }
+    .cart-header h1 { font-size:1.125rem; font-weight:600; color:var(--foreground); margin:0; }
+    .back-btn { border:none; background:transparent; cursor:pointer; border-radius:50%; padding:0.5rem; color:var(--foreground); font-size:1.1rem; transition:background 0.2s; }
+    .back-btn:hover { background:var(--secondary); }
+    .clear-btn { border:none; background:transparent; cursor:pointer; border-radius:0.5rem; padding:0.375rem 0.75rem; font-size:0.875rem; font-weight:500; color:var(--destructive); }
+    .clear-btn:hover { background:rgba(239,68,68,0.1); }
+    .closed-banner { background:#fee2e2; border:1px solid #fca5a5; border-radius:0.75rem; padding:0.75rem 1rem; color:#dc2626; font-weight:600; font-size:0.875rem; margin-bottom:1rem; }
+    .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:5rem 1rem; }
+    .empty-icon { font-size:4rem; margin-bottom:1rem; }
+    .empty-state h2 { font-size:1.25rem; font-weight:600; color:var(--foreground); margin:0 0 0.5rem; }
+    .empty-state p { color:var(--muted-foreground); text-align:center; }
+    .browse-btn { margin-top:1.5rem; border-radius:0.75rem; background:var(--primary); padding:0.75rem 2rem; font-weight:600; color:white; border:none; cursor:pointer; font-family:'Poppins',sans-serif; }
+    .notice-bar { border-radius:0.75rem; background:rgba(232,84,108,0.1); padding:0.75rem; }
+    .rest-group { border-radius:0.75rem; background:var(--card); overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+    .rest-group-header { display:flex; align-items:center; gap:0.75rem; background:rgba(253,232,236,0.5); padding:0.75rem 1rem; border-bottom:1px solid var(--border); font-weight:600; color:var(--foreground); }
+    .rest-group-header h3 { margin:0; font-size:0.95rem; }
+    .cart-item { display:flex; align-items:center; justify-content:space-between; padding:1rem; border-bottom:1px solid var(--border); }
+    .cart-item:last-child { border-bottom:none; }
+    .cart-item h4 { font-weight:500; color:var(--card-foreground); margin:0 0 0.125rem; }
+    .qty-row { display:flex; align-items:center; gap:0.25rem; border-radius:9999px; background:var(--secondary); padding:0 0.25rem; }
+    .qty-btn { display:flex; align-items:center; justify-content:center; width:1.75rem; height:1.75rem; border-radius:50%; border:none; cursor:pointer; background:transparent; color:var(--foreground); font-size:1rem; }
+    .qty-btn:hover { background:rgba(253,232,236,0.8); }
+    .qty-num { min-width:1.25rem; text-align:center; font-size:0.875rem; font-weight:600; color:var(--foreground); }
+    .remove-btn { border:none; background:transparent; cursor:pointer; border-radius:50%; padding:0.4rem; font-size:1rem; }
+    .rest-subtotal { display:flex; justify-content:space-between; align-items:center; background:rgba(253,232,236,0.3); padding:0.75rem 1rem; border-top:1px solid var(--border); }
+    .summary-card { border-radius:0.75rem; background:var(--card); padding:1rem; box-shadow:0 1px 2px rgba(0,0,0,0.05); }
+    .card-title { font-size:1rem; font-weight:700; margin:0 0 1rem; color:var(--foreground); }
+    .summary-row { display:flex; justify-content:space-between; font-size:0.875rem; }
+    .delivery-tip { margin-top:1rem; border-radius:0.5rem; background:rgba(232,84,108,0.1); padding:0.75rem; text-align:center; }
+    .error-box { margin-bottom:1rem; border-radius:0.5rem; background:rgba(239,68,68,0.1); padding:0.75rem 1rem; font-size:0.875rem; color:var(--destructive); }
+    .form-input { width:100%; padding:0.75rem 1rem; border:2px solid var(--input); border-radius:0.75rem; background:var(--background); color:var(--foreground); outline:none; font-size:0.875rem; font-family:'Poppins',sans-serif; box-sizing:border-box; transition:all 0.2s; }
+    .form-input:focus { border-color:var(--primary); box-shadow:0 0 0 2px rgba(232,84,108,0.2); }
     /* Coupon */
-    .coupon-row { display: flex; gap: 0.5rem; }
-    .coupon-input { flex: 1; }
-    .apply-btn { padding: 0 1rem; border-radius: 0.75rem; background: linear-gradient(135deg, #f97316, #ea580c); color: white; border: none; cursor: pointer; font-weight: 700; font-size: 0.85rem; white-space: nowrap; }
-    .apply-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .remove-coupon-btn { padding: 0 0.875rem; border-radius: 0.75rem; background: #fee2e2; color: #dc2626; border: none; cursor: pointer; font-weight: 700; }
-    .coupon-error { margin-top: 0.4rem; font-size: 0.78rem; color: #ef4444; }
-    .coupon-success { margin-top: 0.4rem; font-size: 0.78rem; color: #16a34a; background: #dcfce7; padding: 0.4rem 0.6rem; border-radius: 0.5rem; }
-
-    /* Summary */
-    .summary-row { display: flex; justify-content: space-between; font-size: 0.85rem; color: #6b7280; }
-    .summary-total { display: flex; justify-content: space-between; font-weight: 900; font-size: 1rem; color: #1f2937; padding-top: 0.5rem; margin-top: 0.25rem; border-top: 1px solid #fde8c8; }
-
+    .coupon-input-row { display:flex; gap:0.75rem; }
+    .coupon-input { flex:1; }
+    .apply-btn { padding:0 1.25rem; border-radius:0.75rem; background:var(--primary); color:white; border:none; cursor:pointer; font-weight:600; font-family:'Poppins',sans-serif; white-space:nowrap; transition:all 0.2s; }
+    .apply-btn:hover { opacity:0.9; }
+    .apply-btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .remove-coupon-btn { padding:0 1rem; border-radius:0.75rem; background:#fee2e2; color:#dc2626; border:none; cursor:pointer; font-weight:600; font-family:'Poppins',sans-serif; white-space:nowrap; }
+    .coupon-error { margin-top:0.5rem; font-size:0.8rem; color:var(--destructive); }
+    .coupon-success { margin-top:0.5rem; font-size:0.8rem; color:#16a34a; background:#dcfce7; padding:0.5rem 0.75rem; border-radius:0.5rem; }
     /* Checkout */
-    .checkout-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 50; background: rgba(255,255,255,0.96); backdrop-filter: blur(12px); padding: 1rem 1rem 1.5rem; border-top: 1px solid #fde8c8; box-shadow: 0 -8px 24px rgba(0,0,0,0.08); }
-    .pre-order-note { text-align: center; font-size: 0.75rem; color: #d97706; font-weight: 600; margin-bottom: 0.5rem; }
-    .checkout-btn { width: 100%; border-radius: 1rem; padding: 1rem; font-size: 1rem; font-weight: 800; border: none; cursor: pointer; background: #d1d5db; color: #9ca3af; font-family: inherit; transition: all 0.2s; }
-    .checkout-btn.checkout-ready { background: linear-gradient(135deg, #16a34a, #15803d); color: white; box-shadow: 0 8px 24px rgba(22,163,74,0.4); }
-    .checkout-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .checkout-btn:not(:disabled):active { transform: scale(0.98); }
+    .checkout-bar { position:fixed; bottom:0; left:0; right:0; z-index:50; background:rgba(255,255,255,0.95); backdrop-filter:blur(12px); padding:1rem 1rem 1.5rem; box-shadow:0 -4px 20px rgba(0,0,0,0.1); }
+    .checkout-btn { width:100%; border-radius:1rem; padding:1rem; font-size:1rem; font-weight:700; border:none; cursor:pointer; transition:all 0.2s; background:var(--muted); color:var(--muted-foreground); font-family:'Poppins',sans-serif; }
+    .checkout-btn.valid { background:var(--primary); color:white; box-shadow:0 0 20px rgba(232,84,108,0.3); }
+    .checkout-btn.valid:hover { transform:scale(1.02); }
+    .checkout-btn:disabled { opacity:0.7; cursor:not-allowed; transform:none; }
   `]
 })
 export class CartComponent implements OnInit, OnDestroy {
@@ -302,12 +251,8 @@ export class CartComponent implements OnInit, OnDestroy {
   couponError = '';
   appliedCoupon: Coupon | null = null;
   deliveryType: 'prepay' | 'cod' = 'prepay';
-  selectedLocation = LOCATIONS[0].label;
-  saved = false;
-  triedSubmit = false;
   private timerRef: any;
 
-  readonly locations = LOCATIONS;
   readonly cartService = inject(CartService);
   readonly adminService = inject(AdminService);
   private readonly ordersService = inject(OrdersService);
@@ -316,27 +261,25 @@ export class CartComponent implements OnInit, OnDestroy {
   readonly items = this.cartService.items;
   readonly totalItems = this.cartService.totalItems;
   readonly totalAmount = this.cartService.totalAmount;
+  readonly deliveryCharges = this.cartService.deliveryCharges;
   readonly finalTotal = this.cartService.finalTotal;
-
-  get deliveryFee(): number {
-    return LOCATIONS.find(l => l.label === this.selectedLocation)?.fee ?? 0;
-  }
 
   get couponDiscount(): number {
     if (!this.appliedCoupon) return 0;
-    if (this.appliedCoupon.type === 'percent')
+    if (this.appliedCoupon.type === 'percent') {
       return Math.round(this.totalAmount() * this.appliedCoupon.value / 100);
+    }
     return Math.min(this.appliedCoupon.value, this.totalAmount());
   }
 
   get grandTotal(): number {
-    return Math.max(0, this.totalAmount() + this.deliveryFee - this.couponDiscount);
+    return Math.max(0, this.finalTotal() - this.couponDiscount);
   }
 
   get isFormValid(): boolean {
     const adminOverride = this.adminService.settings().orders_accepting;
     const timeAllowed = this.orderingAllowed || adminOverride;
-    return this.name.trim() !== '' && this.mobile.trim().length >= 10 && timeAllowed && adminOverride;
+    return this.name.trim() !== '' && this.mobile.trim() !== '' && timeAllowed && adminOverride;
   }
 
   get itemsByRestaurantEntries() {
@@ -361,54 +304,74 @@ export class CartComponent implements OnInit, OnDestroy {
   updateQty(itemId: string, qty: number): void { this.cartService.updateQuantity(itemId, qty); }
   removeItem(itemId: string): void { this.cartService.removeItem(itemId); }
 
-  handleSave(): void {
-    this.triedSubmit = true;
-    if (this.name.trim() && this.mobile.trim().length >= 10) this.saved = true;
-  }
-
   applyCoupon(): void {
     this.couponError = '';
     const coupon = this.adminService.validateCoupon(this.couponCode, this.totalAmount());
-    if (!coupon) { this.couponError = this.couponCode.trim() ? 'Invalid or expired coupon code.' : ''; return; }
+    if (!coupon) {
+      this.couponError = this.couponCode.trim() ? 'Invalid or expired coupon code.' : '';
+      return;
+    }
     if (this.totalAmount() < coupon.min_order) {
-      this.couponError = `Minimum order ₹${coupon.min_order} required.`; return;
+      this.couponError = `Minimum order ₹${coupon.min_order} required for this coupon.`;
+      return;
     }
     this.appliedCoupon = coupon;
   }
 
   removeCoupon(): void { this.appliedCoupon = null; this.couponCode = ''; this.couponError = ''; }
 
-  setDeliveryType(mode: string): void { this.deliveryType = mode as 'cod' | 'prepay'; }
-
   async handleCheckout(): Promise<void> {
-    if (!this.saved) { this.triedSubmit = true; return; }
+    // ── Guards ──────────────────────────────────────────────────────────────
     const adminOverride = this.adminService.settings().orders_accepting;
-    if (!adminOverride && !this.orderingAllowed) { this.validationError = 'Sorry, orders are not accepted right now.'; return; }
-    if (!this.name.trim() || this.mobile.trim().length < 10) { this.validationError = 'Please fill all customer details.'; return; }
+    if (!adminOverride && !this.orderingAllowed) {
+      this.validationError = 'Sorry, orders are not accepted right now.';
+      return;
+    }
+    if (!this.name.trim() || !this.mobile.trim()) {
+      this.validationError = 'Please fill all required customer details before checkout.';
+      return;
+    }
     if (this.items().length === 0) { this.validationError = 'Your cart is empty'; return; }
 
     this.validationError = '';
     this.isSubmitting = true;
 
+    // ── Build flat items list ───────────────────────────────────────────────
     const allItems = this.itemsByRestaurantEntries.flatMap(entry =>
-      entry.items.map(i => ({ name: i.name, qty: i.quantity, restaurant_name: entry.restaurantName }))
+      entry.items.map(i => ({
+        name: i.name,
+        qty: i.quantity,
+        restaurant_name: entry.restaurantName,
+      }))
     );
 
+    // ── Save to DB first (guaranteed, same as before) ───────────────────────
     let tokenNumber: number;
-    try { tokenNumber = await this.ordersService.fetchNextToken(); }
-    catch { tokenNumber = Date.now() % 100000; }
+    try {
+      tokenNumber = await this.ordersService.fetchNextToken();
+    } catch {
+      tokenNumber = Date.now() % 100000;
+    }
 
-    const savedOrder = await this.ordersService.placeOrder({
-      customer_name: this.name.trim(),
-      customer_phone: this.mobile.trim(),
-      items: allItems,
-      payment_mode: this.deliveryType === 'cod' ? 'cod' : 'prepaid',
-      total: this.grandTotal,
-      token_number: tokenNumber,
-    }, tokenNumber);
+    const savedOrder = await this.ordersService.placeOrder(
+      {
+        customer_name: this.name.trim(),
+        customer_phone: this.mobile.trim(),
+        items: allItems,
+        payment_mode: this.deliveryType === 'cod' ? 'cod' : 'prepaid',
+        total: this.grandTotal,
+        token_number: tokenNumber,
+      },
+      tokenNumber
+    );
 
-    if (!savedOrder) { this.validationError = 'Failed to save order. Please try again.'; this.isSubmitting = false; return; }
+    if (!savedOrder) {
+      this.validationError = 'Failed to save order. Please try again.';
+      this.isSubmitting = false;
+      return;
+    }
 
+    // ── Build WhatsApp message (with token now available) ───────────────────
     const grouped = this.cartService.getItemsByRestaurant();
     let orderDetails = '';
     Object.entries(grouped).forEach(([, rItems]) => {
@@ -419,20 +382,31 @@ export class CartComponent implements OnInit, OnDestroy {
       orderDetails += `  Subtotal: ₹${sub}\n`;
     });
 
-    const couponLine = this.appliedCoupon ? `\n*Coupon (${this.appliedCoupon.code}):* − ₹${this.couponDiscount}` : '';
-    const delivLine = this.deliveryFee > 0 ? `\n*Delivery:* ₹${this.deliveryFee}` : `\n*Delivery:* FREE`;
+    const couponLine = this.appliedCoupon
+      ? `\n*Coupon (${this.appliedCoupon.code}):* − ₹${this.couponDiscount}`
+      : '';
     const tokenLine = `*Token: #${String(tokenNumber).padStart(3, '0')}*`;
-    const locationLine = `*Location:* ${this.selectedLocation}`;
 
     const message = this.deliveryType === 'cod'
-      ? `Hello, I would like to place an order.\n\n${tokenLine}\n\n*Customer Details:*\nName: ${this.name}\nMobile: ${this.mobile}\n${locationLine}\n\n*Order Details:*${orderDetails}${delivLine}${couponLine}\n*GST:* No GST\n\n*Final Total:* ₹${this.grandTotal}\n\nPlease confirm my order on COD`
-      : `Hello, I would like to place an order.\n\n${tokenLine}\n\n*Customer Details:*\nName: ${this.name}\nMobile: ${this.mobile}\n${locationLine}\n\n*Order Details:*${orderDetails}${delivLine}${couponLine}\n*GST:* No GST\n\n*Final Total:* ₹${this.grandTotal}\n\nPlease confirm my order and send the payment QR.`;
+      ? `Hello, I would like to place an order.\n\n${tokenLine}\n\n*Customer Details:*\nName: ${this.name}\nMobile: ${this.mobile}\n\n*Order Details:*${orderDetails}\n*Items Total:* ₹${this.totalAmount()}\n*Delivery Charges:* FREE${couponLine}\n*GST:* No GST\n\n*Final Total:* ₹${this.grandTotal}\n\nPlease confirm my order on COD`
+      : `Hello, I would like to place an order.\n\n${tokenLine}\n\n*Customer Details:*\nName: ${this.name}\nMobile: ${this.mobile}\n\n*Order Details:*${orderDetails}\n*Items Total:* ₹${this.totalAmount()}\n*Delivery Charges:* FREE${couponLine}\n*GST:* No GST\n\n*Final Total:* ₹${this.grandTotal}\n\nPlease confirm my order and send the payment QR.`;
 
     const waUrl = `https://wa.me/917842960252?text=${encodeURIComponent(message)}`;
+
+    // ── Clear cart ──────────────────────────────────────────────────────────
     this.cartService.clearCart();
 
+    // ── Open WhatsApp ───────────────────────────────────────────────────────
+    // KEY FIX: window.location.href works fine after await on ALL browsers
+    // (iOS Safari, Android Chrome). Only window.open() gets blocked after
+    // an await. So on mobile we use location.href; on desktop window.open().
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) { window.location.href = waUrl; }
-    else { const tab = window.open(waUrl, '_blank'); if (!tab) window.location.href = waUrl; this.router.navigate(['/']); }
+    if (isMobile) {
+      window.location.href = waUrl;
+    } else {
+      const tab = window.open(waUrl, '_blank');
+      if (!tab) { window.location.href = waUrl; }
+      this.router.navigate(['/']);
+    }
   }
 }

@@ -63,15 +63,24 @@ export class CartService {
   }
 
   updateQuantity(itemId: string, quantity: number): void {
-    if (quantity <= 0) {
-      this.removeItem(itemId);
-      return;
-    }
-    this.itemsSignal.update((prev) =>
-      prev.map((i) => (i.id === itemId ? { ...i, quantity } : i))
-    );
+  if (quantity <= 0) {
+    this.removeItem(itemId);
+    return;
   }
+  this.itemsSignal.update((prev) =>
+    prev.map((i) => (i.id === itemId ? { ...i, quantity } : i))
+  );
+}
 
+updateQuantityWithPrice(itemId: string, quantity: number, price: number): void {
+  if (quantity <= 0) {
+    this.removeItem(itemId);
+    return;
+  }
+  this.itemsSignal.update((prev) =>
+    prev.map((i) => (i.id === itemId ? { ...i, quantity, price } : i))
+  );
+}
   getItemQuantity(itemName: string, restaurantId: string): number {
     const itemId = this.generateItemId(itemName, restaurantId);
     const item = this.itemsSignal().find((i) => i.id === itemId);

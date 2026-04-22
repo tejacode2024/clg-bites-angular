@@ -8,7 +8,11 @@ import { FormsModule } from '@angular/forms';
   imports: [CommonModule, FormsModule],
   template: `
     <div class="search-wrapper">
-      <span class="search-icon">🔍</span>
+      <svg class="search-icon" [class.focused]="isFocused"
+        xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+        viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
       <input
         type="text"
         placeholder="Search restaurants or dishes..."
@@ -19,29 +23,51 @@ import { FormsModule } from '@angular/forms';
         [class.focused]="isFocused"
         class="search-input"
       />
-      <button *ngIf="value" class="clear-btn" (click)="clear()" aria-label="Clear search">✕</button>
+      <button *ngIf="value" class="clear-btn" (click)="clear()" aria-label="Clear search">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none"
+          viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
     </div>
   `,
   styles: [`
-    .search-wrapper { position: relative; }
-    .search-icon { position: absolute; left: 0.875rem; top: 50%; transform: translateY(-50%); font-size: 0.875rem; }
-    .search-input {
-      width: 100%; border-radius: 0.875rem; border: 1px solid #fde8c8;
-      background: white; padding: 0.7rem 2.5rem 0.7rem 2.5rem;
-      font-size: 0.875rem; color: #1f2937; outline: none;
-      transition: all 0.2s; box-sizing: border-box; font-family: inherit;
+    .search-wrapper {
+      position: relative;
     }
-    .search-input.focused { border-color: #f97316; box-shadow: 0 0 0 2px rgba(249,115,22,0.15); }
+    .search-icon {
+      position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%);
+      color: var(--muted-foreground); transition: color 0.2s;
+    }
+    .search-icon.focused { color: var(--primary); }
+    .search-input {
+      width: 100%; border-radius: 0.75rem;
+      border: 1px solid var(--border);
+      background: var(--card);
+      padding: 0.75rem 2.5rem 0.75rem 2.5rem;
+      font-size: 0.875rem; color: var(--card-foreground);
+      outline: none; transition: all 0.2s;
+    }
+    .search-input.focused {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(232,84,108,0.2);
+    }
     .clear-btn {
       position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%);
-      border: none; background: #fff7ed; cursor: pointer; color: #9ca3af;
-      padding: 0.2rem 0.4rem; border-radius: 0.375rem; font-size: 0.75rem;
+      border: none; background: transparent; cursor: pointer;
+      color: var(--muted-foreground); padding: 0.25rem;
+      border-radius: 50%;
     }
+    .clear-btn:hover { background: var(--secondary); color: var(--foreground); }
   `]
 })
 export class SearchBarComponent {
   @Input() value = '';
   @Output() onChange = new EventEmitter<string>();
   isFocused = false;
-  clear(): void { this.value = ''; this.onChange.emit(''); }
+
+  clear(): void {
+    this.value = '';
+    this.onChange.emit('');
+  }
 }
