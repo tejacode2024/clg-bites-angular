@@ -6,7 +6,7 @@ import { SupabaseService } from '../../services/supabase.service';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
-const WHATSAPP = '917396018423';
+const WHATSAPP = '917842960252';
 
 const LOCATIONS = [
   { label: 'VIT-AP University', sublabel: 'Free Delivery', fee: 0  },
@@ -283,9 +283,9 @@ function minutesAgo(iso: string): number {
   <div class="section contact-section">
     <div class="contact-card">
       <p class="contact-title">Contact & Support</p>
-      <a href="tel:7396018423" class="contact-row">
+      <a href="tel:7842960252" class="contact-row">
         <div class="contact-icon-box green-box">📞</div>
-        <div><p class="contact-lbl">Admin</p><p class="contact-val">7396018423</p></div>
+        <div><p class="contact-lbl">Admin</p><p class="contact-val">7842960252</p></div>
       </a>
       <div class="contact-divider"></div>
       <a href="mailto:clgbites@gmail.com" class="contact-row">
