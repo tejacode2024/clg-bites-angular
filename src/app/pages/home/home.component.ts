@@ -98,10 +98,13 @@ function minutesAgo(iso: string): number {
       <p>No results for "{{ catSearch }}"</p>
       <button (click)="catSearch=''">Clear search</button>
     </div>
-    <div *ngFor="let r of categoryList" class="rest-card" (click)="openRestaurant(r)">
+    <div *ngFor="let r of categoryList" class="rest-card"
+         [class.rest-unavailable]="!adminService.isRestaurantAvailable(r.id)"
+         (click)="adminService.isRestaurantAvailable(r.id) && openRestaurant(r)">
       <div class="rest-card-img-wrap">
         <img [src]="r.image" [alt]="r.name" class="rest-card-img"/>
         <div class="rest-card-overlay"></div>
+        <div *ngIf="!adminService.isRestaurantAvailable(r.id)" class="rest-unavail-badge">🔴 Currently Unavailable</div>
         <div class="rest-card-bottom">
           <div><h4 class="rest-card-name">{{ r.name }}</h4><p class="rest-card-desc">{{ r.description }}</p></div>
           <span class="rest-card-rating">⭐ {{ r.rating }}</span>
@@ -151,6 +154,9 @@ function minutesAgo(iso: string): number {
     </div>
     <div *ngIf="adminService && !adminService.isOrdersAccepting()" class="orders-off-banner">
       ❗ {{ adminService.settings().orders_off_message }}
+    </div>
+    <div *ngIf="adminService && adminService.settings().delivery_time" class="delivery-banner">
+      🚚 Estimated Delivery: <strong>{{ adminService.settings().delivery_time }}</strong>
     </div>
 
     <!-- Live Ticker from Supabase -->
@@ -318,6 +324,12 @@ function minutesAgo(iso: string): number {
       </div>
     </div>
   </div>
+  <div *ngIf="activeRest && !adminService.isRestaurantAvailable(activeRest.id)" class="rest-unavail-banner">
+    🔴 This restaurant is currently unavailable
+  </div>
+  <div *ngIf="activeRest && !adminService.isOrdersAccepting()" class="rest-unavail-banner">
+    ❗ {{ adminService.settings().orders_off_message }}
+  </div>
   <div class="rest-subhdr">
     <div><p class="best-lbl-orange">Best Item</p><p class="best-val-gray">{{ activeRest.bestItem }}</p></div>
     <button class="veg-toggle" [class.veg-on]="vegOnly" (click)="vegOnly=!vegOnly">
@@ -332,23 +344,32 @@ function minutesAgo(iso: string): number {
         <span class="menu-chevron">{{ openCats[cat.category] ? '▲' : '▼' }}</span>
       </button>
       <div *ngIf="openCats[cat.category]" class="menu-items">
-        <div *ngFor="let item of cat.items" class="menu-item-row">
+        <div *ngFor="let item of cat.items" class="menu-item-row"
+             [class.item-unavailable]="!adminService.isItemAvailable(activeRest.id, item.name)">
           <div class="menu-item-left">
             <div class="menu-item-name-row">
               <span class="veg-dot" [class.nonveg]="!item.veg"><span class="veg-dot-inner" [class.nonveg-inner]="!item.veg"></span></span>
               <span class="menu-item-name">{{ item.name }}</span>
               <span *ngIf="item.isStudentChoice" class="student-pick">Student Pick</span>
+              <span *ngIf="!adminService.isItemAvailable(activeRest.id, item.name)" class="item-unavail-tag">Unavailable</span>
             </div>
-            <span class="menu-item-price">₹{{ item.price }}</span>
+            <span class="menu-item-price">
+              ₹{{ adminService.getItemPrice(activeRest.id, item.name, item.price) }}
+              <span *ngIf="adminService.getItemPrice(activeRest.id, item.name, item.price) !== item.price"
+                    class="price-original">₹{{ item.price }}</span>
+            </span>
           </div>
-          <ng-container *ngIf="gq(activeRest.id, item.name)===0">
-            <button class="add-btn" (click)="uq(activeRest.id,activeRest.name,item.name,item.price,1,item.veg)">+</button>
+          <ng-container *ngIf="adminService.isItemAvailable(activeRest.id, item.name) && adminService.isRestaurantAvailable(activeRest.id) && adminService.isOrdersAccepting()">
+            <ng-container *ngIf="gq(activeRest.id, item.name)===0">
+              <button class="add-btn" (click)="uq(activeRest.id,activeRest.name,item.name,adminService.getItemPrice(activeRest.id,item.name,item.price),1,item.veg)">+</button>
+            </ng-container>
+            <div class="stepper" *ngIf="gq(activeRest.id,item.name)>0">
+              <button class="step-btn" (click)="uq(activeRest.id,activeRest.name,item.name,adminService.getItemPrice(activeRest.id,item.name,item.price),-1,item.veg)">−</button>
+              <span class="step-n">{{ gq(activeRest.id,item.name) }}</span>
+              <button class="step-btn" (click)="uq(activeRest.id,activeRest.name,item.name,adminService.getItemPrice(activeRest.id,item.name,item.price),1,item.veg)">+</button>
+            </div>
           </ng-container>
-          <div class="stepper" *ngIf="gq(activeRest.id,item.name)>0">
-            <button class="step-btn" (click)="uq(activeRest.id,activeRest.name,item.name,item.price,-1,item.veg)">−</button>
-            <span class="step-n">{{ gq(activeRest.id,item.name) }}</span>
-            <button class="step-btn" (click)="uq(activeRest.id,activeRest.name,item.name,item.price,1,item.veg)">+</button>
-          </div>
+          <span *ngIf="!adminService.isItemAvailable(activeRest.id, item.name)" class="unavail-dash">—</span>
         </div>
       </div>
     </div>
@@ -667,6 +688,15 @@ function minutesAgo(iso: string): number {
     .veg-dot.nonveg { border-color:#ef4444; }
     .veg-dot-inner { width:0.4rem; height:0.4rem; border-radius:50%; background:#22c55e; }
     .veg-dot-inner.nonveg-inner { background:#ef4444; }
+
+    .delivery-banner { background:#dcfce7; border:1px solid #86efac; border-radius:0.75rem; padding:0.5rem 0.75rem; color:#16a34a; font-size:0.8125rem; margin-top:0.5rem; text-align:center; }
+    .rest-unavailable { opacity:0.55; cursor:not-allowed !important; }
+    .rest-unavail-badge { position:absolute; top:0.5rem; left:0.5rem; background:rgba(0,0,0,0.75); color:white; font-size:0.625rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:9999px; z-index:2; }
+    .rest-unavail-banner { background:#fee2e2; border:1px solid #fca5a5; color:#dc2626; font-weight:600; font-size:0.8125rem; padding:0.625rem 1rem; text-align:center; }
+    .item-unavailable { opacity:0.45; }
+    .item-unavail-tag { font-size:0.5rem; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; font-weight:700; padding:0.1rem 0.35rem; border-radius:9999px; flex-shrink:0; }
+    .price-original { font-size:0.625rem; color:#9ca3af; text-decoration:line-through; margin-left:0.25rem; font-weight:400; }
+    .unavail-dash { color:#d1d5db; font-size:1rem; flex-shrink:0; }
   `]
 })
 export class HomeComponent implements OnInit, OnDestroy {
