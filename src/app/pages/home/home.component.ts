@@ -916,16 +916,25 @@ export class HomeComponent implements OnInit, OnDestroy {
 
   get categoryList(): Restaurant[] {
     const base = this.activeCatLabel === 'All'
-      ? [...RESTAURANTS].sort((a, b) => this.getRestaurantOrders(b.id) - this.getRestaurantOrders(a.id))
-      : [...RESTAURANTS].filter(r => r.categories.includes(this.activeCatLabel))
-          .sort((a, b) => this.getRestaurantOrders(b.id) - this.getRestaurantOrders(a.id));
+      ? [...RESTAURANTS]
+      : [...RESTAURANTS].filter(r => r.categories.includes(this.activeCatLabel));
+
     const q = this.catSearch.trim().toLowerCase();
-    if (!q) return base;
-    return base.filter(r =>
-      r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q) ||
-      r.bestItem.toLowerCase().includes(q) ||
-      r.menu.some(cat => cat.items.some(item => item.name.toLowerCase().includes(q)))
-    );
+    const filtered = q
+      ? base.filter(r =>
+          r.name.toLowerCase().includes(q) || r.description.toLowerCase().includes(q) ||
+          r.bestItem.toLowerCase().includes(q) ||
+          r.menu.some(cat => cat.items.some(item => item.name.toLowerCase().includes(q)))
+        )
+      : base;
+
+    // Sort: available first (by order count), unavailable at bottom
+    return filtered.sort((a, b) => {
+      const aAvail = this.adminService.isRestaurantAvailable(a.id) ? 0 : 1;
+      const bAvail = this.adminService.isRestaurantAvailable(b.id) ? 0 : 1;
+      if (aAvail !== bAvail) return aAvail - bAvail;
+      return this.getRestaurantOrders(b.id) - this.getRestaurantOrders(a.id);
+    });
   }
 
   get filteredMenu(): MenuCategory[] {
