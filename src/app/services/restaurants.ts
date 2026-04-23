@@ -1,14 +1,25 @@
+// ─── ClgBites Restaurant & Menu Data ─────────────────────────────────────────
+// Each item has:
+//   veg: true   → pure vegetarian
+//   veg: false  → non-vegetarian
+// Each category has:
+//   isVeg: true / false  → category-level default (used for Veg Only filter)
+//
+// To add a new item:  { name: 'Item Name', veg: true/false, price: 000 }
+// To add a new category: { category: 'Category Name', isVeg: true/false, items: [...] }
+// ─────────────────────────────────────────────────────────────────────────────
+
 export interface MenuItem {
   name: string;
   price: number;
+  veg: boolean;           // ← THE key: true = veg, false = non-veg
   isStudentChoice?: boolean;
-  
 }
 
 export interface MenuCategory {
   category: string;
+  isVeg?: boolean;        // category-level flag (true=veg, false=non-veg)
   items: MenuItem[];
-  isVeg?: boolean;
 }
 
 export interface Restaurant {
@@ -19,1016 +30,437 @@ export interface Restaurant {
   description: string;
   categories: string[];
   bestItem: string;
+  todayOrders: number;
   menu: MenuCategory[];
 }
 
-export const restaurants: Restaurant[] = [
+// Category isVeg sets the default for all items in that category.
+export const RESTAURANTS: Restaurant[] = [
   {
-    id: 'fruits',
-    name: 'Fruit Market',
+    id: 'fruits', name: 'Fruit Market',
     image: 'assets/images/fruits.jpg',
-    rating: 4,
-    description: 'Fresh fruits available daily at market prices',
-    categories: ['Fruits'],
-    bestItem: 'Fresh Seasonal Fruits',
+    rating: 4, description: 'Fresh fruits available daily at market prices',
+    categories: ['Fruits'], bestItem: 'Fresh Seasonal Fruits', todayOrders: 0,
     menu: [
-      {
-        category: 'Fresh Fruits', isVeg: true ,
-        items: [
-          { name: 'Bananas 1kg', price: 60 },
-          { name: 'Bananas 1/2kg', price: 35 },
-          { name: 'Oranges 1kg', price: 110 },
-          { name: 'Oranges 1/2kg', price: 60 },
-          { name: 'Pomegranate 1kg', price: 210 },
-          { name: 'Pomegranate 1/2kg', price: 110 },
-          { name: 'Green Grapes 1kg', price: 210 },
-          { name: 'Green Grapes 1/2kg', price: 110 },
-          { name: 'Green Grapes 250g', price: 60 },
-          { name: 'Black Grapes 1kg', price: 360 },
-          { name: 'Black Grapes 1/2kg', price: 185 },
-          { name: 'Black Grapes 250g', price: 100 },
-          { name: 'Apples 1kg', price: 210 },
-          { name: 'Apples 1/2kg', price: 110 },
-        ],
-      },
+      { category: 'Fresh Fruits', isVeg: true, items: [
+        { name: 'Bananas 1kg',         veg: true, price: 60  },
+        { name: 'Bananas 1/2kg',       veg: true, price: 35  },
+        { name: 'Oranges 1kg',         veg: true, price: 110 },
+        { name: 'Oranges 1/2kg',       veg: true, price: 60  },
+        { name: 'Pomegranate 1kg',     veg: true, price: 210 },
+        { name: 'Pomegranate 1/2kg',   veg: true, price: 110 },
+        { name: 'Green Grapes 1kg',    veg: true, price: 210 },
+        { name: 'Green Grapes 1/2kg',  veg: true, price: 110 },
+        { name: 'Green Grapes 250g',   veg: true, price: 60  },
+        { name: 'Black Grapes 1kg',    veg: true, price: 360 },
+        { name: 'Black Grapes 1/2kg',  veg: true, price: 185 },
+        { name: 'Black Grapes 250g',   veg: true, price: 100 },
+        { name: 'Apples 1kg',          veg: true, price: 210 },
+        { name: 'Apples 1/2kg',        veg: true, price: 110 },
+      ]},
     ],
   },
-  // {
-  //   id: 'haleem',
-  //   name: 'Haleem',
-  //   image: 'assets/images/haleem.jpg',
-  //   rating: 5,
-  //   description: 'Slow-cooked by tradition, seasoned with love, and perfected by time.',
-  //   categories: ['Haleem'],
-  //   bestItem: 'Mutton Haleem',
-  //   menu: [
-  //     {
-  //       category: "Student's Choice",isVeg : false,
-  //       items: [
-  //         { name: 'Mutton Haleem (1/4 kg)', price: 210, isStudentChoice: true },
-  //       ],
-  //     },
-  //     {
-  //       category: "Haleem",isVeg : false,
-  //       items: [
-  //         { name: 'Mutton Haleem(1/4 kg)', price: 210},
-  //         { name: 'Mutton Haleem(1/2 kg)', price: 360},
-  //         { name: 'Mutton Haleem(1 kg)', price: 710},
-  //         // { name: 'Chicken Haleem (1/4 kg)', price: 200},
-  //         // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-  //         // { name: 'Chicken Haleem (1 kg)', price: 200},
-  //       ],
-  //     },
-  //   ]
-  // },
-    {
-    id: 'KonaseemaRuchulu',
-    name: 'Konaseema Kodi Palao',
+  {
+    id: 'KonaseemaRuchulu', name: 'Konaseema Kodi Palao',
     image: 'assets/images/kp.jpeg',
-    rating: 5,
-    description: 'Bagara Rice + Fry Piece Curry',
-    categories: ['Biryani'],
-    bestItem: 'Andhra Fry Piece Palao',
+    rating: 5, description: 'Bagara Rice + Fry Piece Curry',
+    categories: ['Biryani'], bestItem: 'Andhra Fry Piece Palao', todayOrders: 0,
     menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [
-          { name: 'Andhra Fry Piece Paloa', price: 220, isStudentChoice: true },
-        ],
-      },
-      {
-        category: "Biryani",isVeg : false,
-        items: [
-          { name: 'Andhra Fry Piece Palao', price: 220},
-          // { name: 'Fry Biryani', price: 200},
-          // { name: 'Mixed Biryani', price: 200},
-          // { name: 'Fish Fry Biryani', price: 200},
-          // { name: 'Prawns Biryani', price: 250},
-          //{ name: 'Mutton Biryani', price: 710},
-          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-      // {
-      //   category: "Double Biryani",isVeg : false,
-      //   items: [
-      //     { name: 'Double Dum Biryani', price: 390},
-      //     { name: 'Double Fry Biryani', price: 390},
-      //     { name: 'Double Mixed Biryani', price: 390},
-      //     { name: 'Double Fish Fry Biryani', price: 390},
-      //     //{ name: 'Prawns Biryani', price: 550},
-      //     //{ name: 'Mutton Biryani', price: 550},
-      //     // { name: 'Chicken Haleem (1/4 kg)', price: 200},
-      //     // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-      //     // { name: 'Chicken Haleem (1 kg)', price: 200},
-      //   ],
-      // },
-    ]
+      { category: "Student's Choice", isVeg: false, items: [
+        { name: 'Andhra Fry Piece Paloa', veg: false, price: 220, isStudentChoice: true },
+      ]},
+      { category: 'Biryani', isVeg: false, items: [
+        { name: 'Andhra Fry Piece Palao', veg: false, price: 220 },
+      ]},
+    ],
   },
   {
-    id: 'Amrutha',
-    name: 'Amrutha (Earlier Nellore Ruchulu)',
+    id: 'Amrutha', name: 'Amrutha (Earlier Nellore Ruchulu)',
     image: 'assets/images/amrutha.jpeg',
-    rating: 5,
-    
-    description: 'Mughalai Birynai is Famous Here',
-    categories: ['Biryani'],
-    bestItem: 'Mughalai Biryani',
+    rating: 5, description: 'Mughalai Biryani is Famous Here',
+    categories: ['Biryani', 'Fast Food'], bestItem: 'Mughalai Biryani', todayOrders: 0,
     menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [
-          { name: 'Mughalai Biryani', price: 239, isStudentChoice: true },
-          { name: 'Tandoori Chicken Full', price: 550 , isStudentChoice: true},
-          { name: 'Tandoori Chicken Half', price: 300 , isStudentChoice: true},
-          ],
-      },
-      {
-        category: "Non Veg Biryani",isVeg : false,
-        items: [
-          { name: 'Dum Biryani', price: 199},
-          { name: 'Fry Piece Biryani', price: 219},
-          { name: 'Mixed Biryani', price: 219},
-          { name: 'Mughalai Biryani', price: 239},
-          
-        
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-      // {
-      //   category: "Amrutha Student combo",isVeg : false,
-      //   items: [
-      //     { name: '3 Members Rice + Chicken Curry + Half Starter + 3 Pulkhas + 3 Eggs', price: 999},
-          
-      //   ],
-      // },
-      {
-        category: "veg Biryanis & Fried Rices",isVeg : true,
-        items: [
-          { name: 'Veg Biryani', price: 160},
-          { name: 'sp Veg Biryani', price: 180},
-          { name: 'Panner Biryani', price: 225},
-          { name: 'Veg Fried Rice', price: 165},
-          { name: 'Sp Veg Fried Rice', price: 235},
-        
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-      {
-        category: "Tandoori",isVeg : true,
-        items: [
-          { name: 'Tandoori Chicken Full', price: 550},
-          { name: 'Tandoori Chicken Half', price: 300},
-          { name: 'Kalmi Kabab(4pc)', price: 390},
-          { name: 'Chicken Tikka', price: 350},
-          { name: 'Chicken Seekh kabab', price: 350},
-          //{ name: 'Sp Veg Fried Rice', price: 235},
-        
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-
-    ]
+      { category: "Student's Choice", isVeg: false, items: [
+        { name: 'Mughalai Biryani',      veg: false, price: 239, isStudentChoice: true },
+        { name: 'Tandoori Chicken Full', veg: false, price: 550, isStudentChoice: true },
+        { name: 'Tandoori Chicken Half', veg: false, price: 300, isStudentChoice: true },
+      ]},
+      { category: 'Non Veg Biryani', isVeg: false, items: [
+        { name: 'Dum Biryani',       veg: false, price: 199 },
+        { name: 'Fry Piece Biryani', veg: false, price: 219 },
+        { name: 'Mixed Biryani',     veg: false, price: 219 },
+        { name: 'Mughalai Biryani',  veg: false, price: 239 },
+      ]},
+      { category: 'Veg Biryanis & Fried Rices', isVeg: true, items: [
+        { name: 'Veg Biryani',      veg: true, price: 160 },
+        { name: 'Sp Veg Biryani',   veg: true, price: 180 },
+        { name: 'Paneer Biryani',   veg: true, price: 225 },
+        { name: 'Veg Fried Rice',   veg: true, price: 165 },
+        { name: 'Sp Veg Fried Rice',veg: true, price: 235 },
+      ]},
+      { category: 'Tandoori', isVeg: false, items: [
+        { name: 'Tandoori Chicken Full',  veg: false, price: 550 },
+        { name: 'Tandoori Chicken Half',  veg: false, price: 300 },
+        { name: 'Kalmi Kabab (4pc)',       veg: false, price: 390 },
+        { name: 'Chicken Tikka',          veg: false, price: 350 },
+        { name: 'Chicken Seekh Kabab',    veg: false, price: 350 },
+      ]},
+    ],
   },
   {
-    id: 'A1Biryani',
-    name: 'A1 Biryani',
+    id: 'kelvin', name: 'Kelvin Fast Food',
+    image: 'assets/images/kelvin.jpeg',
+    rating: 5, description: 'Best for fast food',
+    categories: ['Fast Food'], bestItem: 'Chicken Rice', todayOrders: 0,
+    menu: [
+      { category: "Student's Choice", isVeg: false, items: [
+        { name: 'Chicken Rice', veg: false, price: 90, isStudentChoice: true },
+      ]},
+      { category: 'Rice & Noodles', isVeg: false, items: [
+        { name: 'Double Chicken Rice',     veg: false, price: 100 },
+        { name: 'Double Chicken Noodles',  veg: false, price: 100 },
+        { name: 'Chicken Rice',            veg: false, price: 90  },
+        { name: 'Chicken Noodles',         veg: false, price: 90  },
+        { name: 'Egg Rice',                veg: false, price: 90  },
+        { name: 'Egg Noodles',             veg: false, price: 90  },
+        { name: 'Egg Manchurian Rice',     veg: false, price: 90  },
+        { name: 'Egg Manchurian Noodles',  veg: false, price: 90  },
+      ]},
+      { category: 'Veg Rice & Noodles', isVeg: true, items: [
+        { name: 'Veg Rice',    veg: true, price: 90 },
+        { name: 'Veg Noodles', veg: true, price: 90 },
+      ]},
+      { category: 'Starters', isVeg: false, items: [
+        { name: 'Chilli Chicken',        veg: false, price: 140 },
+        { name: 'Chicken Manchurian',    veg: false, price: 160 },
+        { name: 'Egg Manchurian',        veg: false, price: 120 },
+        { name: 'Double Egg Manchurian', veg: false, price: 140 },
+      ]},
+      { category: 'Veg Starters', isVeg: true, items: [
+        { name: 'Veg Manchurian', veg: true, price: 110 },
+      ]},
+    ],
+  },
+  {
+    id: 'A1Biryani', name: 'A1 Biryani',
     image: 'assets/images/A1.jpeg',
-    rating: 5,
-    description: 'Gaining popularity Briyanis',
-    categories: ['Biryani'],
-    bestItem: 'Dum Biryani',
+    rating: 5, description: 'Gaining popularity Biryanis',
+    categories: ['Biryani'], bestItem: 'Dum Biryani', todayOrders: 0,
     menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [
-          { name: 'Dum Biryani', price: 200, isStudentChoice: true },
-        ],
-      },
-      {
-        category: "Biryani",isVeg : false,
-        items: [
-          { name: 'Dum Biryani', price: 170},
-          { name: 'Fry Biryani', price: 190},
-          { name: 'Mixed Biryani', price: 200},
-          // { name: 'Fish Fry Biryani', price: 200},
-          // { name: 'Prawns Biryani', price: 250},
-          //{ name: 'Mutton Biryani', price: 710},
-          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-      // {
-      //   category: "Double Biryani",isVeg : false,
-      //   items: [
-      //     { name: 'Double Dum Biryani', price: 390},
-      //     { name: 'Double Fry Biryani', price: 390},
-      //     { name: 'Double Mixed Biryani', price: 390},
-      //     { name: 'Double Fish Fry Biryani', price: 390},
-      //     //{ name: 'Prawns Biryani', price: 550},
-      //     //{ name: 'Mutton Biryani', price: 550},
-      //     // { name: 'Chicken Haleem (1/4 kg)', price: 200},
-      //     // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-      //     // { name: 'Chicken Haleem (1 kg)', price: 200},
-      //   ],
-      // },
-    ]
+      { category: "Student's Choice", isVeg: false, items: [
+        { name: 'Mixed Biryani', veg: false, price: 200, isStudentChoice: true },
+      ]},
+      { category: 'Biryani', isVeg: false, items: [
+        { name: 'Dum Biryani',   veg: false, price: 170 },
+        { name: 'Fry Biryani',   veg: false, price: 190 },
+        { name: 'Mixed Biryani', veg: false, price: 200 },
+      ]},
+    ],
   },
   {
-    id: 'sindhu',
-    name: 'Hotel Sindhu',
+    id: 'sindhu', name: 'Hotel Sindhu',
     image: 'assets/images/sindhu.jpg',
-    rating: 5,
-    description: 'Best Biryanis in Mandadam',
-    categories: ['Biryani'],
-    bestItem: 'Dum Biryani',
+    rating: 5, description: 'Best Biryanis in Mandadam',
+    categories: ['Biryani'], bestItem: 'Dum Biryani', todayOrders: 0,
     menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [
-          { name: 'Dum Biryani', price: 200, isStudentChoice: true },
-        ],
-      },
-      {
-        category: "Biryani",isVeg : false,
-        items: [
-          { name: 'Dum Biryani', price: 200},
-          { name: 'Fry Biryani', price: 200},
-          { name: 'Mixed Biryani', price: 200},
-          { name: 'Fish Fry Biryani', price: 200},
-          { name: 'Prawns Biryani', price: 250},
-          //{ name: 'Mutton Biryani', price: 710},
-          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-      {
-        category: "Double Biryani",isVeg : false,
-        items: [
-          { name: 'Double Dum Biryani', price: 390},
-          { name: 'Double Fry Biryani', price: 390},
-          { name: 'Double Mixed Biryani', price: 390},
-          { name: 'Double Fish Fry Biryani', price: 390},
-          //{ name: 'Prawns Biryani', price: 550},
-          //{ name: 'Mutton Biryani', price: 550},
-          // { name: 'Chicken Haleem (1/4 kg)', price: 200},
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-    ]
+      { category: "Student's Choice", isVeg: false, items: [
+        { name: 'Dum Biryani', veg: false, price: 200, isStudentChoice: true },
+      ]},
+      { category: 'Biryani', isVeg: false, items: [
+        { name: 'Dum Biryani',       veg: false, price: 200 },
+        { name: 'Fry Biryani',       veg: false, price: 200 },
+        { name: 'Mixed Biryani',     veg: false, price: 200 },
+        { name: 'Fish Fry Biryani',  veg: false, price: 200 },
+        { name: 'Prawns Biryani',    veg: false, price: 250 },
+      ]},
+      { category: 'Double Biryani', isVeg: false, items: [
+        { name: 'Double Dum Biryani',       veg: false, price: 390 },
+        { name: 'Double Fry Biryani',       veg: false, price: 390 },
+        { name: 'Double Mixed Biryani',     veg: false, price: 390 },
+        { name: 'Double Fish Fry Biryani',  veg: false, price: 390 },
+      ]},
+    ],
   },
   {
-    id: 'cafe999',
-    name: 'Cafe 999',
+    id: 'cafe999', name: 'Cafe 999',
     image: 'assets/images/cafe999.jpeg',
-    rating: 5,
-    
-    description: 'Food & Bavarages',
-    categories: ['Food'],
-    bestItem: 'pizza',
+    rating: 5, description: 'Food & Beverages',
+    categories: ['Fast Food'], bestItem: 'Chicken Pizza', todayOrders: 0,
     menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [
-          { name: 'Chicken pizza', price: 189, isStudentChoice: true },
-          { name: 'Sweet corn pizza', price: 169, isStudentChoice: true },
-          { name: 'Chicken Burger', price: 119, isStudentChoice: true },
-          { name: 'Veg Burger', price: 99, isStudentChoice: true },
-          { name: 'Chicken wings(10pc)', price: 239, isStudentChoice: true},
-          
-          
-
-          
-        ],
-      },
-      // {
-      //   category: "Bavarages",isVeg : true,
-      //   items: [
-      //     { name: 'Mint Mojito', price: 99},
-      //     { name: 'Blue Cirracao', price: 99},
-        
-      //     { name: 'Mango Burst Milkshake', price: 119},
-      //     { name: 'Butter Scotch Milkshake', price: 119},
-          
-      //     // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-      //     // { name: 'Chicken Haleem (1 kg)', price: 200},
-      //   ],
-      // },
-      {
-        category: "Non Veg",isVeg : false,
-        items: [
-          { name: 'Chicken Sandwich', price: 149},
-          { name: 'Chicken burger', price: 119},
-          { name: 'Chicken pizza', price: 189},
-          { name: 'Chicken wings(5pc)', price: 159},
-          { name: 'Chicken wings(10pc)', price: 239},
-          { name: 'Chicken lollipop(5pc)', price: 209},
-          { name: 'Chicken lollipop(10pc)', price: 359},
-
-          { name: 'Chicken pizza', price: 189},
-          { name: 'chicken momo fried', price: 109},
-        
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-      {
-        category: "Veg",isVeg : true,
-        items: [
-          { name: 'Corn Samosa (5 pc)', price:69},
-           {name: 'Veg Burger', price: 89},
-           { name: 'sweet corn pizza', price: 169},
-
-          { name: 'Salted French Fries', price:99},
-          
-          { name: 'Masala French Fries', price: 109},
-
-
-          { name: 'Veg Momo Fried', price: 99},
-          { name: 'Paneer Momo Fried', price: 119},
-          { name: 'veg sandwich', price: 129},
-          
-                    
-        
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-    ]
+      { category: "Student's Choice", isVeg: false, items: [
+        { name: 'Chicken Pizza',        veg: false, price: 189, isStudentChoice: true },
+        { name: 'Sweet Corn Pizza',     veg: true,  price: 169, isStudentChoice: true },
+        { name: 'Chicken Burger',       veg: false, price: 119, isStudentChoice: true },
+        { name: 'Veg Burger',           veg: true,  price: 99,  isStudentChoice: true },
+        { name: 'Chicken Wings (10pc)', veg: false, price: 239, isStudentChoice: true },
+      ]},
+      { category: 'Non Veg', isVeg: false, items: [
+        { name: 'Chicken Sandwich',       veg: false, price: 149 },
+        { name: 'Chicken Burger',         veg: false, price: 119 },
+        { name: 'Chicken Pizza',          veg: false, price: 189 },
+        { name: 'Chicken Wings (5pc)',    veg: false, price: 159 },
+        { name: 'Chicken Wings (10pc)',   veg: false, price: 239 },
+        { name: 'Chicken Lollipop (5pc)', veg: false, price: 209 },
+        { name: 'Chicken Lollipop (10pc)',veg: false, price: 359 },
+        { name: 'Chicken Momo Fried',     veg: false, price: 109 },
+      ]},
+      { category: 'Veg', isVeg: true, items: [
+        { name: 'Corn Samosa (5pc)',    veg: true, price: 69  },
+        { name: 'Veg Burger',          veg: true, price: 89  },
+        { name: 'Sweet Corn Pizza',    veg: true, price: 169 },
+        { name: 'Salted French Fries', veg: true, price: 99  },
+        { name: 'Masala French Fries', veg: true, price: 109 },
+        { name: 'Veg Momo Fried',      veg: true, price: 99  },
+        { name: 'Paneer Momo Fried',   veg: true, price: 119 },
+        { name: 'Veg Sandwich',        veg: true, price: 129 },
+      ]},
+    ],
   },
-  
-  // {
-  //   id: 'spice-magic',
-  //   name: 'Spice Magic',
-  //   image: 'assets/images/spice-magic.jpg',
-  //   rating: 4,
-  //   description: 'Famous for their aromatic Mixed Biryani',
-  //   categories: ['Biryani', 'Fast Food'],
-  //   bestItem: 'Mixed Biryani',
-  //   menu: [
-  //     {
-  //       category: "Student's Choice",isVeg : false,
-  //       items: [{ name: 'Mixed Biryani', price: 190, isStudentChoice: true },
-  //               { name: 'chicken 65 Biryani', price: 240, isStudentChoice: true  },
-  //               { name: 'Boxer Fried Rice', price: 260, isStudentChoice: true  },
-  //               //{ name: 'SP Fried Rice', price: 250, isStudentChoice: true  },
-  //       ],
-
-  //     },
-  //     {
-  //       category: "Newly Added",isVeg : false,
-  //       items: [{ name: 'Chicken 65 Biryani', price: 240},
-  //               { name: 'Mughalai Biryani', price: 250},
-  //               { name: 'Chicken Special biryani', price: 240},
-  //              // { name: 'Boxer Fried Rice', price: 260},
-  //               //{ name: 'SP Fried Rice', price: 250},
-  //       ],
-
-  //     },
-
-      
-  //     {
-  //       category: 'Bucket Biryanis',isVeg : false,
-  //       items: [
-  //         { name: 'Bucket Dum Biryani (For 4)', price: 640 },
-  //         { name: 'Bucket Fry Piece Biryani (For 4)', price: 670 },
-  //         { name: 'Bucket Mixed Biryani (For 4)', price: 730 },
-  //       ],
-  //     },
-  //     {
-  //       category: 'Biryanis',isVeg : false,
-  //       items: [
-  //         { name: 'Dum Biryani', price: 160 },
-  //         { name: 'Fry Biryani', price: 180 },
-  //         {name: 'Mixed Biryani', price: 190},
-  //         { name: 'Chicken 65 biryani', price: 240 },
-  //         { name: 'Chicken Special biryani', price: 240 },
-  //         { name: 'Mughalai Biryani', price: 250 },
-  //       ],
-  //     },
-      
-  //     {
-  //       category: 'Chinese/Fast Food',isVeg : false ,
-  //       items: [
-  //         // { name: 'Veg Noodles', price: 90 },
-  //         // { name: 'Veg Fried Rice', price: 90 },
-  //         { name: 'Egg Noodles', price: 110 },
-  //         { name: 'Egg Fried Rice', price: 110 },
-  //         { name: 'Chicken Noodles', price: 130 },
-  //         { name: 'Chicken Fried Rice', price: 130 },
-  //        // { name: 'SP Fried Rice', price: 20 },
-  //        // { name: 'Boxer Fried Rice', price: 250 },
-  //         { name: 'Chicken Manchurian', price: 160 },
-  //         { name: 'Chilli Chicken', price: 160 },
-  //         { name: 'Chicken Lollipop (4 pcs)', price: 160 },
-  //       ],
-  //     },
-  //     {
-  //       category : 'Veg Chinese/Fast Food', isVeg : true,
-  //       items:[
-  //          { name: 'Veg Noodles', price: 90 },
-  //         { name: 'Veg Fried Rice', price: 90 },
-  //       ]
-  //     },
-  //   ],
-  // },
-
-  
   {
-    id: 'food-corner',
-    name: 'Food Corner',
+    id: 'food-corner', name: 'Food Corner',
     image: 'assets/images/food-corner.jpg',
-    rating: 4,
-    description: 'Your go-to spot for quick Chinese & Fast Foods',
-    categories: ['Fast Food'],
-    bestItem: 'Chicken Noodles',
+    rating: 4, description: 'Your go-to spot for quick Chinese & Fast Foods',
+    categories: ['Fast Food'], bestItem: 'Chicken Noodles', todayOrders: 0,
     menu: [
-      {
-        category: "Student's Choice",isVeg : false ,
-        items: [
-          { name: 'Veg Noodles', price: 80, isStudentChoice: true },
-          { name: 'Egg Noodles', price: 90, isStudentChoice: true },
-          { name: 'Chicken Noodles', price: 100, isStudentChoice: true },
-        ],
-      },
-      {
-        category :'Veg Items',isVeg : true,
-        items:[
-          { name: 'Veg Noodles', price: 80 },
-          { name: 'Veg Fried Rice', price: 80 },
-           { name: 'Veg Manchurian', price: 80 },
-          
-        ]
-      },
-      {
-        category: 'NV Noodles',isVeg : false ,
-        items: [
-          // { name: 'Veg Noodles', price: 80 },
-          { name: 'Egg Noodles', price: 90 },
-          { name: 'Chicken Noodles', price: 100 },
-          { name: 'Veg Manchurian Noodles', price: 90 },
-          { name: 'Egg Manchurian Noodles', price: 100 },
-        ],
-      },
-      {
-        category: 'NV Fried Rice',isVeg : false ,
-        items: [
-          // { name: 'Veg Fried Rice', price: 80 },
-          { name: 'Egg Fried Rice', price: 90 },
-          { name: 'Chicken Fried Rice', price: 100 },
-          { name: 'Veg Manchurian Fried Rice', price: 90 },
-          { name: 'Egg Manchurian Fried Rice', price: 100 },
-        ],
-      },
-      {
-        category: 'NV Starters',isVeg : false ,
-        items: [
-          // { name: 'Veg Manchurian', price: 80 },
-          { name: 'Egg Manchurian', price: 90 },
-          { name: 'Chicken Manchurian', price: 170 },
-          { name: 'Chilli Chicken', price: 170 },
-          { name: '4P Chicken Lollipop', price: 150 },
-        ],
-      },
+      { category: "Student's Choice", isVeg: false, items: [
+        { name: 'Veg Noodles',     veg: true,  price: 80,  isStudentChoice: true },
+        { name: 'Egg Noodles',     veg: false, price: 90,  isStudentChoice: true },
+        { name: 'Chicken Noodles', veg: false, price: 100, isStudentChoice: true },
+      ]},
+      { category: 'Veg Items', isVeg: true, items: [
+        { name: 'Veg Noodles',    veg: true, price: 80 },
+        { name: 'Veg Fried Rice', veg: true, price: 80 },
+        { name: 'Veg Manchurian', veg: true, price: 80 },
+      ]},
+      { category: 'NV Noodles', isVeg: false, items: [
+        { name: 'Egg Noodles',            veg: false, price: 90  },
+        { name: 'Chicken Noodles',        veg: false, price: 100 },
+        { name: 'Veg Manchurian Noodles', veg: false, price: 90  },
+        { name: 'Egg Manchurian Noodles', veg: false, price: 100 },
+      ]},
+      { category: 'NV Fried Rice', isVeg: false, items: [
+        { name: 'Egg Fried Rice',            veg: false, price: 90  },
+        { name: 'Chicken Fried Rice',        veg: false, price: 100 },
+        { name: 'Veg Manchurian Fried Rice', veg: false, price: 90  },
+        { name: 'Egg Manchurian Fried Rice', veg: false, price: 100 },
+      ]},
+      { category: 'NV Starters', isVeg: false, items: [
+        { name: 'Egg Manchurian',    veg: false, price: 90  },
+        { name: 'Chicken Manchurian',veg: false, price: 170 },
+        { name: 'Chilli Chicken',    veg: false, price: 170 },
+        { name: '4P Chicken Lollipop',veg: false,price: 150 },
+      ]},
     ],
   },
-
   {
-    id: 'RoyalGrand',
-    name: 'Hotel Royal Grand',
+    id: 'RoyalGrand', name: 'Hotel Royal Grand',
     image: 'assets/images/royalgrand.png',
-    rating: 5,
-    description: 'Lollipop Biryani is famous here',
-    categories: ['Biryani'],
-    bestItem: 'Lollipop Biryani',
+    rating: 5, description: 'Lollipop Biryani is famous here',
+    categories: ['Biryani'], bestItem: 'Lollipop Biryani', todayOrders: 0,
     menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [
-          { name: 'Lollipop Biryani', price: 269, isStudentChoice: true },
-        ],
-      },
-      {
-        category: "Biryani",isVeg : false,
-        items: [
-          { name: 'Dum Biryani', price: 199},
-          { name: 'Fry Piece Biryani', price: 219},
-          { name: 'Lollipop Biryani', price: 269},
-          { name: 'Wing Biryani', price: 269},
-          { name: 'Mughalai Biryani', price: 269},
-          { name: 'Tikka Biryani', price: 269},
-          { name: 'Sp Biryani', price: 269},
-          
-        
-          // { name: 'Chicken Haleem (1/2 kg)', price: 200},
-          // { name: 'Chicken Haleem (1 kg)', price: 200},
-        ],
-      },
-    ]
+      { category: "Student's Choice", isVeg: false, items: [
+        { name: 'Lollipop Biryani', veg: false, price: 269, isStudentChoice: true },
+      ]},
+      { category: 'Biryani', isVeg: false, items: [
+        { name: 'Dum Biryani',      veg: false, price: 199 },
+        { name: 'Fry Piece Biryani',veg: false, price: 219 },
+        { name: 'Lollipop Biryani', veg: false, price: 269 },
+        { name: 'Wing Biryani',     veg: false, price: 269 },
+        { name: 'Mughalai Biryani', veg: false, price: 269 },
+        { name: 'Tikka Biryani',    veg: false, price: 269 },
+        { name: 'Sp Biryani',       veg: false, price: 269 },
+      ]},
+    ],
   },
-  
-  
-  
   {
-    id: 'hotel-bheemasena',
-    name: 'Hotel Bheemasena',
+    id: 'hotel-bheemasena', name: 'Hotel Bheemasena',
     image: 'assets/images/hotel-bheemasena.jpg',
-    rating: 5,
-    description: 'Authentic restaurant-style veg and non-veg dishes',
-    categories: ['Biryani', 'Veg Meals'],
-    bestItem: 'Biryanis, Starters, Soups & Curries',
+    rating: 5, description: 'Authentic restaurant-style veg and non-veg dishes',
+    categories: ['Biryani', 'Fast Food', 'Veg Meals'], bestItem: 'Biryanis, Starters, Soups & Curries', todayOrders: 0,
     menu: [
-      {
-        category: 'Veg Biryanis',isVeg : true,
-        items: [
-          { name: 'Biryani Rice', price: 180 },
-          { name: 'Veg Biryani', price: 240 },
-          { name: 'Spl Veg Biryani', price: 260 },
-          { name: 'Ulavacharu Biryani', price: 270 },
-          { name: 'Kaju Biryani', price: 290},
-          { name: 'Spl Kaju Biryani', price: 310 },
-          { name: 'Mushroom Biryani', price: 270 },
-          { name: 'Spl Mushroom Biryani', price: 290 },
-          { name: 'Paneer Biryani', price: 270 },
-          { name: 'Spl Paneer Biryani', price: 290 },
-          { name: 'Paneer Tikka Biryani', price: 310 },
-          { name: 'Bheemasena Spl Biryani', price: 310},
-        ],
-      },
-      {
-        category: 'Non-Veg Biryanis',isVeg : false,
-        items: [
-          { name: 'Spl Egg Biryani', price: 280 },
-          { name: 'Chicken Dum Biryani', price: 270 },
-          { name: 'Chicken Fry Biryani', price: 280 },
-          { name: 'Chicken Fry Roasted Biryani', price: 290 },
-          { name: 'Spl Chicken Biryani', price: 300 },
-          { name: 'Joint Biryani', price: 310 },
-          { name: 'Kalmi Biryani', price: 320 },
-          { name: 'Chicken Tikka Biryani', price: 320 },
-          { name: 'Chicken Mughlai Biryani', price: 310 },
-          { name: 'Ulavacharu Chicken Biryani', price: 320 },
-          { name: 'Wings Biryani', price: 310 },
-          { name: 'Chicken Lollipop Biryani', price: 330 },
-          { name: 'Kundan Biryani', price: 360 },
-          { name: 'Nawab Biryani', price: 370 },
-          { name: 'Tandoori Chicken Biryani', price: 370 },
-          { name: 'Oanpur Biryani', price: 400 },
-          { name: 'Nalli Gosht', price: 500 },
-          { name: 'Mutton Fry Biryani', price: 400 },
-          { name: 'Mutton Afgani Biryani', price: 400 },
-          { name: 'Mutton Dum Biryani', price: 410 },
-          { name: 'Mutton Keema Biryani', price: 480 },
-          { name: 'Mutton Mughlai Biryani', price: 430 },
-          { name: 'Prawns Biryani', price: 390 },
-          { name: 'Spl Prawns Biryani', price: 410 },
-          { name: 'Fish Biryani', price: 390 },
-          { name: 'Bheemasena Spl Non Veg Biryani', price: 460 },
-        ],
-      },
-      {
-        category: 'Bucket Biryanis',isVeg : false,
-        items: [
-          { name: 'Chicken Dum Bucket Biryani', price: 800 },
-          { name: 'Fry Chicken Bucket Biryani', price: 850 },
-          { name: 'Spl Chicken Bucket Biryani', price: 880 },
-          { name: 'Wings Bucket Biryani', price: 890 },
-          { name: 'Lollipop Bucket Biryani', price: 950 },
-          { name: 'Kundan Bucket Biryani', price: 1150 },
-          { name: 'Prawns Bucket Biryani', price: 1100 },
-          { name: 'Fish Bucket Biryani', price: 1000 },
-          { name: 'Mutton Bucket Biryani', price: 1200 },
-        ],
-      },
-      {
-        category: 'Mini Biryanis',isVeg : false,
-        items: [
-          { name: 'Mini Dum Biryani', price: 170 },
-          { name: 'Mini Fry Biryani', price: 180 },
-          { name: 'Mini Boneless Biryani', price: 190 },
-          // { name: 'Mini Paneer Biryani', price: 190 },
-          // { name: 'Mini Mushroom Biryani', price: 180 },
-        ],
-      },
-      {
-        category: 'Mini Veg Biryanis',isVeg : true,
-        items: [
-          // { name: 'Mini Dum Biryani', price: 170 },
-          // { name: 'Mini Fry Biryani', price: 180 },
-          // { name: 'Mini Boneless Biryani', price: 190 },
-          { name: 'Mini Paneer Biryani', price: 190 },
-          { name: 'Mini Mushroom Biryani', price: 180 },
-        ],
-      },
-
-      // {
-      //   category: 'Fried Rice',
-      //   items: [
-      //     { name: 'Zeera Rice', price: 204 },
-      //     { name: 'Veg Fried Rice', price: 223 },
-      //     { name: 'Paneer Fried Rice', price: 252 },
-      //     { name: 'Kaju Fried Rice', price: 262 },
-      //     { name: 'Mushroom Fried Rice', price: 242 },
-      //     { name: 'Bheemasena Spl Fried Rice', price: 300 },
-      //     { name: 'Egg Fried Rice', price: 252 },
-      //     { name: 'Chicken Fried Rice', price: 271 },
-      //     { name: 'Spl Chicken Fried Rice', price: 291 },
-      //     { name: "Prawn's Fried Rice", price: 320 },
-      //     { name: 'Mutton Fried Rice', price: 350 },
-      //     { name: 'Bheemasena Spl Non Veg Fried Rice', price: 378 },
-      //   ],
-      // },
-      // {
-      //   category: 'Soups',
-      //   items: [
-      //     { name: 'Veg Corn Soup', price: 130 },
-      //     { name: 'Veg Manchow Soup', price: 130 },
-      //     { name: 'Veg H/S Soup', price: 130 },
-      //     { name: 'Bheemasena Spl Soup (Veg)', price: 140 },
-      //     { name: 'Chicken Corn Soup', price: 140 },
-      //     { name: 'Chicken Manchow Soup', price: 140 },
-      //     { name: 'Chicken H/S Soup', price: 140 },
-      //     { name: 'Chicken Coriander Soup', price: 140 },
-      //     { name: 'Mutton Bone Soup', price: 170 },
-      //     { name: 'Mutton Sharbh Soup', price: 170 },
-      //     { name: 'Bheemasena Spl Soup (Non-Veg)', price: 160 },
-      //   ],
-      // },
-      {
-        category: 'Veg Starters',isVeg : true,
-        items: [
-          { name: 'Veg Manchuria', price: 210 },
-          { name: 'Gobi Manchuria', price: 210 },
-        ],
-      },
-      {
-        category: 'Non Veg Starters',isVeg : false,
-        items: [
-          { name: 'Chilli Chicken', price: 290 },
-          { name: 'Chicken Manchuria', price: 290 },
-          { name: 'Chicken 65', price: 290 },
-          { name: 'Chicken Majestic', price: 290 },
-          { name: 'Dragon Chicken', price: 300 },
-          { name: 'Chicken 555', price: 290 },
-          { name: 'Royal Chicken', price: 300 },
-          { name: 'Chicken Lollipop', price: 310 },
-          { name: 'Apollo Fish', price: 330 },
-          { name: 'Chilli Fish', price: 340 },
-          { name: 'Bheemasena Spl Non Veg', price: 360 },
-          { name: 'Chicken Wings', price: 310 },
-          { name: 'Basket Chicken', price: 320 },
-          { name: 'Chicken Fry Bone', price: 270 },
-          { name: 'Chicken Popcorn', price: 290 },
-          { name: 'Chilli Egg', price: 250 },
-          { name: 'Crispy Chicken', price: 310 },
-          { name: 'Hong Kong Chicken', price: 300 },
-          { name: 'Pepper Chicken', price: 320 },
-          { name: 'Loose Prawns', price: 360 },
-          { name: 'Chilli Prawn', price: 370 },
-        ],
-      },
-      // {
-      //   category: 'Curries',
-      //   items: [
-      //     { name: 'Plain Palak/Paneer', price: 190 },
-      //     { name: 'Mix Veg Curry', price: 270 },
-      //     { name: 'Paneer Butter M/S', price: 280 },
-      //     { name: 'Kaju Masala', price: 300 },
-      //     { name: 'Mushroom Masala', price: 280 },
-      //     { name: 'Kaju Paneer Curry', price: 300 },
-      //     { name: 'Veg Jaipuri', price: 280 },
-      //     { name: 'Veg Chat Pat', price: 290 },
-      //     { name: 'Tomato Kaju Curry', price: 300 },
-      //     { name: 'Methi Chaman', price: 300 },
-      //     { name: 'Bheemasena Spl Veg Curry', price: 330 },
-      //     { name: 'Chicken Curry', price: 270 },
-      //     { name: 'Chicken Fry Bone Curry', price: 260 },
-      //     { name: 'Egg Burji', price: 190 },
-      //     { name: 'Egg Curry', price: 230 },
-      //     { name: 'Methi Chicken Curry', price: 290 },
-      //     { name: 'Mughlai Chicken Curry', price: 290 },
-      //     { name: 'Mutton Boneless Curry', price: 410 },
-      //     { name: 'Prawns Fry', price: 350 },
-      //     { name: 'Andhra Chicken Curry', price: 290 },
-      //     { name: 'Kadai Chicken', price: 290 },
-      //     { name: 'Butter Chicken', price: 290 },
-      //     { name: 'Hyderabad Chicken', price: 290 },
-      //     { name: 'Chicken Tikka Masala', price: 290 },
-      //     { name: 'Punjabi Chicken Masala', price: 310 },
-      //     { name: 'Prawns Curry', price: 350 },
-      //     { name: 'Mutton Curry', price: 380 },
-      //     { name: 'Fish Curry BL', price: 330 },
-      //     { name: 'Mutton Rogan Josh', price: 410 },
-      //     { name: 'Bheemasena Spl N.V. Curry', price: 400 },
-      //   ],
-      // },
-      {
-        category: 'Breads',isVeg : true,
-        items: [
-          { name: 'Pulka', price: 15 },
-          { name: 'Butter Pulka', price: 20 },
-          { name: 'Roti', price: 25 },
-          { name: 'Butter Roti', price: 30 },
-          { name: 'Butter Naan', price: 45 },
-          { name: 'Plain Naan', price: 35 },
-          { name: 'Kulcha', price: 50 },
-          { name: 'M/S Kulcha', price: 60 },
-          { name: 'Methi Parota', price: 60 },
-          { name: 'Garlic Naan', price: 70 },
-        ],
-      },
-      {
-        category: 'Tandoori Starters',isVeg : false,
-        items: [
-          { name: 'Tandoori Chicken 1/2', price: 300 },
-          { name: 'Tandoori Chicken Full', price: 580 },
-          { name: 'Tangdi Kebab', price: 330 },
-          { name: 'Chicken Tikka', price: 310 },
-          { name: 'Malai Tikka', price: 340 },
-          { name: 'Fish Tikka', price: 330 },
-        ],
-      },
-      {
-        category: 'Thali/Beverages',isVeg : true,
-        items: [
-          { name: 'Thali', price: 140 },
-          { name: 'Thali Parcel', price: 160 },
-          { name: 'Thali Parcel Single', price: 130 },
-          { name: 'Ragi Sangati', price: 110 },
-          { name: 'Natukodi Curry', price: 350 },
-          { name: 'White Rice', price: 80 },
-          { name: 'Curd Rice', price: 90 },
-          { name: 'Spl Curd Rice', price: 150 },
-          { name: 'Water Bottle', price: 20 },
-          { name: 'Soft Drink', price: 25 },
-          { name: 'Butter Milk', price: 50 },
-          { name: 'Lassi', price: 70 },
-        ],
-      },
+      { category: 'Veg Biryanis', isVeg: true, items: [
+        { name: 'Biryani Rice',         veg: true, price: 180 },
+        { name: 'Veg Biryani',          veg: true, price: 240 },
+        { name: 'Spl Veg Biryani',      veg: true, price: 260 },
+        { name: 'Ulavacharu Biryani',   veg: true, price: 270 },
+        { name: 'Kaju Biryani',         veg: true, price: 290 },
+        { name: 'Spl Kaju Biryani',     veg: true, price: 310 },
+        { name: 'Mushroom Biryani',     veg: true, price: 270 },
+        { name: 'Spl Mushroom Biryani', veg: true, price: 290 },
+        { name: 'Paneer Biryani',       veg: true, price: 270 },
+        { name: 'Spl Paneer Biryani',   veg: true, price: 290 },
+        { name: 'Paneer Tikka Biryani', veg: true, price: 310 },
+        { name: 'Bheemasena Spl Biryani',veg: true,price: 310 },
+      ]},
+      { category: 'Non-Veg Biryanis', isVeg: false, items: [
+        { name: 'Spl Egg Biryani',               veg: false, price: 280 },
+        { name: 'Chicken Dum Biryani',           veg: false, price: 270 },
+        { name: 'Chicken Fry Biryani',           veg: false, price: 280 },
+        { name: 'Chicken Fry Roasted Biryani',   veg: false, price: 290 },
+        { name: 'Spl Chicken Biryani',           veg: false, price: 300 },
+        { name: 'Joint Biryani',                 veg: false, price: 310 },
+        { name: 'Kalmi Biryani',                 veg: false, price: 320 },
+        { name: 'Chicken Tikka Biryani',         veg: false, price: 320 },
+        { name: 'Chicken Mughlai Biryani',       veg: false, price: 310 },
+        { name: 'Ulavacharu Chicken Biryani',    veg: false, price: 320 },
+        { name: 'Wings Biryani',                 veg: false, price: 310 },
+        { name: 'Chicken Lollipop Biryani',      veg: false, price: 330 },
+        { name: 'Kundan Biryani',                veg: false, price: 360 },
+        { name: 'Nawab Biryani',                 veg: false, price: 370 },
+        { name: 'Tandoori Chicken Biryani',      veg: false, price: 370 },
+        { name: 'Oanpur Biryani',                veg: false, price: 400 },
+        { name: 'Nalli Gosht',                   veg: false, price: 500 },
+        { name: 'Mutton Fry Biryani',            veg: false, price: 400 },
+        { name: 'Mutton Afgani Biryani',         veg: false, price: 400 },
+        { name: 'Mutton Dum Biryani',            veg: false, price: 410 },
+        { name: 'Mutton Keema Biryani',          veg: false, price: 480 },
+        { name: 'Mutton Mughlai Biryani',        veg: false, price: 430 },
+        { name: 'Prawns Biryani',                veg: false, price: 390 },
+        { name: 'Spl Prawns Biryani',            veg: false, price: 410 },
+        { name: 'Fish Biryani',                  veg: false, price: 390 },
+        { name: 'Bheemasena Spl Non Veg Biryani',veg: false, price: 460 },
+      ]},
+      { category: 'Bucket Biryanis', isVeg: false, items: [
+        { name: 'Chicken Dum Bucket Biryani', veg: false, price: 800  },
+        { name: 'Fry Chicken Bucket Biryani', veg: false, price: 850  },
+        { name: 'Spl Chicken Bucket Biryani', veg: false, price: 880  },
+        { name: 'Wings Bucket Biryani',       veg: false, price: 890  },
+        { name: 'Lollipop Bucket Biryani',    veg: false, price: 950  },
+        { name: 'Kundan Bucket Biryani',      veg: false, price: 1150 },
+        { name: 'Prawns Bucket Biryani',      veg: false, price: 1100 },
+        { name: 'Fish Bucket Biryani',        veg: false, price: 1000 },
+        { name: 'Mutton Bucket Biryani',      veg: false, price: 1200 },
+      ]},
+      { category: 'Mini Biryanis', isVeg: false, items: [
+        { name: 'Mini Dum Biryani',      veg: false, price: 170 },
+        { name: 'Mini Fry Biryani',      veg: false, price: 180 },
+        { name: 'Mini Boneless Biryani', veg: false, price: 190 },
+      ]},
+      { category: 'Mini Veg Biryanis', isVeg: true, items: [
+        { name: 'Mini Paneer Biryani',   veg: true, price: 190 },
+        { name: 'Mini Mushroom Biryani', veg: true, price: 180 },
+      ]},
+      { category: 'Veg Starters', isVeg: true, items: [
+        { name: 'Veg Manchuria',  veg: true, price: 210 },
+        { name: 'Gobi Manchuria', veg: true, price: 210 },
+      ]},
+      { category: 'Non Veg Starters', isVeg: false, items: [
+        { name: 'Chilli Chicken',          veg: false, price: 290 },
+        { name: 'Chicken Manchuria',       veg: false, price: 290 },
+        { name: 'Chicken 65',              veg: false, price: 290 },
+        { name: 'Chicken Majestic',        veg: false, price: 290 },
+        { name: 'Dragon Chicken',          veg: false, price: 300 },
+        { name: 'Chicken 555',             veg: false, price: 290 },
+        { name: 'Royal Chicken',           veg: false, price: 300 },
+        { name: 'Chicken Lollipop',        veg: false, price: 310 },
+        { name: 'Apollo Fish',             veg: false, price: 330 },
+        { name: 'Chilli Fish',             veg: false, price: 340 },
+        { name: 'Bheemasena Spl Non Veg',  veg: false, price: 360 },
+        { name: 'Chicken Wings',           veg: false, price: 310 },
+        { name: 'Basket Chicken',          veg: false, price: 320 },
+        { name: 'Chicken Fry Bone',        veg: false, price: 270 },
+        { name: 'Chicken Popcorn',         veg: false, price: 290 },
+        { name: 'Chilli Egg',              veg: false, price: 250 },
+        { name: 'Crispy Chicken',          veg: false, price: 310 },
+        { name: 'Hong Kong Chicken',       veg: false, price: 300 },
+        { name: 'Pepper Chicken',          veg: false, price: 320 },
+        { name: 'Loose Prawns',            veg: false, price: 360 },
+        { name: 'Chilli Prawn',            veg: false, price: 370 },
+      ]},
+      { category: 'Breads', isVeg: true, items: [
+        { name: 'Pulka',        veg: true, price: 15 },
+        { name: 'Butter Pulka', veg: true, price: 20 },
+        { name: 'Roti',         veg: true, price: 25 },
+        { name: 'Butter Roti',  veg: true, price: 30 },
+        { name: 'Butter Naan',  veg: true, price: 45 },
+        { name: 'Plain Naan',   veg: true, price: 35 },
+        { name: 'Kulcha',       veg: true, price: 50 },
+        { name: 'M/S Kulcha',   veg: true, price: 60 },
+        { name: 'Methi Parota', veg: true, price: 60 },
+        { name: 'Garlic Naan',  veg: true, price: 70 },
+      ]},
+      { category: 'Tandoori Starters', isVeg: false, items: [
+        { name: 'Tandoori Chicken 1/2', veg: false, price: 300 },
+        { name: 'Tandoori Chicken Full',veg: false, price: 580 },
+        { name: 'Tangdi Kebab',         veg: false, price: 330 },
+        { name: 'Chicken Tikka',        veg: false, price: 310 },
+        { name: 'Malai Tikka',          veg: false, price: 340 },
+        { name: 'Fish Tikka',           veg: false, price: 330 },
+      ]},
+      { category: 'Thali/Beverages', isVeg: true, items: [
+        { name: 'Thali',              veg: true, price: 140 },
+        { name: 'Thali Parcel',       veg: true, price: 160 },
+        { name: 'Thali Parcel Single',veg: true, price: 130 },
+        { name: 'Ragi Sangati',       veg: true, price: 110 },
+        { name: 'Natukodi Curry',     veg: false,price: 350 },
+        { name: 'White Rice',         veg: true, price: 80  },
+        { name: 'Curd Rice',          veg: true, price: 90  },
+        { name: 'Spl Curd Rice',      veg: true, price: 150 },
+        { name: 'Water Bottle',       veg: true, price: 20  },
+        { name: 'Soft Drink',         veg: true, price: 25  },
+        { name: 'Butter Milk',        veg: true, price: 50  },
+        { name: 'Lassi',              veg: true, price: 70  },
+      ]},
     ],
   },
-  // {
-  //   id: 'palleturu-palahaaram',
-  //   name: 'Palleturu Palaharam',
-  //   image: 'assets/images/palleturu-palahaaram.jpg',
-  //   rating: 4,
-  //   description: 'Authentic village-style non-veg biryani delicacies',
-  //   categories: ['Biryani'],
-  //   bestItem: 'Mutton Biryani & Prawns Biryani',
-  //   menu: [
-  //     {
-  //       category: "Student's Choice(Revised Prices By Restaurent)",
-  //       items: [
-  //         { name: 'Mutton Biryani', price: 320, isStudentChoice: true },
-  //         { name: 'Prawns Biryani', price: 300, isStudentChoice: true },
-  //       ],
-  //     },
-  //     {
-  //       category: 'Full Biryani Menu(Revised Prices By Restaurent)',
-  //       items: [
-  //         { name: 'Mutton Fry Biryani', price: 320 },
-  //         { name: 'Prawns Fry Biryani', price: 300 },
-  //         { name: 'Chicken Dhum Biryani', price: 220 },
-  //         { name: 'Chicken Fry Biryani', price: 250 },
-  //       ],
-  //     },
-  //   ],
-  // },
-  // {
-  //   id: 'hotel-mourya',
-  //   name: 'Hotel Mourya',
-  //   image: 'assets/images/hotel-mourya.jpg',
-  //   rating: 4,
-  //   description: 'Home of the legendary Chicken Mughalai Biryani',
-  //   categories: ['Biryani'],
-  //   bestItem: 'Chicken Mughalai Biryani',
-  //   menu: [
-  //     {
-  //       category: "Student's Choice",
-  //       items: [
-  //         { name: 'Chicken Mughalai Biryani', price: 400, isStudentChoice: true },
-  //       ],
-  //     },
-  //     {
-  //       category: 'Non-Veg Biryani',
-  //       items: [
-  //         { name: 'Chicken Dum Biryani', price: 290 },
-  //         { name: 'SP Chicken Biryani', price: 350 },
-  //         { name: 'Chicken Fry Piece Biryani', price: 330 },
-  //         { name: 'Chicken Tikka Biryani', price: 400 },
-  //         { name: 'Chicken Wings Biryani', price: 430 },
-  //         { name: 'Chicken Mughalai Biryani', price: 400 },
-  //         { name: 'Mutton Biryani', price: 530 },
-  //         { name: 'SP Mutton Biryani', price: 620 },
-  //         { name: 'Mutton Mughalai Biryani', price: 580 },
-  //         { name: 'Fish Biryani', price: 490 },
-  //         { name: 'Prawns Biryani', price: 490 },
-  //         { name: 'SP Prawns Biryani', price: 590 },
-  //       ],
-  //     },
-  //     {
-  //       category: 'Mourya Specials',
-  //       items: [
-  //         { name: 'Mourya SP Chicken Biryani', price: 430 },
-  //         { name: 'Mourya SP Mutton Biryani', price: 710 },
-  //         { name: 'Mourya SP Veg Biryani', price: 360 },
-  //         { name: 'Mourya SP Chicken Family Pack', price: 1500 },
-  //         { name: 'Mourya SP Chicken Curry', price: 330 },
-  //       ],
-  //     },
-  //     {
-  //       category: 'Veg Biryani',
-  //       items: [
-  //         { name: 'Biryani Rice', price: 190 },
-  //         { name: 'Biryani Rice Half', price: 140 },
-  //         { name: 'Baby Corn Biryani', price: 240 },
-  //         { name: 'Egg Biryani', price: 280 },
-  //         { name: 'Kaju Biryani', price: 300 },
-  //         { name: 'Mushroom Biryani', price: 270 },
-  //         { name: 'Veg Biryani', price: 260 },
-  //         { name: 'Paneer Biryani', price: 280 },
-  //         { name: 'Veg Palav', price: 240 },
-  //       ],
-  //     },
-  //     {
-  //       category: 'Family Packs',
-  //       items: [
-  //         { name: 'Chicken Dum Family Pack', price: 860 },
-  //         { name: 'Chicken Fry Piece Family Pack', price: 910 },
-  //         { name: 'Chicken SP Family Pack', price: 960 },
-  //         { name: 'Mutton Family Pack', price: 1410 },
-  //         { name: 'Fish Family Pack', price: 1310 },
-  //         { name: 'Prawns Family Pack', price: 1410 },
-  //         { name: 'Veg Family Pack', price: 760 },
-  //       ],
-  //     },
-  //     {
-  //       category: 'Fried Rice',
-  //       items: [
-  //         { name: 'Egg Fried Rice', price: 250 },
-  //         { name: 'SP Egg Fried Rice', price: 300 },
-  //         { name: 'Egg Schezwan Fried Rice', price: 270 },
-  //         { name: 'Ghee Fried Rice', price: 240 },
-  //         { name: 'Kaju Fried Rice', price: 280 },
-  //         { name: 'Mixed Veg Fried Rice', price: 290 },
-  //         { name: 'Mushroom Fried Rice', price: 260 },
-  //         { name: 'Paneer Fried Rice', price: 280 },
-  //         { name: 'Veg Fried Rice', price: 240 },
-  //         { name: 'SP Veg Fried Rice', price: 290 },
-  //         { name: 'Tomato Rice', price: 230 },
-  //         { name: 'Veg Schezwan Fried Rice', price: 240 },
-  //         { name: 'Zeera Rice', price: 220 },
-  //         { name: 'Curd Rice', price: 120 },
-  //         { name: 'SP Curd Rice', price: 170 },
-  //         { name: 'Chicken Fried Rice', price: 280 },
-  //         { name: 'Mixed Non-Veg Fried Rice', price: 330 },
-  //         { name: 'Non-Veg Schezwan Fried Rice', price: 330 },
-  //         { name: 'Mutton Fried Rice', price: 440 },
-  //       ],
-  //     },
-  //     {
-  //       category: 'Snacks',
-  //       items: [
-  //         { name: 'Loose Prawns', price: 360 },
-  //         { name: 'Prawns Fry', price: 360 },
-  //         { name: 'Chilli Fish', price: 360 },
-  //         { name: 'Chilli Prawns', price: 360 },
-  //         { name: 'Apollo Fish', price: 360 },
-  //         { name: 'Baby Corn Manchurian', price: 270 },
-  //         { name: 'Chilli Baby Corn', price: 260 },
-  //         { name: 'Chilli Mushroom', price: 260 },
-  //         { name: 'Chilli Paneer', price: 280 },
-  //         { name: 'Crispy Baby Corn', price: 260 },
-  //         { name: 'Kaju Fry', price: 320 },
-  //         { name: 'Mushroom 65', price: 270 },
-  //         { name: 'Gobi Manchurian', price: 260 },
-  //         { name: 'Paneer 65', price: 280 },
-  //         { name: 'Paneer 555', price: 280 },
-  //         { name: 'Paneer Manchurian', price: 280 },
-  //         { name: 'Paneer Majestic', price: 280 },
-  //         { name: 'Veg Manchurian', price: 260 },
-  //         { name: 'Chicken 555', price: 330 },
-  //         { name: 'Chicken 65', price: 320 },
-  //         { name: 'Chilly Chicken', price: 310 },
-  //         { name: 'Chicken Lollipop', price: 350 },
-  //         { name: 'Chicken Wings Full', price: 340 },
-  //         { name: 'Mutton Fry', price: 470 },
-  //       ],
-  //     },
-  //     {
-  //       category: 'Curries',
-  //       items: [
-  //         { name: 'Andhra Chicken Curry BL', price: 310 },
-  //         { name: 'Butter Chicken', price: 330 },
-  //         { name: 'Chicken Tikka Masala Curry', price: 330 },
-  //         { name: 'Mutton Curry', price: 460 },
-  //         { name: 'Prawns Curry', price: 360 },
-  //         { name: 'Kadai Paneer', price: 280 },
-  //         { name: 'Paneer Butter Masala', price: 270 },
-  //         { name: 'Egg Curry', price: 200 },
-  //       ],
-  //     },
-  //   ],
-  // },
   {
-    id: 'ruchi-pulkha-point',
-    name: 'Ruchi Pulkha Point',
+    id: 'ruchi-pulkha-point', name: 'Ruchi Pulkha Point',
     image: 'assets/images/ruchi-pulkha.jpg',
-    rating: 4,
-    description: 'Best Pulkha & Egg Burji combos at budget prices',
-    categories: ['Veg Meals'],
-    bestItem: '3 Pulkha + Egg Burji Combo',
+    rating: 4, description: 'Best Pulkha & Egg Burji combos at budget prices',
+    categories: ['Veg Meals'], bestItem: '3 Pulkha + Egg Burji Combo', todayOrders: 0,
     menu: [
-      {
-        category: "Student's Choice",isVeg : false,
-        items: [
-          { name: '3 Pulkhas + Egg Burji Combo', price: 70, isStudentChoice: true },
-        ],
-      },
-      {
-        category: 'Non Veg Combos',isVeg : false,
-        items: [
-          { name: '1 Pulka', price: 12 },
-          { name: 'Only Egg Burji(Half)', price: 35 },
-          { name: 'Only Egg Burji(Full)', price: 55 },
-          { name: '3 Pulkas (2 Veg Curries)', price: 60 },
-          { name: '3 Pulkas + Chicken Curry', price: 90 },
-          { name: 'Single Egg Omelette', price: 25 },
-          { name: 'Double Egg Omelette', price: 45 },
-          { name: '2 Chapatis + 2 Veg Curries', price: 60 },
-        ],
-      },
-      {
-        category: 'Veg Combos',isVeg : true,
-        items: [
-          { name: '1 Pulka', price: 12 },
-          // { name: 'Only Egg Burji(Half)', price: 35 },
-          // { name: 'Only Egg Burji(Full)', price: 55 },
-          { name: '3 Pulkas (2 Veg Curries)', price: 60 },
-          // { name: '3 Pulkas + Chicken Curry', price: 90 },
-          // { name: 'Single Egg Omelette', price: 25 },
-          // { name: 'Double Egg Omelette', price: 45 },
-          { name: '2 Chapatis + 2 Veg Curries', price: 60 },
-        ],
-      },
+      { category: "Student's Choice", isVeg: false, items: [
+        { name: '3 Pulkhas + Egg Burji Combo', veg: false, price: 70, isStudentChoice: true },
+      ]},
+      { category: 'Non Veg Combos', isVeg: false, items: [
+        { name: '1 Pulka',               veg: true,  price: 12 },
+        { name: 'Only Egg Burji (Half)', veg: false, price: 35 },
+        { name: 'Only Egg Burji (Full)', veg: false, price: 55 },
+        { name: '3 Pulkas (2 Veg Curries)',veg: true, price: 60 },
+        { name: '3 Pulkas + Chicken Curry',veg: false,price: 90 },
+        { name: 'Single Egg Omelette',   veg: false, price: 25 },
+        { name: 'Double Egg Omelette',   veg: false, price: 45 },
+        { name: '2 Chapatis + 2 Veg Curries',veg: true,price: 60 },
+      ]},
+      { category: 'Veg Combos', isVeg: true, items: [
+        { name: '1 Pulka',                   veg: true, price: 12 },
+        { name: '3 Pulkas (2 Veg Curries)',  veg: true, price: 60 },
+        { name: '2 Chapatis + 2 Veg Curries',veg: true, price: 60 },
+      ]},
     ],
   },
   {
-    id: 'tiffens',
-    name: 'Tiffins',
+    id: 'tiffens', name: 'Tiffins',
     image: 'assets/images/tiffens.jpg',
-    rating: 4,
-    description: 'Choose from two or more outlets for South Indian breakfast',
-    categories: ['Tiffins'],
-    bestItem: 'Masala Dosa & Idli',
+    rating: 4, description: 'Choose from two or more outlets for South Indian breakfast',
+    categories: ['Tiffins'], bestItem: 'Masala Dosa & Idli', todayOrders: 0,
     menu: [
-      {
-        category: 'Breakfast & Snacks(Prices Revised By Restaurents)',isVeg : true,
-        items: [
-          { name: 'Idli (4 pcs)', price: 55 },
-          { name: 'Gare (4 pcs)', price: 55 },
-          { name: 'Bajji (4 pcs)', price: 55 },
-          { name: 'Mirchi Bajji (4 pcs)', price: 55 },
-          { name: 'Punugulu', price: 55 },
-          { name: 'Poori (2 pcs)', price: 50 },
-        ],
-      },
-      {
-        category: 'Non Veg Dosa Corner',isVeg : false,
-        items: [
-          // { name: 'Masala Dosa', price: 65 },
-          // { name: 'Onion Dosa', price: 60 },
-          { name: 'Single Egg Dosa', price: 60 },
-          { name: 'Double Egg Dosa', price: 75 },
-        ],
-      },
-      {
-        category: 'Veg Dosa Corner',isVeg : true,
-        items: [
-          { name: 'Masala Dosa', price: 65 },
-          { name: 'Onion Dosa', price: 60 },
-          // { name: 'Single Egg Dosa', price: 60 },
-          // { name: 'Double Egg Dosa', price: 75 },
-        ],
-      },
-      {
-        category: 'Tawa Items',isVeg : true,
-        items: [
-          { name: 'Chapati', price: 60 },
-          { name: 'Parotha', price: 60 },
-        ],
-      },
+      { category: 'Breakfast & Snacks', isVeg: true, items: [
+        { name: 'Idli (4 pcs)',       veg: true, price: 55 },
+        { name: 'Gare (4 pcs)',       veg: true, price: 55 },
+        { name: 'Bajji (4 pcs)',      veg: true, price: 55 },
+        { name: 'Mirchi Bajji (4 pcs)',veg: true,price: 55 },
+        { name: 'Punugulu',           veg: true, price: 55 },
+        { name: 'Poori (2 pcs)',      veg: true, price: 50 },
+      ]},
+      { category: 'Non Veg Dosa Corner', isVeg: false, items: [
+        { name: 'Single Egg Dosa', veg: false, price: 60 },
+        { name: 'Double Egg Dosa', veg: false, price: 75 },
+      ]},
+      { category: 'Veg Dosa Corner', isVeg: true, items: [
+        { name: 'Masala Dosa', veg: true, price: 65 },
+        { name: 'Onion Dosa',  veg: true, price: 60 },
+      ]},
+      { category: 'Tawa Items', isVeg: true, items: [
+        { name: 'Chapati', veg: true, price: 60 },
+        { name: 'Parotha', veg: true, price: 60 },
+      ]},
     ],
   },
-  
-  
 ];
 
-export const categories = ['All','Haleem' ,'Biryani', 'Fast Food', 'Tiffins','Fruits', 'Veg Meals'];
+// ─── Available top-level categories ──────────────────────────────────────────
+export const categories = ['All', 'Biryani', 'Fast Food', 'Tiffins', 'Fruits', 'Veg Meals'];
+
+// Backward-compatible alias used by admin dashboard
+export const restaurants = RESTAURANTS;

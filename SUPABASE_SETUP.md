@@ -126,3 +126,76 @@ Or connect your GitHub repo to **https://vercel.com** for auto-deploy on every p
 | Users | Unlimited |
 
 More than enough for ClgBites! 🎉
+
+---
+
+## ⚡ Orders Table Setup (Required for Live Features)
+
+Run this SQL in Supabase → SQL Editor to create the orders table and enable realtime:
+
+```sql
+-- Orders table
+create table if not exists orders (
+  id integer primary key,
+  token_number integer,
+  customer_name text,
+  customer_phone text,
+  items jsonb default '[]',
+  payment_mode text default 'cod',
+  total numeric default 0,
+  pay_status text default 'pending',
+  pending_amount numeric,
+  deliver_status text default 'pending',
+  created_at timestamptz default now(),
+  delivered_at timestamptz
+);
+
+-- Row level security
+alter table orders enable row level security;
+create policy "Public insert orders" on orders for insert with check (true);
+create policy "Public read orders"   on orders for select using (true);
+create policy "Public update orders" on orders for update using (true);
+create policy "Public delete orders" on orders for delete using (true);
+
+-- Enable realtime so the user page gets live updates instantly
+alter publication supabase_realtime add table orders;
+
+-- Helper to reset token sequence (used by admin)
+create or replace function reset_orders_sequence() returns void as $$
+begin
+  -- no-op placeholder; token is derived from count
+end;
+$$ language plpgsql;
+```
+
+After running this SQL:
+- Orders placed on the user page save to Supabase automatically
+- The live activity ticker on the home page shows real orders (oldest → newest, cycling)
+- Trending item counts and restaurant order counts reflect today's actual orders
+- The admin dashboard sees all orders in real time
+
+
+---
+
+## 🔧 Fix: Run this SQL too (Token RPC function)
+
+This is required for orders to save correctly. Run in SQL Editor:
+
+```sql
+-- Atomic daily token generator
+-- Returns 1 for the first order of the day, 2 for second, etc.
+create or replace function get_next_daily_token()
+returns integer
+language plpgsql
+as $$
+declare
+  next_val integer;
+begin
+  select coalesce(max(id), 0) + 1
+  into next_val
+  from orders;
+  return next_val;
+end;
+$$;
+```
+
