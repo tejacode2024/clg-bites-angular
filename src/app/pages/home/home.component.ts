@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../services/admin.service';
 import { SupabaseService } from '../../services/supabase.service';
+import { UserService, UserProfile } from '../../services/user.service';
 import { RESTAURANTS, Restaurant, MenuCategory } from '../../services/restaurants';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -35,7 +36,7 @@ const TRENDING = [
 
 interface CartItem { restaurantId:string; restaurantName:string; itemName:string; price:number; qty:number; isVeg:boolean; }
 interface LiveOrderRow { name:string; location:string; restaurant:string; item:string; mins:number; }
-type View = 'home'|'category'|'restaurant'|'success'|'profile'|'cart';
+type View = 'home'|'category'|'restaurant'|'success'|'profile'|'cart'|'checkout'|'orders';
 
 function todayStart(): string {
   const now = new Date();
@@ -52,16 +53,228 @@ function minutesAgo(iso:string): number {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
+<!-- ══ LOGIN SCREEN ══════════════════════════════════════════════════════════ -->
+<div *ngIf="!loggedInUser" class="login-screen">
+  <div class="login-top">
+    <div class="login-logo-box"><span class="login-logo-emoji">🍽️</span></div>
+    <h1 class="login-title">CLGBITES</h1>
+    <p class="login-sub">VIT-AP's Campus Food App</p>
+    <div class="login-pill"><span class="login-pill-dot"></span><span class="login-pill-text">9 restaurants · Delivered to your door</span></div>
+  </div>
+  <div class="login-card">
+    <h2 class="login-card-title">Welcome!</h2>
+    <p class="login-card-sub">No password needed — enter your details to start ordering</p>
+    <div class="login-fields">
+      <div>
+        <label class="login-label">Your Name</label>
+        <input class="login-input" type="text" placeholder="e.g. Ravi Kumar" [(ngModel)]="loginName"/>
+      </div>
+      <div>
+        <label class="login-label">Phone Number</label>
+        <input class="login-input" type="tel" placeholder="10-digit mobile number" maxlength="10" [(ngModel)]="loginPhone" (input)="loginPhone=loginPhone.replace(/\D/g,'')"/>
+      </div>
+      <div>
+        <label class="login-label">Delivery Location</label>
+        <div class="login-locs">
+          <button *ngFor="let l of LOCATIONS; let i=index" class="login-loc-btn"
+            [class.login-loc-active]="i===loginLocIdx" (click)="loginLocIdx=i">
+            <div class="login-loc-left">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" [attr.stroke]="i===loginLocIdx?'white':'#f97316'" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <div>
+                <p class="login-loc-name" [class.login-loc-name-active]="i===loginLocIdx">{{ l.label }}</p>
+                <p class="login-loc-sub" [class.login-loc-sub-active]="i===loginLocIdx">{{ l.sublabel }}</p>
+              </div>
+            </div>
+            <span class="login-loc-fee" [class.login-loc-fee-free]="l.fee===0 && i!==loginLocIdx" [class.login-loc-fee-active]="i===loginLocIdx">{{ l.fee===0?'FREE':'₹'+l.fee }}</span>
+          </button>
+        </div>
+      </div>
+      <div *ngIf="loginError" class="login-error">{{ loginError }}</div>
+    </div>
+    <button class="login-btn" [disabled]="loginLoading" (click)="doLogin()">
+      <span *ngIf="!loginLoading">Continue →</span>
+      <span *ngIf="loginLoading">Loading…</span>
+    </button>
+    <p class="login-footer">VIT-AP students only · Your data stays private</p>
+  </div>
+</div>
+
+<!-- ══ CHECKOUT TIMELINE ══════════════════════════════════════════════════════ -->
+<div *ngIf="loggedInUser && view==='checkout'" class="pg">
+  <!-- Header -->
+  <div class="checkout-header">
+    <div class="checkout-header-top">
+      <div class="checkout-timer-icon">⏱</div>
+      <div>
+        <p class="checkout-header-label">Confirming your order</p>
+        <p class="checkout-header-title">Last chance to cancel</p>
+      </div>
+    </div>
+    <div class="checkout-countdown-box">
+      <div class="checkout-countdown-row">
+        <div>
+          <p class="checkout-countdown-label">Auto-confirming in</p>
+          <p class="checkout-countdown-num">{{ checkoutSecsLeft < 10 ? '0'+checkoutSecsLeft : checkoutSecsLeft }}<span class="checkout-countdown-unit"> sec</span></p>
+        </div>
+        <div class="checkout-countdown-total">
+          <p class="checkout-countdown-label">Total</p>
+          <p class="checkout-countdown-total-num">₹{{ cartTotal + LOCATIONS[locIndex].fee }}</p>
+        </div>
+      </div>
+      <div class="checkout-progress-bg">
+        <div class="checkout-progress-fill" [style.width.%]="(checkoutSecsLeft/30)*100"></div>
+      </div>
+      <p class="checkout-progress-hint">Tap <strong>Cancel</strong> to stop, or <strong>Place Order Now</strong> to skip the wait.</p>
+    </div>
+  </div>
+
+  <!-- Order Preview -->
+  <div class="px4 space-y3" style="margin-top:-1rem">
+    <div class="checkout-preview-card">
+      <div class="checkout-preview-hdr">
+        <div class="checkout-preview-hdr-left">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+          <p class="checkout-preview-title">Order Preview</p>
+        </div>
+        <span class="checkout-preview-count">{{ cartCount }} item{{ cartCount!==1?'s':'' }}</span>
+      </div>
+      <div class="checkout-items-list">
+        <div *ngFor="let item of cart" class="checkout-item-row">
+          <div class="checkout-item-left">
+            <span class="veg-dot" [class.nonveg]="!item.isVeg"><span class="veg-dot-inner" [class.nonveg-inner]="!item.isVeg"></span></span>
+            <div>
+              <p class="checkout-item-name">{{ item.itemName }}</p>
+              <p class="checkout-item-from">{{ item.restaurantName }} · ×{{ item.qty }}</p>
+            </div>
+          </div>
+          <span class="checkout-item-total">₹{{ item.price*item.qty }}</span>
+        </div>
+      </div>
+      <div class="checkout-bill">
+        <div class="checkout-bill-row"><span>Subtotal</span><span class="font-bold">₹{{ cartTotal }}</span></div>
+        <div class="checkout-bill-row"><span>Delivery</span><span [class.green]="LOCATIONS[locIndex].fee===0" class="font-bold">{{ LOCATIONS[locIndex].fee===0?'FREE':'₹'+LOCATIONS[locIndex].fee }}</span></div>
+        <div class="checkout-bill-divider"></div>
+        <div class="checkout-bill-row checkout-bill-total-row"><span>Total</span><span class="checkout-bill-total-amt">₹{{ cartTotal+LOCATIONS[locIndex].fee }}</span></div>
+      </div>
+    </div>
+
+    <!-- Delivery + Payment summary -->
+    <div class="checkout-meta-grid">
+      <div class="checkout-meta-card">
+        <div class="checkout-meta-label-row">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <p class="checkout-meta-label">Delivering To</p>
+        </div>
+        <p class="checkout-meta-val">{{ LOCATIONS[locIndex].label }}</p>
+        <p class="checkout-meta-sub">{{ loggedInUser.name }} · {{ loggedInUser.phone }}</p>
+      </div>
+      <div class="checkout-meta-card">
+        <div class="checkout-meta-label-row">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.5"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/></svg>
+          <p class="checkout-meta-label">Payment</p>
+        </div>
+        <p class="checkout-meta-val">{{ payMode==='COD'?'Cash on Delivery':'Pay Online' }}</p>
+        <p class="checkout-meta-sub">{{ payMode==='COD'?'Pay when it arrives':'Prepaid' }}</p>
+      </div>
+    </div>
+
+    <div class="checkout-warn-box">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" style="flex-shrink:0;margin-top:2px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <p>Once the timer ends, your order is sent to the restaurant and <strong>can't be cancelled</strong>.</p>
+    </div>
+
+    <div class="checkout-actions">
+      <button class="checkout-cancel-btn" (click)="cancelCheckout()">✕ Cancel</button>
+      <button class="checkout-confirm-btn" [disabled]="checkoutLoading" (click)="confirmOrder()">
+        <span *ngIf="!checkoutLoading">Place Order Now →</span>
+        <span *ngIf="checkoutLoading">Saving…</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ SUCCESS ══════════════════════════════════════════════════════════════ -->
-<div *ngIf="view==='success'" class="pg flex-col-center" style="background:white;padding:1.5rem;text-align:center">
-  <div class="suc-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+<div *ngIf="loggedInUser && view==='success'" class="pg flex-col-center" style="background:#fff9f5;padding:1.5rem;text-align:center">
+  <div class="suc-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
   <h2 class="suc-title">Order Placed!</h2>
-  <p class="suc-sub">Sent via WhatsApp. Restaurant will confirm soon.</p>
-  <button class="suc-btn" (click)="view='home'">Back to Home</button>
+  <p class="suc-sub">Your order has been confirmed</p>
+  <div class="suc-detail-card">
+    <div class="suc-detail-row">
+      <span class="suc-detail-label">Token / Order ID</span>
+      <span class="suc-detail-val orange">#{{ lastTokenNumber }}</span>
+    </div>
+    <div class="suc-detail-row">
+      <span class="suc-detail-label">Delivering to</span>
+      <span class="suc-detail-val">{{ LOCATIONS[locIndex].label }}</span>
+    </div>
+    <div class="suc-detail-row">
+      <span class="suc-detail-label">Payment</span>
+      <span class="suc-detail-val">{{ payMode==='COD'?'Cash on Delivery':'Pay Online' }}</span>
+    </div>
+    <div class="suc-detail-divider"></div>
+    <div class="suc-timer-row">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <p>Estimated delivery: 20–30 minutes</p>
+    </div>
+  </div>
+  <div class="suc-btns">
+    <button class="suc-home-btn" (click)="view='home'">Back to Home</button>
+    <button class="suc-orders-btn" (click)="view='orders'">My Orders</button>
+  </div>
+</div>
+
+<!-- ══ ORDERS PAGE ═══════════════════════════════════════════════════════════ -->
+<div *ngIf="loggedInUser && view==='orders'" class="pg" style="padding-bottom:5rem">
+  <div class="pg-header">
+    <button class="back-circle" (click)="view='home'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <div><h1 class="pg-title">My Orders</h1><p class="pg-sub">{{ userOrders.length }} order{{ userOrders.length!==1?'s':'' }}</p></div>
+    <button class="orders-refresh-btn" (click)="loadUserOrders()" style="margin-left:auto">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.45"/></svg>
+    </button>
+  </div>
+
+  <div *ngIf="ordersPageLoading" class="orders-loading">Loading…</div>
+
+  <div *ngIf="!ordersPageLoading && userOrders.length===0" class="empty-cart" style="padding:3rem 1.5rem;text-align:center">
+    <div class="empty-bag"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#fdba74" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+    <h2 class="empty-h">No orders yet</h2>
+    <p class="empty-p">Your order history will appear here</p>
+    <button class="orange-pill-btn" (click)="view='home'">Start Ordering</button>
+  </div>
+
+  <div *ngIf="!ordersPageLoading && userOrders.length>0" class="px4 space-y3" style="padding-top:1rem">
+    <div *ngFor="let order of userOrders" class="order-card">
+      <div class="order-card-hdr">
+        <div>
+          <p class="order-card-token">Token #{{ order.token_number ?? order.id }}</p>
+          <p class="order-card-date">{{ formatOrderDate(order.created_at) }}</p>
+        </div>
+        <div class="order-status-badges">
+          <span class="order-badge" [class.badge-green]="order.deliver_status==='delivered'" [class.badge-orange]="order.deliver_status==='pending'">
+            {{ order.deliver_status==='delivered'?'✓ Delivered':'⏳ Pending' }}
+          </span>
+          <span class="order-badge" [class.badge-blue]="order.pay_status==='paid'" [class.badge-gray]="order.pay_status!=='paid'">
+            {{ order.pay_status==='paid'?'💳 Paid':'💵 '+order.payment_mode?.toUpperCase() }}
+          </span>
+        </div>
+      </div>
+      <div class="order-items-list">
+        <div *ngFor="let item of order.items" class="order-item-row">
+          <span class="order-item-name">{{ item.qty }}× {{ item.name }}</span>
+          <span class="order-item-rest">{{ item.restaurant_name }}</span>
+        </div>
+      </div>
+      <div class="order-card-footer">
+        <span class="order-total">Total: <strong class="orange">₹{{ order.total }}</strong></span>
+        <span class="order-pay-mode">{{ order.payment_mode==='cod'?'Cash on Delivery':'Prepaid' }}</span>
+      </div>
+    </div>
+  </div>
+  <ng-container *ngTemplateOutlet="bottomNav; context:{active:'orders'}"></ng-container>
 </div>
 
 <!-- ══ CART PAGE ═════════════════════════════════════════════════════════════ -->
-<div *ngIf="view==='cart'" class="pg" style="padding-bottom:5rem">
+<div *ngIf="loggedInUser && view==='cart'" class="pg" style="padding-bottom:5rem">
   <div class="pg-header">
     <button class="back-circle" (click)="view='home'"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div><h1 class="pg-title">My Cart</h1><p class="pg-sub">{{ cartCount > 0 ? cartCount+' item'+(cartCount!==1?'s':'')+' · ₹'+cartTotal : 'Empty' }}</p></div>
@@ -116,8 +329,10 @@ function minutesAgo(iso:string): number {
     <!-- Delivery details -->
     <div class="card-box space-y3">
       <p class="section-label">Delivery Details</p>
-      <input class="sheet-input" type="text" placeholder="Your Name" [(ngModel)]="customerName"/>
-      <input class="sheet-input" type="tel" placeholder="Phone Number" [(ngModel)]="customerPhone"/>
+      <div class="user-info-box">
+        <div class="user-info-row"><span class="user-info-label">Name</span><span class="user-info-val">{{ loggedInUser!.name }}</span></div>
+        <div class="user-info-row"><span class="user-info-label">Phone</span><span class="user-info-val">{{ loggedInUser!.phone }}</span></div>
+      </div>
       <div class="loc-picker">
         <button *ngFor="let l of LOCATIONS; let i=index" class="loc-pick-opt" [class.loc-pick-active]="i===locIndex" (click)="locIndex=i">
           <div><p class="loc-pick-name" [class.active-text]="i===locIndex">{{ l.label }}</p><p class="loc-pick-sub">{{ l.sublabel }}</p></div>
@@ -135,33 +350,34 @@ function minutesAgo(iso:string): number {
       </div>
     </div>
 
-    <button class="wa-btn" (click)="checkout()" [disabled]="checkoutLoading">
-      <span *ngIf="!checkoutLoading">Order on WhatsApp →</span>
-      <span *ngIf="checkoutLoading">⏳ Saving…</span>
+    <button class="checkout-proceed-btn" (click)="goToCheckout()">
+      Proceed to Checkout →
     </button>
   </div>
   <ng-container *ngTemplateOutlet="bottomNav; context:{active:'cart'}"></ng-container>
 </div>
 
 <!-- ══ PROFILE PAGE ══════════════════════════════════════════════════════════ -->
-<div *ngIf="view==='profile'" class="pg" style="padding-bottom:5rem">
+<div *ngIf="loggedInUser && view==='profile'" class="pg" style="padding-bottom:5rem">
   <div class="profile-hero">
-    <div class="profile-av">{{ customerName?customerName[0].toUpperCase():'S' }}</div>
+    <div class="profile-av">{{ loggedInUser.name[0].toUpperCase() }}</div>
     <div>
-      <p class="profile-name">{{ customerName||'Welcome, Student!' }}</p>
-      <p class="profile-sub">{{ customerPhone||'VIT-AP University' }}</p>
+      <p class="profile-name">{{ loggedInUser.name }}</p>
+      <p class="profile-sub">{{ loggedInUser.phone }} · {{ loggedInUser.location }}</p>
     </div>
   </div>
   <div class="px4 space-y3" style="margin-top:-1.5rem">
     <div class="profile-stats">
       <div class="stat-cell"><p class="stat-val">{{ cartCount }}</p><p class="stat-lbl">In Cart</p></div>
       <div class="stat-cell stat-mid"><p class="stat-val">₹{{ cartTotal }}</p><p class="stat-lbl">Cart Value</p></div>
-      <div class="stat-cell"><p class="stat-val">{{ RESTAURANTS.length }}</p><p class="stat-lbl">Restaurants</p></div>
+      <div class="stat-cell"><p class="stat-val">{{ userOrders.length }}</p><p class="stat-lbl">Orders</p></div>
     </div>
+    <button class="profile-link" (click)="view='orders'; loadUserOrders()"><div class="profile-link-icon orange-icon">📦</div><div class="profile-link-body"><p class="profile-link-title">My Orders</p><p class="profile-link-sub">{{ userOrders.length>0?userOrders.length+' order'+(userOrders.length!==1?'s':''):'No orders yet' }}</p></div><span class="profile-link-arrow">›</span></button>
+    <button class="profile-link" (click)="view='cart'"><div class="profile-link-icon orange-icon">🛍</div><div class="profile-link-body"><p class="profile-link-title">My Cart</p><p class="profile-link-sub">{{ cartCount>0?cartCount+' item'+(cartCount!==1?'s':''):'Empty cart' }}</p></div><span class="profile-link-arrow">›</span></button>
     <a href="tel:7842960252" class="profile-link"><div class="profile-link-icon green-icon">📞</div><div class="profile-link-body"><p class="profile-link-title">Contact Support</p><p class="profile-link-sub">7842960252</p></div><span class="profile-link-arrow">›</span></a>
     <a href="mailto:clgbites@gmail.com" class="profile-link"><div class="profile-link-icon orange-icon">✉️</div><div class="profile-link-body"><p class="profile-link-title">Email Us</p><p class="profile-link-sub">clgbites&#64;gmail.com</p></div><span class="profile-link-arrow">›</span></a>
-    <button class="profile-link" (click)="view='cart'"><div class="profile-link-icon orange-icon">🛍</div><div class="profile-link-body"><p class="profile-link-title">My Cart</p><p class="profile-link-sub">{{ cartCount>0?cartCount+' item'+(cartCount!==1?'s':''):'Empty cart' }}</p></div><span class="profile-link-arrow">›</span></button>
     <div class="profile-link"><div class="profile-link-icon orange-icon">✨</div><div class="profile-link-body"><p class="profile-link-title">About CLGBITES</p><p class="profile-link-sub">For VIT-AP students, by VIT-AP</p></div></div>
+    <button class="profile-logout-btn" (click)="logout()">🚪 Sign Out</button>
   </div>
   <ng-container *ngTemplateOutlet="cartBarTpl"></ng-container>
   <ng-container *ngTemplateOutlet="bottomNav; context:{active:'profile'}"></ng-container>
@@ -169,7 +385,7 @@ function minutesAgo(iso:string): number {
 </div>
 
 <!-- ══ CATEGORY PAGE ═════════════════════════════════════════════════════════ -->
-<div *ngIf="view==='category'" class="pg" style="padding-bottom:5rem">
+<div *ngIf="loggedInUser && view==='category'" class="pg" style="padding-bottom:5rem">
   <div class="pg-header">
     <button class="back-circle" (click)="view='home'; catSearch=''"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ea580c" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg></button>
     <div><h1 class="pg-title">{{ activeCatLabel==='All'?'All Restaurants':activeCatLabel }}</h1><p class="pg-sub">{{ categoryList.length }} place{{ categoryList.length!==1?'s':'' }}{{ catSearch?' found':'' }}</p></div>
@@ -209,7 +425,7 @@ function minutesAgo(iso:string): number {
 </div>
 
 <!-- ══ HOME ══════════════════════════════════════════════════════════════════ -->
-<div *ngIf="view==='home'" class="pg" style="padding-bottom:5rem">
+<div *ngIf="loggedInUser && view==='home'" class="pg" style="padding-bottom:5rem">
   <!-- Header -->
   <div class="home-header">
     <div class="home-header-top">
@@ -387,7 +603,7 @@ function minutesAgo(iso:string): number {
 </div>
 
 <!-- ══ RESTAURANT PAGE ═══════════════════════════════════════════════════════ -->
-<div *ngIf="view==='restaurant' && activeRest" class="pg" style="padding-bottom:5rem">
+<div *ngIf="loggedInUser && view==='restaurant' && activeRest" class="pg" style="padding-bottom:5rem">
   <div class="rest-hero">
     <img [src]="activeRest.image" [alt]="activeRest.name" class="rest-hero-img"/>
     <div class="rest-hero-overlay"></div>
@@ -470,6 +686,12 @@ function minutesAgo(iso:string): number {
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" [attr.stroke]="active==='search'?'#f97316':'#9ca3af'" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <span class="nav-label" [class.nav-label-active]="active==='search'">Search</span>
     </button>
+    <button class="nav-tab" [class.nav-active]="active==='orders'" (click)="view='orders'; loadUserOrders()">
+      <div style="position:relative">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" [attr.stroke]="active==='orders'?'#f97316':'#9ca3af'" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <span class="nav-label" [class.nav-label-active]="active==='orders'">Orders</span>
+    </button>
     <button class="nav-tab" [class.nav-active]="active==='cart'" (click)="view='cart'" style="position:relative">
       <div style="position:relative">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" [attr.stroke]="active==='cart'?'#f97316':'#9ca3af'" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -509,8 +731,10 @@ function minutesAgo(iso:string): number {
       </div>
       <div class="delivery-section">
         <p class="section-label">Delivery Details</p>
-        <input class="sheet-input" type="text" placeholder="Your Name" [(ngModel)]="customerName"/>
-        <input class="sheet-input" type="tel" placeholder="Phone Number" [(ngModel)]="customerPhone"/>
+        <div class="user-info-box">
+          <div class="user-info-row"><span class="user-info-label">Name</span><span class="user-info-val">{{ loggedInUser!.name }}</span></div>
+          <div class="user-info-row"><span class="user-info-label">Phone</span><span class="user-info-val">{{ loggedInUser!.phone }}</span></div>
+        </div>
         <div class="loc-picker">
           <button *ngFor="let l of LOCATIONS; let i=index" class="loc-pick-opt" [class.loc-pick-active]="i===locIndex" (click)="locIndex=i">
             <div><p class="loc-pick-name" [class.active-text]="i===locIndex">{{ l.label }}</p><p class="loc-pick-sub">{{ l.sublabel }}</p></div>
@@ -527,9 +751,8 @@ function minutesAgo(iso:string): number {
       </div>
     </div>
     <div class="sheet-footer">
-      <button class="wa-btn" (click)="checkout()" [disabled]="checkoutLoading">
-        <span *ngIf="!checkoutLoading">Order on WhatsApp →</span>
-        <span *ngIf="checkoutLoading">⏳ Saving order…</span>
+      <button class="checkout-proceed-btn" (click)="isCartOpen=false; goToCheckout()">
+        Proceed to Checkout →
       </button>
     </div>
   </div>
@@ -799,7 +1022,7 @@ function minutesAgo(iso:string): number {
     .cart-bar-cta { color:white; font-size:0.875rem; font-weight:700; }
 
     /* BOTTOM NAV */
-    .bottom-nav { position:fixed; bottom:0; left:0; right:0; z-index:30; background:white; border-top:1px solid #ffedd5; display:grid; grid-template-columns:repeat(4,1fr); }
+    /* bottom-nav is now defined with 5 columns in the new styles block below */
     .nav-tab { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:0.625rem 0; border:none; background:none; cursor:pointer; transition:transform 0.1s; font-family:'Poppins',sans-serif; }
     .nav-tab:active { transform:scale(0.93); }
     .nav-label { font-size:0.625rem; margin-top:0.25rem; color:#9ca3af; font-weight:500; }
@@ -853,11 +1076,158 @@ function minutesAgo(iso:string): number {
 
     /* CARD BOX */
     .card-box { background:white; border:1px solid #fed7aa; border-radius:1rem; padding:1rem; }
+
+    /* USER INFO BOX */
+    .user-info-box { background:#fff7ed; border:1px solid #ffedd5; border-radius:0.75rem; padding:0.75rem; }
+    .user-info-row { display:flex; justify-content:space-between; align-items:center; padding:0.25rem 0; }
+    .user-info-label { font-size:0.75rem; color:#9ca3af; font-weight:600; }
+    .user-info-val { font-size:0.8125rem; font-weight:700; color:#1f2937; }
+
+    /* BOTTOM NAV — 5 tabs */
+    .bottom-nav { position:fixed; bottom:0; left:0; right:0; z-index:30; background:white; border-top:1px solid #ffedd5; display:grid; grid-template-columns:repeat(5,1fr); }
+
+    /* LOGIN SCREEN */
+    .login-screen { min-height:100vh; background:linear-gradient(135deg,#f97316,#f59e0b); font-family:'Poppins',sans-serif; display:flex; flex-direction:column; }
+    .login-top { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:2.5rem 1.5rem 1.5rem; }
+    .login-logo-box { width:6rem; height:6rem; background:rgba(255,255,255,0.2); border-radius:1.5rem; display:flex; align-items:center; justify-content:center; margin-bottom:1.25rem; box-shadow:0 8px 32px rgba(0,0,0,0.15); }
+    .login-logo-emoji { font-size:3rem; }
+    .login-title { font-size:2.5rem; font-weight:900; color:white; letter-spacing:-2px; line-height:1; }
+    .login-sub { color:rgba(255,255,255,0.85); font-size:0.875rem; font-weight:600; margin-top:0.375rem; }
+    .login-pill { display:flex; align-items:center; gap:0.5rem; margin-top:1rem; background:rgba(255,255,255,0.2); backdrop-filter:blur(8px); padding:0.5rem 1rem; border-radius:9999px; }
+    .login-pill-dot { width:0.5rem; height:0.5rem; background:white; border-radius:50%; animation:pulse 1.5s infinite; }
+    .login-pill-text { color:white; font-size:0.75rem; font-weight:600; }
+    .login-card { background:white; border-radius:2rem 2rem 0 0; padding:1.75rem 1.5rem 2.5rem; box-shadow:0 -4px 24px rgba(0,0,0,0.12); }
+    .login-card-title { font-size:1.375rem; font-weight:900; color:#111827; }
+    .login-card-sub { font-size:0.8125rem; color:#9ca3af; margin-top:0.25rem; margin-bottom:1.5rem; }
+    .login-fields { display:flex; flex-direction:column; gap:1rem; }
+    .login-label { display:block; font-size:0.625rem; font-weight:800; color:#9ca3af; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.375rem; }
+    .login-input { width:100%; background:#fff7ed; border:1px solid #ffedd5; border-radius:1rem; padding:0.875rem 1rem; font-size:0.875rem; font-weight:500; outline:none; font-family:'Poppins',sans-serif; transition:border-color 0.2s; }
+    .login-input:focus { border-color:#f97316; background:white; }
+    .login-locs { display:flex; flex-direction:column; gap:0.5rem; }
+    .login-loc-btn { display:flex; align-items:center; justify-content:space-between; padding:0.75rem; border-radius:1rem; border:2px solid #ffedd5; background:#fff7ed; cursor:pointer; font-family:'Poppins',sans-serif; text-align:left; transition:all 0.2s; }
+    .login-loc-active { background:#f97316; border-color:#f97316; }
+    .login-loc-left { display:flex; align-items:center; gap:0.625rem; min-width:0; }
+    .login-loc-name { font-size:0.8125rem; font-weight:700; color:#1f2937; }
+    .login-loc-name-active { color:white; }
+    .login-loc-sub { font-size:0.625rem; color:#9ca3af; margin-top:1px; }
+    .login-loc-sub-active { color:rgba(255,255,255,0.8); }
+    .login-loc-fee { font-size:0.625rem; font-weight:800; padding:0.125rem 0.5rem; border-radius:9999px; background:#fef3c7; color:#92400e; flex-shrink:0; }
+    .login-loc-fee-free { background:#dcfce7; color:#166534; }
+    .login-loc-fee-active { background:rgba(255,255,255,0.25); color:white; }
+    .login-error { background:#fef2f2; border:1px solid #fecaca; border-radius:0.75rem; padding:0.5rem 0.75rem; }
+    .login-error { color:#ef4444; font-size:0.75rem; font-weight:600; }
+    .login-btn { width:100%; margin-top:1.5rem; background:#f97316; color:white; border:none; border-radius:1rem; padding:1rem; font-size:0.9375rem; font-weight:900; cursor:pointer; font-family:'Poppins',sans-serif; box-shadow:0 8px 20px rgba(249,115,22,0.35); }
+    .login-btn:disabled { opacity:0.7; cursor:not-allowed; }
+    .login-footer { text-align:center; font-size:0.625rem; color:#d1d5db; margin-top:1rem; }
+
+    /* CHECKOUT TIMELINE */
+    .checkout-header { background:linear-gradient(135deg,#f97316,#f59e0b); padding:1.5rem 1.25rem 2.5rem; color:white; }
+    .checkout-header-top { display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem; }
+    .checkout-timer-icon { width:2rem; height:2rem; background:rgba(255,255,255,0.2); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.875rem; flex-shrink:0; }
+    .checkout-header-label { font-size:0.6875rem; color:rgba(255,255,255,0.8); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; }
+    .checkout-header-title { font-size:0.875rem; font-weight:900; }
+    .checkout-countdown-box { background:rgba(255,255,255,0.12); backdrop-filter:blur(8px); border-radius:1rem; padding:1rem; border:1px solid rgba(255,255,255,0.2); }
+    .checkout-countdown-row { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:0.5rem; }
+    .checkout-countdown-label { font-size:0.625rem; color:rgba(255,255,255,0.7); font-weight:700; text-transform:uppercase; letter-spacing:0.06em; }
+    .checkout-countdown-num { font-size:2.75rem; font-weight:900; line-height:1; margin-top:0.25rem; }
+    .checkout-countdown-unit { font-size:1.125rem; font-weight:700; color:rgba(255,255,255,0.7); margin-left:0.25rem; }
+    .checkout-countdown-total { text-align:right; }
+    .checkout-countdown-total-num { font-size:1.25rem; font-weight:900; line-height:1; margin-top:0.25rem; }
+    .checkout-progress-bg { height:0.375rem; background:rgba(255,255,255,0.2); border-radius:9999px; overflow:hidden; }
+    .checkout-progress-fill { height:100%; background:white; border-radius:9999px; transition:width 1s linear; }
+    .checkout-progress-hint { font-size:0.625rem; color:rgba(255,255,255,0.8); margin-top:0.5rem; line-height:1.4; }
+    .checkout-preview-card { background:white; border-radius:1rem; border:1px solid #ffedd5; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.04); }
+    .checkout-preview-hdr { padding:0.75rem 1rem; border-bottom:1px solid #fff7ed; display:flex; align-items:center; justify-content:space-between; }
+    .checkout-preview-hdr-left { display:flex; align-items:center; gap:0.5rem; }
+    .checkout-preview-title { font-weight:800; font-size:0.8125rem; color:#111827; }
+    .checkout-preview-count { font-size:0.625rem; font-weight:700; color:#9ca3af; }
+    .checkout-items-list { }
+    .checkout-item-row { display:flex; align-items:flex-start; justify-content:space-between; gap:0.75rem; padding:0.75rem 1rem; border-bottom:1px solid #f9fafb; }
+    .checkout-item-left { display:flex; align-items:flex-start; gap:0.5rem; flex:1; min-width:0; }
+    .checkout-item-name { font-size:0.8125rem; font-weight:600; color:#111827; line-height:1.3; }
+    .checkout-item-from { font-size:0.6875rem; color:#9ca3af; margin-top:2px; }
+    .checkout-item-total { font-weight:800; font-size:0.8125rem; color:#1f2937; flex-shrink:0; }
+    .checkout-bill { padding:0.75rem 1rem; background:#fff7ed; }
+    .checkout-bill-row { display:flex; justify-content:space-between; font-size:0.75rem; color:#6b7280; margin-bottom:0.25rem; }
+    .checkout-bill-row .font-bold { font-weight:700; color:#1f2937; }
+    .checkout-bill-divider { border-top:1px dashed #fed7aa; margin:0.5rem 0; }
+    .checkout-bill-total-row { color:#111827; font-weight:800; font-size:0.8125rem; }
+    .checkout-bill-total-amt { font-weight:800; color:#f97316; font-size:0.9375rem; }
+    .checkout-meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:0.625rem; }
+    .checkout-meta-card { background:white; border-radius:1rem; border:1px solid #ffedd5; padding:0.75rem; }
+    .checkout-meta-label-row { display:flex; align-items:center; gap:0.375rem; margin-bottom:0.375rem; }
+    .checkout-meta-label { font-size:0.625rem; font-weight:700; color:#9ca3af; text-transform:uppercase; letter-spacing:0.06em; }
+    .checkout-meta-val { font-size:0.75rem; font-weight:800; color:#111827; line-height:1.3; }
+    .checkout-meta-sub { font-size:0.625rem; color:#9ca3af; margin-top:2px; }
+    .checkout-warn-box { display:flex; align-items:flex-start; gap:0.5rem; background:#fffbeb; border:1px solid #fde68a; border-radius:1rem; padding:0.875rem; font-size:0.6875rem; color:#92400e; line-height:1.4; }
+    .checkout-actions { display:grid; grid-template-columns:1fr 1fr; gap:0.625rem; padding-bottom:1.5rem; }
+    .checkout-cancel-btn { background:white; border:2px solid #fecaca; color:#dc2626; padding:0.875rem; border-radius:1rem; font-weight:800; font-size:0.8125rem; cursor:pointer; font-family:'Poppins',sans-serif; }
+    .checkout-confirm-btn { background:#f97316; color:white; border:none; padding:0.875rem; border-radius:1rem; font-weight:800; font-size:0.8125rem; cursor:pointer; font-family:'Poppins',sans-serif; box-shadow:0 4px 12px rgba(249,115,22,0.35); }
+    .checkout-confirm-btn:disabled { opacity:0.7; cursor:not-allowed; }
+
+    /* PROCEED TO CHECKOUT BUTTON */
+    .checkout-proceed-btn { width:100%; background:#f97316; color:white; border:none; border-radius:1rem; padding:1rem; font-size:0.875rem; font-weight:800; cursor:pointer; font-family:'Poppins',sans-serif; box-shadow:0 4px 16px rgba(249,115,22,0.3); }
+
+    /* SUCCESS PAGE */
+    .suc-detail-card { width:100%; background:white; border-radius:1rem; border:1px solid #ffedd5; padding:1.25rem; margin-top:1.5rem; }
+    .suc-detail-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem; }
+    .suc-detail-label { font-size:0.75rem; color:#9ca3af; font-weight:600; }
+    .suc-detail-val { font-size:0.8125rem; font-weight:700; color:#1f2937; }
+    .suc-detail-val.orange { color:#f97316; }
+    .suc-detail-divider { border-top:1px solid #fff7ed; margin:0.75rem 0; }
+    .suc-timer-row { display:flex; align-items:center; gap:0.5rem; background:#fff7ed; border-radius:0.75rem; padding:0.625rem 0.75rem; font-size:0.75rem; color:#c2410c; font-weight:600; }
+    .suc-btns { display:flex; gap:0.625rem; margin-top:1.5rem; width:100%; }
+    .suc-home-btn { flex:1; background:white; border:2px solid #fed7aa; color:#f97316; font-weight:700; padding:0.875rem; border-radius:9999px; cursor:pointer; font-family:'Poppins',sans-serif; }
+    .suc-orders-btn { flex:1; background:#f97316; color:white; border:none; font-weight:700; padding:0.875rem; border-radius:9999px; cursor:pointer; font-family:'Poppins',sans-serif; box-shadow:0 4px 12px rgba(249,115,22,0.3); }
+
+    /* ORDERS PAGE */
+    .orders-loading { text-align:center; padding:2rem; color:#9ca3af; font-size:0.875rem; }
+    .orders-refresh-btn { width:2.25rem; height:2.25rem; background:#fff7ed; border:none; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; }
+    .order-card { background:white; border:1px solid #ffedd5; border-radius:1rem; overflow:hidden; }
+    .order-card-hdr { display:flex; align-items:flex-start; justify-content:space-between; padding:0.875rem 1rem; border-bottom:1px solid #fff7ed; }
+    .order-card-token { font-size:0.875rem; font-weight:900; color:#f97316; }
+    .order-card-date { font-size:0.6875rem; color:#9ca3af; margin-top:2px; }
+    .order-status-badges { display:flex; flex-direction:column; gap:0.25rem; align-items:flex-end; }
+    .order-badge { font-size:0.625rem; font-weight:700; padding:0.2rem 0.5rem; border-radius:9999px; }
+    .badge-green { background:#dcfce7; color:#166534; }
+    .badge-orange { background:#fff7ed; color:#c2410c; }
+    .badge-blue { background:#dbeafe; color:#1e40af; }
+    .badge-gray { background:#f3f4f6; color:#6b7280; }
+    .order-items-list { padding:0.5rem 1rem; }
+    .order-item-row { display:flex; align-items:center; justify-content:space-between; padding:0.375rem 0; border-bottom:1px solid #f9fafb; }
+    .order-item-row:last-child { border-bottom:none; }
+    .order-item-name { font-size:0.8125rem; font-weight:600; color:#1f2937; }
+    .order-item-rest { font-size:0.6875rem; color:#9ca3af; }
+    .order-card-footer { display:flex; align-items:center; justify-content:space-between; padding:0.75rem 1rem; background:#fff7ed; font-size:0.75rem; }
+    .order-total { color:#6b7280; }
+    .order-pay-mode { color:#9ca3af; font-size:0.6875rem; }
+
+    /* PROFILE LOGOUT */
+    .profile-logout-btn { width:100%; background:#fef2f2; border:1px solid #fecaca; color:#dc2626; border-radius:0.75rem; padding:0.875rem; font-size:0.8125rem; font-weight:700; cursor:pointer; font-family:'Poppins',sans-serif; margin-top:0.5rem; }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
   `]
 })
 export class HomeComponent implements OnInit, OnDestroy {
   readonly adminService = inject(AdminService);
   private readonly sb = inject(SupabaseService);
+  private readonly userService = inject(UserService);
+
+  // ── Login state ──────────────────────────────────────────────────────────
+  loginName = '';
+  loginPhone = '';
+  loginLocIdx = 0;
+  loginError = '';
+  loginLoading = false;
+  get loggedInUser() { return this.userService.currentUser(); }
+
+  // ── New feature state ─────────────────────────────────────────────────────
+  checkoutSecsLeft = 30;
+  private checkoutTimer: any;
+  checkoutLoading = false;
+  lastTokenNumber: number | string = '';
+  userOrders: any[] = [];
+  ordersPageLoading = false;
 
   view: View = 'home';
   activeRest: Restaurant | null = null;
@@ -872,7 +1242,6 @@ export class HomeComponent implements OnInit, OnDestroy {
   openCats: Record<string, boolean> = {};
   locationOpen = false;
   catSearch = '';
-  checkoutLoading = false;
 
   liveOrders: LiveOrderRow[] = [];
   ordersLoaded = false;
@@ -896,6 +1265,126 @@ export class HomeComponent implements OnInit, OnDestroy {
   getCat(label: string) { return CATEGORY_CARDS.find(c => c.label === label)!; }
   getStars(n: number): string { return '⭐'.repeat(n); }
 
+  // ── Login ─────────────────────────────────────────────────────────────────
+  async doLogin() {
+    if (!this.loginName.trim()) { this.loginError = 'Please enter your name'; return; }
+    if (!/^\d{10}$/.test(this.loginPhone)) { this.loginError = 'Enter a valid 10-digit phone number'; return; }
+    this.loginError = '';
+    this.loginLoading = true;
+    const user = await this.userService.loginOrRegister(
+      this.loginName.trim(),
+      this.loginPhone,
+      LOCATIONS[this.loginLocIdx].label
+    );
+    this.loginLoading = false;
+    if (user) {
+      this.locIndex = this.loginLocIdx;
+      this.customerName = user.name;
+      this.customerPhone = user.phone;
+      // Pre-load user orders in background
+      this.loadUserOrders();
+    }
+  }
+
+  logout() {
+    this.userService.logout();
+    this.cart = [];
+    this.view = 'home';
+    this.loginName = '';
+    this.loginPhone = '';
+    this.userOrders = [];
+  }
+
+  // ── Orders page ───────────────────────────────────────────────────────────
+  async loadUserOrders() {
+    if (!this.loggedInUser) return;
+    this.ordersPageLoading = true;
+    this.userOrders = await this.userService.fetchUserOrders(this.loggedInUser.phone);
+    this.ordersPageLoading = false;
+  }
+
+  formatOrderDate(iso: string): string {
+    const d = new Date(iso);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+    return `${String(d.getDate()).padStart(2,'0')} ${months[d.getMonth()]} · ${String(h).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} ${ap}`;
+  }
+
+  // ── New checkout flow ─────────────────────────────────────────────────────
+  goToCheckout() {
+    if (this.cartCount === 0) { alert('Your cart is empty.'); return; }
+    this.checkoutSecsLeft = 30;
+    this.view = 'checkout';
+    this.startCheckoutTimer();
+  }
+
+  private startCheckoutTimer() {
+    this.stopCheckoutTimer();
+    this.checkoutTimer = setInterval(() => {
+      this.checkoutSecsLeft--;
+      if (this.checkoutSecsLeft <= 0) {
+        this.stopCheckoutTimer();
+        this.confirmOrder();
+      }
+    }, 1000);
+  }
+
+  private stopCheckoutTimer() {
+    if (this.checkoutTimer) { clearInterval(this.checkoutTimer); this.checkoutTimer = null; }
+  }
+
+  cancelCheckout() {
+    this.stopCheckoutTimer();
+    this.view = 'cart';
+  }
+
+  async confirmOrder() {
+    this.stopCheckoutTimer();
+    if (this.checkoutLoading) return;
+    this.checkoutLoading = true;
+
+    const orderItems = this.cart.map(i => ({ name: i.itemName, qty: i.qty, restaurant_name: i.restaurantName }));
+    const total = this.cartTotal + this.deliveryFee;
+    const loc = LOCATIONS[this.locIndex];
+
+    // Get atomic token
+    let tokenNumber = 1;
+    try {
+      const { data: rpcData, error: rpcErr } = await this.sb.client.rpc('get_next_daily_token');
+      if (!rpcErr && rpcData != null) tokenNumber = rpcData as number;
+      else {
+        const { data: maxRow } = await this.sb.client.from('orders').select('id').order('id', { ascending: false }).limit(1).single();
+        tokenNumber = ((maxRow as any)?.id ?? 0) + 1;
+      }
+    } catch { tokenNumber = Date.now() % 100000; }
+
+    const user = this.loggedInUser!;
+    const { error: insertError } = await this.sb.client.from('orders').insert([{
+      id: tokenNumber, token_number: tokenNumber,
+      customer_name: user.name, customer_phone: user.phone,
+      items: orderItems, payment_mode: this.payMode === 'COD' ? 'cod' : 'prepaid',
+      total, deliver_status: 'pending', pay_status: 'pending',
+    }]);
+
+    if (insertError?.code === '23505') {
+      const fb = Date.now() % 1000000;
+      await this.sb.client.from('orders').insert([{
+        id: fb, token_number: fb, customer_name: user.name, customer_phone: user.phone,
+        items: orderItems, payment_mode: this.payMode === 'COD' ? 'cod' : 'prepaid',
+        total, deliver_status: 'pending', pay_status: 'pending'
+      }]);
+      tokenNumber = fb;
+    }
+
+    this.lastTokenNumber = tokenNumber;
+    this.cart = [];
+    this.isCartOpen = false;
+    this.checkoutLoading = false;
+    this.view = 'success';
+    // Refresh user orders in background
+    this.loadUserOrders();
+  }
+
   async ngOnInit() {
     await this.loadTodayOrders();
     this.subscribeRealtime();
@@ -907,6 +1396,7 @@ export class HomeComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     if (this.tickInterval) clearInterval(this.tickInterval);
     if (this.realtimeChannel) this.sb.client.removeChannel(this.realtimeChannel);
+    this.stopCheckoutTimer();
   }
 
   async loadTodayOrders() {
@@ -1030,38 +1520,4 @@ export class HomeComponent implements OnInit, OnDestroy {
       .filter(cat => cat.items.length > 0);
   }
 
-  async checkout() {
-    if (!this.customerName.trim() || !this.customerPhone.trim()) { alert('Please fill your name and phone.'); return; }
-    this.checkoutLoading = true;
-    const orderItems = this.cart.map(i => ({ name:i.itemName, qty:i.qty, restaurant_name:i.restaurantName }));
-    const total = this.cartTotal + this.deliveryFee;
-    const loc = LOCATIONS[this.locIndex];
-    let tokenNumber = 1;
-    try {
-      const { data: rpcData, error: rpcErr } = await this.sb.client.rpc('get_next_daily_token');
-      if (!rpcErr && rpcData != null) tokenNumber = rpcData as number;
-      else {
-        const { data: maxRow } = await this.sb.client.from('orders').select('id').order('id',{ascending:false}).limit(1).single();
-        tokenNumber = ((maxRow as any)?.id ?? 0) + 1;
-      }
-    } catch { tokenNumber = Date.now() % 100000; }
-    const { error: insertError } = await this.sb.client.from('orders').insert([{
-      id: tokenNumber, token_number: tokenNumber,
-      customer_name: this.customerName.trim(), customer_phone: this.customerPhone.trim(),
-      items: orderItems, payment_mode: this.payMode === 'COD' ? 'cod' : 'prepaid',
-      total, deliver_status: 'pending', pay_status: 'pending',
-    }]);
-    if (insertError?.code === '23505') {
-      const fb = Date.now() % 1000000;
-      await this.sb.client.from('orders').insert([{ id:fb, token_number:fb, customer_name:this.customerName.trim(), customer_phone:this.customerPhone.trim(), items:orderItems, payment_mode:this.payMode==='COD'?'cod':'prepaid', total, deliver_status:'pending', pay_status:'pending' }]);
-      tokenNumber = fb;
-    }
-    let msg = `*🍽️ CLGBITES Order — Token #${tokenNumber}*\n\n*Name:* ${this.customerName.trim()}\n*Phone:* ${this.customerPhone.trim()}\n*Location:* ${loc.label}\n*Payment:* ${this.payMode}\n\n`;
-    this.cart.forEach(i => { msg += `• ${i.qty}× ${i.itemName} (${i.restaurantName}) — ₹${i.price*i.qty}\n`; });
-    msg += `\n*Subtotal:* ₹${this.cartTotal}`;
-    if (this.deliveryFee) msg += `\n*Delivery:* ₹${this.deliveryFee}`;
-    msg += `\n*Total:* ₹${total}\n*Token:* #${tokenNumber}`;
-    window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(msg)}`, '_blank');
-    this.cart = []; this.isCartOpen = false; this.checkoutLoading = false; this.view = 'success';
-  }
 }
