@@ -9,8 +9,7 @@ import { RealtimeChannel } from '@supabase/supabase-js';
 
 const WHATSAPP = '917842960252';
 const LOCATIONS = [
-  { label: 'VIT-AP University', sublabel: 'Free Delivery', fee: 0  },
-  { label: 'Ainavolu Village',  sublabel: '+ ₹10 delivery', fee: 10 },
+  { label: 'SRM-AP University', sublabel: 'Free Delivery', fee: 0 },
 ];
 const REVIEWS = [
   { name: 'Nikhil R.', block: 'B-Block',  stars: 5, text: "Hotel Bheemasena's biryani hits different at 9pm. Fast and always hot!" },
@@ -57,7 +56,7 @@ function minutesAgo(iso:string): number {
   <div class="login-top">
     <div class="login-logo-box"><span class="login-logo-emoji">🍽️</span></div>
     <h1 class="login-title">CLGBITES</h1>
-    <p class="login-sub">VIT-AP's Campus Food App</p>
+    <p class="login-sub">SRM-AP's Campus Food App</p>
     <div class="login-pill"><span class="login-pill-dot"></span><span class="login-pill-text">4 restaurants · Delivered to your door</span></div>
   </div>
   <div class="login-card">
@@ -94,7 +93,7 @@ function minutesAgo(iso:string): number {
       <span *ngIf="!loginLoading">Continue →</span>
       <span *ngIf="loginLoading">Loading…</span>
     </button>
-    <p class="login-footer">VIT-AP students only · Your data stays private</p>
+    <p class="login-footer">SRM-AP students only · Your data stays private</p>
   </div>
 </div>
 
@@ -375,7 +374,7 @@ function minutesAgo(iso:string): number {
     <button class="profile-link" (click)="view='cart'"><div class="profile-link-icon orange-icon">🛍</div><div class="profile-link-body"><p class="profile-link-title">My Cart</p><p class="profile-link-sub">{{ cartCount>0?cartCount+' item'+(cartCount!==1?'s':''):'Empty cart' }}</p></div><span class="profile-link-arrow">›</span></button>
     <a href="tel:7842960252" class="profile-link"><div class="profile-link-icon green-icon">📞</div><div class="profile-link-body"><p class="profile-link-title">Contact Support</p><p class="profile-link-sub">7842960252</p></div><span class="profile-link-arrow">›</span></a>
     <a href="mailto:clgbites@gmail.com" class="profile-link"><div class="profile-link-icon orange-icon">✉️</div><div class="profile-link-body"><p class="profile-link-title">Email Us</p><p class="profile-link-sub">clgbites&#64;gmail.com</p></div><span class="profile-link-arrow">›</span></a>
-    <div class="profile-link"><div class="profile-link-icon orange-icon">✨</div><div class="profile-link-body"><p class="profile-link-title">About CLGBITES</p><p class="profile-link-sub">For VIT-AP students, by VIT-AP</p></div></div>
+    <div class="profile-link"><div class="profile-link-icon orange-icon">✨</div><div class="profile-link-body"><p class="profile-link-title">About CLGBITES</p><p class="profile-link-sub">For SRM-AP students, by SRM-AP</p></div></div>
     <button class="profile-logout-btn" (click)="logout()">🚪 Sign Out</button>
   </div>
   <ng-container *ngTemplateOutlet="cartBarTpl"></ng-container>
@@ -429,7 +428,7 @@ function minutesAgo(iso:string): number {
   <div class="home-header">
     <div class="home-header-top">
       <h1 class="home-logo">CLGBITES</h1>
-      <div class="campus-pill"><span class="campus-dot"></span><span class="campus-text">VIT-AP</span></div>
+      <div class="campus-pill"><span class="campus-dot"></span><span class="campus-text">SRM-AP</span></div>
     </div>
     <div class="loc-wrap">
       <button class="loc-btn" (click)="locationOpen=!locationOpen">
@@ -516,7 +515,7 @@ function minutesAgo(iso:string): number {
     <div class="trending-hdr">
       <div class="trending-title-grp">
         <div class="trending-icon-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
-        <div><h2 class="trending-h">Trending at VIT-AP</h2><p class="trending-p">Most ordered today</p></div>
+        <div><h2 class="trending-h">Trending at SRM-AP</h2><p class="trending-p">Most ordered today</p></div>
       </div>
       <div class="live-pill">✨ <span>Live</span></div>
     </div>
@@ -586,7 +585,7 @@ function minutesAgo(iso:string): number {
       <a href="tel:7842960252" class="contact-row"><div class="contact-icon green-box">📞</div><div><p class="contact-lbl">Admin</p><p class="contact-val">7842960252</p></div></a>
       <div class="contact-divider"></div>
       <a href="mailto:clgbites@gmail.com" class="contact-row"><div class="contact-icon orange-box">✉️</div><div><p class="contact-lbl">Email</p><p class="contact-val">clgbites&#64;gmail.com</p></div></a>
-      <p class="contact-footer">CLGBITES · VIT-AP University · Taxes: ₹0</p>
+      <p class="contact-footer">CLGBITES · SRM-AP University · Taxes: ₹0</p>
     </div>
   </div>
 
