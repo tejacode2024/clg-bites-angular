@@ -13,25 +13,24 @@ const LOCATIONS = [
   { label: 'Ainavolu Village',  sublabel: '+ ₹10 delivery', fee: 10 },
 ];
 const REVIEWS = [
-  { name: 'Nikhil R.', block: 'B-Block',  stars: 5, text: "Spice Magic's biryani hits different at 9pm. Fast and always hot!" },
-  { name: 'Swetha P.', block: 'A-Hostel', stars: 5, text: "CLGBITES is so easy to use. Noodles at ₹90 — can't beat that!" },
-  { name: 'Rohit K.',  block: 'C-Block',  stars: 4, text: 'Palleturu mutton biryani is legit village-style. Loved it.' },
-  { name: 'Anjali M.', block: 'D-Hostel', stars: 5, text: "WhatsApp checkout is genius — no account needed. Fresh dosa!" },
+  { name: 'Nikhil R.', block: 'B-Block',  stars: 5, text: "Hotel Bheemasena's biryani hits different at 9pm. Fast and always hot!" },
+  { name: 'Swetha P.', block: 'A-Hostel', stars: 5, text: "CLGBITES is so easy to use. Food Corner noodles are always fresh!" },
+  { name: 'Rohit K.',  block: 'C-Block',  stars: 4, text: 'A1 Biryani mixed biryani is proper value for money. Loved it.' },
+  { name: 'Anjali M.', block: 'D-Hostel', stars: 5, text: "Ordering is genius — no password needed. Fruit Market delivers same day!" },
   { name: 'Sai T.',    block: 'A-Block',  stars: 5, text: 'Hotel Bheemasena butter chicken is 10/10. Ordered twice this week!' },
 ];
 const CATEGORY_CARDS = [
-  { label: 'Biryani',   count: 6, img: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=80' },
-  { label: 'Fast Food', count: 5, img: 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=500&q=80' },
-  { label: 'Tiffins',   count: 1, img: 'https://images.unsplash.com/photo-1630409351241-e90e7eb139b3?w=500&q=80' },
+  { label: 'Biryani',   count: 2, img: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=80' },
+  { label: 'Fast Food', count: 2, img: 'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=500&q=80' },
   { label: 'Fruits',    count: 1, img: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&q=80' },
-  { label: 'Veg Meals', count: 2, img: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500&q=80' },
+  { label: 'Veg Meals', count: 1, img: 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500&q=80' },
 ];
 const TRENDING = [
-  { rank:1, item:'Mixed Biryani',              rid:'spice-magic',        rname:'Spice Magic',        price:180, change:12, img:'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=80' },
-  { rank:2, item:'Chicken Mughalai Biryani',   rid:'hotel-mourya',       rname:'Hotel Mourya',        price:400, change:8,  img:'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500&q=80' },
-  { rank:3, item:'Chicken Noodles',            rid:'food-corner',        rname:'Food Corner',         price:90,  change:5,  img:'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=500&q=80' },
-  { rank:4, item:'3 Pulkhas + Egg Burji Combo',rid:'ruchi-pulkha-point', rname:'Ruchi Pulkha Point',  price:60,  change:19, img:'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500&q=80' },
-  { rank:5, item:'Masala Dosa',                rid:'tiffens',            rname:'Tiffins',             price:55,  change:3,  img:'https://images.unsplash.com/photo-1630409351241-e90e7eb139b3?w=500&q=80' },
+  { rank:1, item:'Chicken Dum Biryani', rid:'hotel-bheemasena', rname:'Hotel Bheemasena', price:290, change:12, img:'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500&q=80' },
+  { rank:2, item:'Chilli Chicken',      rid:'hotel-bheemasena', rname:'Hotel Bheemasena', price:310, change:8,  img:'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500&q=80' },
+  { rank:3, item:'Chicken Noodles',     rid:'food-corner',      rname:'Food Corner',      price:140, change:5,  img:'https://images.unsplash.com/photo-1569050467447-ce54b3bbc37d?w=500&q=80' },
+  { rank:4, item:'Veg Manchurian',      rid:'food-corner',      rname:'Food Corner',      price:110, change:19, img:'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500&q=80' },
+  { rank:5, item:'Pomegranate 500g',    rid:'fruits',           rname:'Fruit Market',     price:185, change:3,  img:'https://images.unsplash.com/photo-1610832958506-aa56368176cf?w=500&q=80' },
 ];
 
 interface CartItem { restaurantId:string; restaurantName:string; itemName:string; price:number; qty:number; isVeg:boolean; }
@@ -59,7 +58,7 @@ function minutesAgo(iso:string): number {
     <div class="login-logo-box"><span class="login-logo-emoji">🍽️</span></div>
     <h1 class="login-title">CLGBITES</h1>
     <p class="login-sub">VIT-AP's Campus Food App</p>
-    <div class="login-pill"><span class="login-pill-dot"></span><span class="login-pill-text">9 restaurants · Delivered to your door</span></div>
+    <div class="login-pill"><span class="login-pill-dot"></span><span class="login-pill-text">4 restaurants · Delivered to your door</span></div>
   </div>
   <div class="login-card">
     <h2 class="login-card-title">Welcome!</h2>
@@ -487,13 +486,7 @@ function minutesAgo(iso:string): number {
           <p class="bento-md-sub">{{ getCat('Fast Food').count }} Places</p>
         </div>
       </button>
-      <!-- Tiffins — 1×1 -->
-      <button class="bento-tiffins" (click)="goCategory('Tiffins')">
-        <img [src]="getCat('Tiffins').img" alt="Tiffins" class="bento-img"/>
-        <div class="bento-overlay-dark"></div>
-        <p class="bento-sm-label">Tiffins</p>
-      </button>
-      <!-- Fruits — 2×1 -->
+      <!-- Fruits — 3×1 -->
       <button class="bento-fruits" (click)="goCategory('Fruits')">
         <img [src]="getCat('Fruits').img" alt="Fruits" class="bento-img"/>
         <div class="bento-overlay-lr"></div>
@@ -818,11 +811,10 @@ function minutesAgo(iso:string): number {
     .bento-grid { display:grid; grid-template-columns:repeat(6,1fr); grid-auto-rows:68px; gap:0.625rem; }
     .bento-biryani  { grid-column:span 3; grid-row:span 3; position:relative; border-radius:1rem; overflow:hidden; border:none; cursor:pointer; padding:0; transition:transform 0.15s; }
     .bento-fastfood { grid-column:span 3; grid-row:span 2; position:relative; border-radius:1rem; overflow:hidden; border:none; cursor:pointer; padding:0; transition:transform 0.15s; }
-    .bento-tiffins  { grid-column:span 1; grid-row:span 1; position:relative; border-radius:0.75rem; overflow:hidden; border:none; cursor:pointer; padding:0; transition:transform 0.15s; display:flex; align-items:center; justify-content:center; }
-    .bento-fruits   { grid-column:span 2; grid-row:span 1; position:relative; border-radius:0.75rem; overflow:hidden; border:none; cursor:pointer; padding:0; transition:transform 0.15s; }
+    .bento-fruits   { grid-column:span 3; grid-row:span 1; position:relative; border-radius:0.75rem; overflow:hidden; border:none; cursor:pointer; padding:0; transition:transform 0.15s; }
     .bento-vegmeals { grid-column:span 3; grid-row:span 2; position:relative; border-radius:1rem; overflow:hidden; border:none; cursor:pointer; padding:0; transition:transform 0.15s; }
     .bento-all      { grid-column:span 3; grid-row:span 2; background:linear-gradient(135deg,#f97316,#fbbf24); border-radius:1rem; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; transition:transform 0.15s; }
-    .bento-biryani:active,.bento-fastfood:active,.bento-tiffins:active,.bento-fruits:active,.bento-vegmeals:active,.bento-all:active { transform:scale(0.97); }
+    .bento-biryani:active,.bento-fastfood:active,.bento-fruits:active,.bento-vegmeals:active,.bento-all:active { transform:scale(0.97); }
     .bento-img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
     .bento-overlay { position:absolute; inset:0; background:linear-gradient(to top,rgba(0,0,0,0.8) 0%,rgba(0,0,0,0.2) 50%,transparent 100%); }
     .bento-overlay-dark { position:absolute; inset:0; background:rgba(0,0,0,0.45); }
