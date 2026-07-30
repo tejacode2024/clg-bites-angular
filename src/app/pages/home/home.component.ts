@@ -70,7 +70,7 @@ function minutesAgo(iso:string): number {
       </div>
       <div>
         <label class="login-label">Phone Number</label>
-        <input class="login-input" type="tel" placeholder="10-digit mobile number" maxlength="10" [(ngModel)]="loginPhone" (input)="loginPhone=loginPhone.replace(/\D/g,'')"/>
+        <input class="login-input" type="tel" placeholder="10-digit mobile number" maxlength="10" [(ngModel)]="loginPhone" (input)="onPhoneInput()"/>
       </div>
       <div>
         <label class="login-label">Delivery Location</label>
@@ -1231,6 +1231,11 @@ export class HomeComponent implements OnInit, OnDestroy {
   locIndex = 0;
   payMode: 'COD'|'Prepay' = 'COD';
   vegOnly = false;
+
+  onPhoneInput(): void {
+    this.loginPhone = this.loginPhone.replace(/\D/g, '');
+  }
+
   openCats: Record<string, boolean> = {};
   locationOpen = false;
   catSearch = '';
